@@ -1,0 +1,324 @@
+{
+  "info": {
+    "name": "CBT Santri API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "ujian_id",
+      "value": "1"
+    },
+    {
+      "key": "santri_id",
+      "value": "1"
+    },
+    {
+      "key": "soal_id",
+      "value": "1"
+    },
+    {
+      "key": "jadwal_id",
+      "value": "1"
+    },
+    {
+      "key": "jawaban_id",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth - Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data.token) {",
+              "  pm.collectionVariables.set('token', json.data.token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"password\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/login"
+      }
+    },
+    {
+      "name": "Ujian - Create",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data.ujian_id) {",
+              "  pm.collectionVariables.set('ujian_id', json.data.ujian_id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nama_ujian\": \"Tes Masuk Gelombang 1\",\n  \"tanggal\": \"2026-05-06\",\n  \"durasi\": 90,\n  \"status\": \"aktif\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/ujian"
+      }
+    },
+    {
+      "name": "Soal - Create",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data.soal_id) {",
+              "  pm.collectionVariables.set('soal_id', json.data.soal_id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ujian_id\": {{ujian_id}},\n  \"judul_soal\": \"Apa ibu kota Indonesia?\",\n  \"jenis_soal\": \"pg\",\n  \"durasi_pengerjaan\": 60,\n  \"jawaban_benar\": \"Jakarta\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/soal"
+      }
+    },
+    {
+      "name": "Soal - Import XLSX/CSV",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": "{{base_url}}/ujian/{{ujian_id}}/soal/import"
+      }
+    },
+    {
+      "name": "Jadwal Ujian - Create",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data.jadwal_id) {",
+              "  pm.collectionVariables.set('jadwal_id', json.data.jadwal_id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ujian_id\": {{ujian_id}},\n  \"santri_id\": {{santri_id}},\n  \"tanggal\": \"2026-05-06\",\n  \"waktu_mulai\": \"08:00\",\n  \"waktu_selesai\": \"09:30\",\n  \"ruang_ujian\": \"Ruang CBT 1\",\n  \"keterangan\": \"Sesi pagi\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/jadwal-ujian"
+      }
+    },
+    {
+      "name": "Jadwal Ujian - List",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{base_url}}/jadwal-ujian?ujian_id={{ujian_id}}&santri_id={{santri_id}}"
+      }
+    },
+    {
+      "name": "Jawaban - Create",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data.jawaban_id) {",
+              "  pm.collectionVariables.set('jawaban_id', json.data.jawaban_id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"soal_id\": {{soal_id}},\n  \"santri_id\": {{santri_id}},\n  \"jawaban_text\": \"Jakarta\",\n  \"waktu_submit\": \"2026-05-06 08:45:00\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/jawaban"
+      }
+    },
+    {
+      "name": "Jawaban - Nilai",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nilai_jawaban\": 100\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/jawaban/{{jawaban_id}}"
+      }
+    }
+  ]
+}
