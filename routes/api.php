@@ -35,6 +35,7 @@ use App\Http\Controllers\API\JawabanController;
     Route::get('/auth-user', [AuthController::class, 'authUser']);
     // CALON SANTRI
     Route::post('/calon-santri', [DataCalonSantriController::class, 'store']);
+    Route::post('/calon-santri/dokumen', [DataCalonSantriController::class, 'uploadDokumen']);
     Route::get('/calon-santri', [DataCalonSantriController::class, 'show']);
 
     Route::post('/ayah-calon-santri', [DataAyahCalonSantriController::class, 'store']);
