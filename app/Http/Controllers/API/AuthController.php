@@ -62,6 +62,41 @@ class AuthController extends Controller
         ]);
     }
 
+    public function adminLogin(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        $user = User::where('username', $request->username)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Invalid credentials',
+            ], 401);
+        }
+
+        if ($user->role !== 'admin') {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Akun ini bukan admin',
+            ], 403);
+        }
+
+        $token = $user->createToken('Admin API Token')->plainTextToken;
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Login admin berhasil',
+            'data'    => [
+                'user'  => $user->makeHidden('password'),
+                'token' => $token,
+            ],
+        ]);
+    }
+
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();

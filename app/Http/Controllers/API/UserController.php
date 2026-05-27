@@ -38,16 +38,16 @@ class UserController extends Controller
     // POST create user
     public function store(Request $request)
     {
-        $request->validate([
-            'username' => 'required',
-            'password' => 'required',
-            'role' => 'required'
+        $validated = $request->validate([
+            'username' => 'required|string|max:50|unique:users,username',
+            'password' => 'required|string|min:6',
+            'role' => 'required|in:calon_santri,santri,admin,pengajar'
         ]);
 
         $user = User::create([
-            'username' => $request->username,
-            'password' => Hash::make($request->password),
-            'role' => $request->role
+            'username' => $validated['username'],
+            'password' => Hash::make($validated['password']),
+            'role' => $validated['role']
         ]);
 
         return response()->json([
@@ -67,11 +67,17 @@ class UserController extends Controller
             ], 404);
         }
 
-        $user->update([
-            'username' => $request->username ?? $user->username,
-            'password' => $request->password ? Hash::make($request->password) : $user->password,
-            'role' => $request->role ?? $user->role
+        $validated = $request->validate([
+            'username' => 'sometimes|string|max:50|unique:users,username,' . $user->user_id . ',user_id',
+            'password' => 'sometimes|string|min:6',
+            'role' => 'sometimes|in:calon_santri,santri,admin,pengajar',
         ]);
+
+        if (isset($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($validated);
 
         return response()->json([
             'status' => true,

@@ -26,6 +26,7 @@ use App\Http\Controllers\API\JawabanController;
 
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login'])->name('login');
+    Route::post('/admin/login', [AuthController::class, 'adminLogin']);
 
 
     Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
@@ -50,43 +51,49 @@ use App\Http\Controllers\API\JawabanController;
     Route::post('/sekolah-asal-calon-santri', [DataSekolahAsalCalonSantriController::class, 'store']);
     Route::get('/sekolah-asal-calon-santri', [DataSekolahAsalCalonSantriController::class, 'show']);
 
-    // ====================
-    // SANTRI
-    // ====================
-    Route::get('/santri', [SantriController::class, 'index']);
-    Route::get('/santri/{id}', [SantriController::class, 'show']);
-    Route::post('/santri', [SantriController::class, 'store']);
-    Route::put('/santri/{id}', [SantriController::class, 'update']);
-    Route::delete('/santri/{id}', [SantriController::class, 'destroy']);
+    Route::middleware('role:admin')->group(function () {
+        // ====================
+        // SANTRI
+        // ====================
+        Route::get('/santri', [SantriController::class, 'index']);
+        Route::get('/santri/{id}', [SantriController::class, 'show']);
+        Route::post('/santri', [SantriController::class, 'store']);
+        Route::put('/santri/{id}', [SantriController::class, 'update']);
+        Route::delete('/santri/{id}', [SantriController::class, 'destroy']);
 
-    // ====================
-    // USERS
-    // ====================
-    Route::get('/users', [UserController::class, 'index']);
-    Route::get('/users/{id}', [UserController::class, 'show']);
-    Route::post('/users', [UserController::class, 'store']);
-    Route::put('/users/{id}', [UserController::class, 'update']);
-    Route::delete('/users/{id}', [UserController::class, 'destroy']);
+        // ====================
+        // USERS
+        // ====================
+        Route::get('/users', [UserController::class, 'index']);
+        Route::get('/users/{id}', [UserController::class, 'show']);
+        Route::post('/users', [UserController::class, 'store']);
+        Route::put('/users/{id}', [UserController::class, 'update']);
+        Route::delete('/users/{id}', [UserController::class, 'destroy']);
+    });
 
     Route::get('/ujian/{ujian_id}/soal', [SoalController::class, 'index']);
     Route::get('/ujian/{ujian_id}/santri/{santri_id}/soal-jawaban', [SoalController::class, 'indexWithJawaban']);
-    Route::post('/ujian/{ujian_id}/soal/import', [SoalController::class, 'import']);
     Route::get('/soal/{id}', [SoalController::class, 'show']);
-    Route::post('/soal', [SoalController::class, 'store']);
-    Route::put('/soal/{id}', [SoalController::class, 'update']);
-    Route::delete('/soal/{id}', [SoalController::class, 'destroy']);
 
     Route::get('/ujian', [UjianController::class, 'index']);
     Route::get('/ujian/{id}', [UjianController::class, 'show']);
-    Route::post('/ujian', [UjianController::class, 'store']);
-    Route::put('/ujian/{id}', [UjianController::class, 'update']);
-    Route::delete('/ujian/{id}', [UjianController::class, 'destroy']);
 
-    Route::get('/jadwal-ujian', [JadwalUjianController::class, 'index']);
-    Route::get('/jadwal-ujian/{id}', [JadwalUjianController::class, 'show']);
-    Route::post('/jadwal-ujian', [JadwalUjianController::class, 'store']);
-    Route::put('/jadwal-ujian/{id}', [JadwalUjianController::class, 'update']);
-    Route::delete('/jadwal-ujian/{id}', [JadwalUjianController::class, 'destroy']);
+    Route::middleware('role:admin')->group(function () {
+        Route::post('/ujian/{ujian_id}/soal/import', [SoalController::class, 'import']);
+        Route::post('/soal', [SoalController::class, 'store']);
+        Route::put('/soal/{id}', [SoalController::class, 'update']);
+        Route::delete('/soal/{id}', [SoalController::class, 'destroy']);
+
+        Route::post('/ujian', [UjianController::class, 'store']);
+        Route::put('/ujian/{id}', [UjianController::class, 'update']);
+        Route::delete('/ujian/{id}', [UjianController::class, 'destroy']);
+
+        Route::get('/jadwal-ujian', [JadwalUjianController::class, 'index']);
+        Route::get('/jadwal-ujian/{id}', [JadwalUjianController::class, 'show']);
+        Route::post('/jadwal-ujian', [JadwalUjianController::class, 'store']);
+        Route::put('/jadwal-ujian/{id}', [JadwalUjianController::class, 'update']);
+        Route::delete('/jadwal-ujian/{id}', [JadwalUjianController::class, 'destroy']);
+    });
 
     Route::get('/jawaban', [JawabanController::class, 'index']);
     Route::post('/jawaban/bulk', [JawabanController::class, 'bulkStore']);
