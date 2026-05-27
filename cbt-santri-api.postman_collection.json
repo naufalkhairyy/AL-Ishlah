@@ -159,6 +159,72 @@
       }
     },
     {
+      "name": "Soal - Create Upload Word",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data.soal_id) {",
+              "  pm.collectionVariables.set('soal_id', json.data.soal_id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "ujian_id",
+              "value": "{{ujian_id}}",
+              "type": "text"
+            },
+            {
+              "key": "judul_soal",
+              "value": "Soal dari file Word",
+              "type": "text"
+            },
+            {
+              "key": "file_soal",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "jenis_soal",
+              "value": "essay",
+              "type": "text"
+            },
+            {
+              "key": "durasi_pengerjaan",
+              "value": "60",
+              "type": "text"
+            },
+            {
+              "key": "jawaban_benar",
+              "value": "",
+              "type": "text"
+            }
+          ]
+        },
+        "url": "{{base_url}}/soal"
+      }
+    },
+    {
       "name": "Soal - Import XLSX/CSV",
       "request": {
         "method": "POST",
@@ -183,6 +249,93 @@
           ]
         },
         "url": "{{base_url}}/ujian/{{ujian_id}}/soal/import"
+      }
+    },
+    {
+      "name": "Calon Santri - Simpan Data Diri",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nama_lengkap\": \"Ahmad Santri\",\n  \"nama_panggilan\": \"Ahmad\",\n  \"tempat_lahir\": \"Pekanbaru\",\n  \"tanggal_lahir\": \"2012-05-10\",\n  \"jenis_kelamin\": \"L\",\n  \"golongan_darah\": \"O\",\n  \"jumlah_saudara\": 2,\n  \"anak_ke\": 1,\n  \"alamat\": \"Jl. Pendidikan No. 1\",\n  \"nisn\": \"1234567890\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/calon-santri"
+      }
+    },
+    {
+      "name": "Calon Santri - Upload Dokumen",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "raport_semester_4",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "pas_foto",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "akta_kelahiran",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "kartu_keluarga",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "ktp_ayah",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "ktp_ibu",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "surat_pernyataan_lulus",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": "{{base_url}}/calon-santri/dokumen"
       }
     },
     {

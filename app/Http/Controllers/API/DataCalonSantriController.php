@@ -10,11 +10,13 @@ use Illuminate\Support\Facades\Storage;
 class DataCalonSantriController extends Controller
 {
     private const DOKUMEN_FIELDS = [
+        'raport_semester_4',
         'akta_kelahiran',
         'pas_foto',
         'kartu_keluarga',
         'ktp',
         'ijazah_skl',
+        'surat_pernyataan_lulus',
         'ktp_ayah',
         'ktp_ibu',
     ];
@@ -33,11 +35,13 @@ class DataCalonSantriController extends Controller
             'anak_ke'        => 'required|integer',
             'alamat'         => 'required|string',
             'nisn'           => 'required|string|max:20',
+            'raport_semester_4' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'akta_kelahiran' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'pas_foto'       => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
             'kartu_keluarga' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'ktp'            => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'ijazah_skl'     => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'surat_pernyataan_lulus' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'ktp_ayah'       => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'ktp_ibu'        => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
@@ -62,11 +66,13 @@ class DataCalonSantriController extends Controller
     public function uploadDokumen(Request $request)
     {
         $validated = $request->validate([
+            'raport_semester_4' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'akta_kelahiran' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'pas_foto'       => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
             'kartu_keluarga' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'ktp'            => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'ijazah_skl'     => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'surat_pernyataan_lulus' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'ktp_ayah'       => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'ktp_ibu'        => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);

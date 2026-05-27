@@ -21,11 +21,13 @@ class DataCalonSantri extends Model
         'anak_ke',
         'alamat',
         'nisn',
+        'raport_semester_4',
         'akta_kelahiran',
         'pas_foto',
         'kartu_keluarga',
         'ktp',
         'ijazah_skl',
+        'surat_pernyataan_lulus',
         'ktp_ayah',
         'ktp_ibu',
     ];

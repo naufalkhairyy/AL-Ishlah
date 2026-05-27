@@ -9,6 +9,7 @@ use App\Models\Ujian;
 use App\Services\SoalImportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class SoalController extends Controller
 {
@@ -19,7 +20,7 @@ class SoalController extends Controller
 
         return response()->json([
             'status' => true,
-            'data'   => $soal,
+            'data'   => $soal->map(fn ($item) => $this->withFileSoalUrl($item))->values(),
         ]);
     }
 
@@ -48,35 +49,32 @@ class SoalController extends Controller
 
         return response()->json([
             'status' => true,
-            'data'   => $soal,
+            'data'   => $soal->map(fn ($item) => $this->withFileSoalUrl($item))->values(),
         ]);
     }
 
     // Buat soal baru
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'ujian_id'          => 'required|integer|exists:ujian,ujian_id',
             'judul_soal'        => 'required|string|max:255',
-            'file_soal'         => 'nullable|string|max:255',
+            'file_soal'         => $this->fileSoalRule($request),
             'jenis_soal'        => 'required|in:pg,essay',
             'durasi_pengerjaan' => 'required|integer',
             'jawaban_benar'     => 'nullable|string',
         ]);
 
-        $soal = Soal::create([
-            'ujian_id'          => $request->ujian_id,
-            'judul_soal'        => $request->judul_soal,
-            'file_soal'         => $request->file_soal,
-            'jenis_soal'        => $request->jenis_soal,
-            'durasi_pengerjaan' => $request->durasi_pengerjaan,
-            'jawaban_benar'     => $request->jawaban_benar,
-        ]);
+        if ($request->hasFile('file_soal')) {
+            $validated['file_soal'] = $this->storeFileSoal($request, (int) $validated['ujian_id']);
+        }
+
+        $soal = Soal::create($validated);
 
         return response()->json([
             'status'  => true,
             'message' => 'Soal berhasil dibuat',
-            'data'    => $soal,
+            'data'    => $this->withFileSoalUrl($soal),
         ], 201);
     }
 
@@ -122,7 +120,7 @@ class SoalController extends Controller
 
         return response()->json([
             'status' => true,
-            'data'   => $soal,
+            'data'   => $this->withFileSoalUrl($soal),
         ]);
     }
 
@@ -140,18 +138,25 @@ class SoalController extends Controller
 
         $validated = $request->validate([
             'judul_soal'        => 'sometimes|string|max:255',
-            'file_soal'         => 'nullable|string|max:255',
+            'file_soal'         => $this->fileSoalRule($request),
             'jenis_soal'        => 'sometimes|in:pg,essay',
             'durasi_pengerjaan' => 'sometimes|integer',
             'jawaban_benar'     => 'nullable|string',
         ]);
+
+        if ($request->hasFile('file_soal')) {
+            $this->deleteFileSoal($soal);
+            $validated['file_soal'] = $this->storeFileSoal($request, (int) $soal->ujian_id);
+        } elseif ($request->has('file_soal')) {
+            $this->deleteFileSoal($soal);
+        }
 
         $soal->update($validated);
 
         return response()->json([
             'status'  => true,
             'message' => 'Soal berhasil diupdate',
-            'data'    => $soal,
+            'data'    => $this->withFileSoalUrl($soal->fresh()),
         ]);
     }
 
@@ -167,11 +172,47 @@ class SoalController extends Controller
             ], 404);
         }
 
+        $this->deleteFileSoal($soal);
         $soal->delete();
 
         return response()->json([
             'status'  => true,
             'message' => 'Soal berhasil dihapus',
         ]);
+    }
+
+    private function fileSoalRule(Request $request): string
+    {
+        if ($request->hasFile('file_soal')) {
+            return 'nullable|file|mimes:doc,docx|max:10240';
+        }
+
+        return 'nullable|string|max:255';
+    }
+
+    private function storeFileSoal(Request $request, int $ujianId): string
+    {
+        return $request->file('file_soal')->store("file-soal/{$ujianId}", 'public');
+    }
+
+    private function deleteFileSoal(Soal $soal): void
+    {
+        if ($soal->file_soal && !filter_var($soal->file_soal, FILTER_VALIDATE_URL)) {
+            Storage::disk('public')->delete($soal->file_soal);
+        }
+    }
+
+    private function withFileSoalUrl(Soal $soal): array
+    {
+        $data = $soal->toArray();
+        $data['file_soal_url'] = null;
+
+        if ($soal->file_soal) {
+            $data['file_soal_url'] = filter_var($soal->file_soal, FILTER_VALIDATE_URL)
+                ? $soal->file_soal
+                : Storage::url($soal->file_soal);
+        }
+
+        return $data;
     }
 }
