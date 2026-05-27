@@ -50,4 +50,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(Santri::class, 'user_id', 'user_id');
     }
+
+    public function pembayaran()
+    {
+        return $this->hasMany(Pembayaran::class, 'user_id', 'user_id');
+    }
 }

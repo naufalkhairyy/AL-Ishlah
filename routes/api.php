@@ -16,6 +16,7 @@ use App\Http\Controllers\API\UjianController;
 use App\Http\Controllers\API\SoalController;
 use App\Http\Controllers\API\JadwalUjianController;
 use App\Http\Controllers\API\JawabanController;
+use App\Http\Controllers\API\PembayaranController;
 
     Route::get('/test', function () {
         return response()->json([
@@ -82,6 +83,11 @@ use App\Http\Controllers\API\JawabanController;
     Route::get('/ujian', [UjianController::class, 'index']);
     Route::get('/ujian/{id}', [UjianController::class, 'show']);
 
+    Route::get('/pembayaran/saya', [PembayaranController::class, 'mine']);
+    Route::post('/pembayaran', [PembayaranController::class, 'store']);
+    Route::get('/pembayaran/{id}', [PembayaranController::class, 'show']);
+    Route::get('/pembayaran/{id}/bukti-bayar', [PembayaranController::class, 'downloadBuktiBayar']);
+
     Route::middleware('role:admin')->group(function () {
         Route::post('/ujian/{ujian_id}/soal/import', [SoalController::class, 'import']);
         Route::post('/soal', [SoalController::class, 'store']);
@@ -97,6 +103,10 @@ use App\Http\Controllers\API\JawabanController;
         Route::post('/jadwal-ujian', [JadwalUjianController::class, 'store']);
         Route::put('/jadwal-ujian/{id}', [JadwalUjianController::class, 'update']);
         Route::delete('/jadwal-ujian/{id}', [JadwalUjianController::class, 'destroy']);
+
+        Route::get('/pembayaran', [PembayaranController::class, 'index']);
+        Route::put('/pembayaran/{id}/status', [PembayaranController::class, 'updateStatus']);
+        Route::delete('/pembayaran/{id}', [PembayaranController::class, 'destroy']);
     });
 
     Route::get('/jawaban', [JawabanController::class, 'index']);

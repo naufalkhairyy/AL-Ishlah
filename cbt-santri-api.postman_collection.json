@@ -31,6 +31,10 @@
     {
       "key": "jawaban_id",
       "value": "1"
+    },
+    {
+      "key": "pembayaran_id",
+      "value": "1"
     }
   ],
   "item": [
@@ -416,6 +420,131 @@
           }
         },
         "url": "{{base_url}}/jadwal-ujian"
+      }
+    },
+    {
+      "name": "Pembayaran - Upload Bukti Bayar",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "if (json.data && json.data.pembayaran_id) {",
+              "  pm.collectionVariables.set('pembayaran_id', json.data.pembayaran_id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "jenis_pembayaran",
+              "value": "pendaftaran",
+              "type": "text"
+            },
+            {
+              "key": "jumlah_bayar",
+              "value": "500000",
+              "type": "text"
+            },
+            {
+              "key": "metode_pembayaran",
+              "value": "transfer",
+              "type": "text"
+            },
+            {
+              "key": "tanggal_bayar",
+              "value": "2026-05-27",
+              "type": "text"
+            },
+            {
+              "key": "bukti_bayar",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": "{{base_url}}/pembayaran"
+      }
+    },
+    {
+      "name": "Pembayaran - Saya",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{base_url}}/pembayaran/saya"
+      }
+    },
+    {
+      "name": "Pembayaran - Admin List",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{base_url}}/pembayaran"
+      }
+    },
+    {
+      "name": "Pembayaran - Admin Update Status",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"diterima\",\n  \"catatan\": \"Pembayaran valid\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/pembayaran/{{pembayaran_id}}/status"
       }
     },
     {

@@ -34,4 +34,9 @@ class Santri extends Model
     {
         return $this->hasMany(Jawaban::class, 'santri_id', 'santri_id');
     }
+
+    public function pembayaran()
+    {
+        return $this->hasMany(Pembayaran::class, 'santri_id', 'santri_id');
+    }
 }
