@@ -16,9 +16,16 @@ class Soal extends Model
         'ujian_id',
         'judul_soal',
         'file_soal',
+        'file_soal_nama_file',
+        'file_soal_mime_type',
+        'file_soal_size',
         'jenis_soal',
         'durasi_pengerjaan',
         'jawaban_benar',
+    ];
+
+    protected $hidden = [
+        'file_soal',
     ];
 
     public function ujian()

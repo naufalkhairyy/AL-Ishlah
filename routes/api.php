@@ -37,6 +37,7 @@ use App\Http\Controllers\API\JawabanController;
     // CALON SANTRI
     Route::post('/calon-santri', [DataCalonSantriController::class, 'store']);
     Route::post('/calon-santri/dokumen', [DataCalonSantriController::class, 'uploadDokumen']);
+    Route::get('/calon-santri/dokumen/{field}', [DataCalonSantriController::class, 'downloadDokumen']);
     Route::get('/calon-santri', [DataCalonSantriController::class, 'show']);
 
     Route::post('/ayah-calon-santri', [DataAyahCalonSantriController::class, 'store']);
@@ -69,10 +70,13 @@ use App\Http\Controllers\API\JawabanController;
         Route::post('/users', [UserController::class, 'store']);
         Route::put('/users/{id}', [UserController::class, 'update']);
         Route::delete('/users/{id}', [UserController::class, 'destroy']);
+
+        Route::get('/calon-santri/{id}/dokumen/{field}', [DataCalonSantriController::class, 'downloadDokumenAdmin']);
     });
 
     Route::get('/ujian/{ujian_id}/soal', [SoalController::class, 'index']);
     Route::get('/ujian/{ujian_id}/santri/{santri_id}/soal-jawaban', [SoalController::class, 'indexWithJawaban']);
+    Route::get('/soal/{id}/file', [SoalController::class, 'downloadFile']);
     Route::get('/soal/{id}', [SoalController::class, 'show']);
 
     Route::get('/ujian', [UjianController::class, 'index']);

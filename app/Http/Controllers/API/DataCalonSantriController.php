@@ -5,7 +5,6 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\DataCalonSantri;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class DataCalonSantriController extends Controller
 {
@@ -46,8 +45,7 @@ class DataCalonSantriController extends Controller
             'ktp_ibu'        => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
-        $calonLama = DataCalonSantri::where('user_id', $request->user()->user_id)->first();
-        $validated = array_merge($validated, $this->storeDokumenFiles($request, $request->user()->user_id, $calonLama));
+        $validated = array_merge($validated, $this->storeDokumenFiles($request));
 
         $calon = DataCalonSantri::updateOrCreate(
             ['user_id' => $request->user()->user_id],
@@ -95,7 +93,7 @@ class DataCalonSantriController extends Controller
 
         $calon->update(array_merge(
             $validated,
-            $this->storeDokumenFiles($request, $request->user()->user_id, $calon)
+            $this->storeDokumenFiles($request)
         ));
 
         return response()->json([
@@ -123,23 +121,38 @@ class DataCalonSantriController extends Controller
         ]);
     }
 
-    private function storeDokumenFiles(Request $request, int $userId, ?DataCalonSantri $calon = null): array
+    public function downloadDokumen(Request $request, string $field)
     {
-        $paths = [];
+        $calon = DataCalonSantri::where('user_id', $request->user()->user_id)->first();
+
+        return $this->downloadDokumenFromRecord($calon, $field);
+    }
+
+    public function downloadDokumenAdmin(int $id, string $field)
+    {
+        $calon = DataCalonSantri::find($id);
+
+        return $this->downloadDokumenFromRecord($calon, $field);
+    }
+
+    private function storeDokumenFiles(Request $request): array
+    {
+        $data = [];
 
         foreach (self::DOKUMEN_FIELDS as $field) {
             if (!$request->hasFile($field)) {
                 continue;
             }
 
-            if ($calon && $calon->{$field}) {
-                Storage::disk('public')->delete($calon->{$field});
-            }
+            $file = $request->file($field);
 
-            $paths[$field] = $request->file($field)->store("dokumen-calon-santri/{$userId}", 'public');
+            $data[$field] = file_get_contents($file->getRealPath());
+            $data["{$field}_nama_file"] = $file->getClientOriginalName();
+            $data["{$field}_mime_type"] = $file->getClientMimeType();
+            $data["{$field}_size"] = $file->getSize();
         }
 
-        return $paths;
+        return $data;
     }
 
     private function hasDokumenFile(Request $request): bool
@@ -157,13 +170,40 @@ class DataCalonSantriController extends Controller
     {
         $data = $calon->toArray();
         $data['dokumen_url'] = [];
+        $data['dokumen_uploaded'] = [];
 
         foreach (self::DOKUMEN_FIELDS as $field) {
-            $data['dokumen_url'][$field] = $calon->{$field}
-                ? Storage::url($calon->{$field})
+            $data['dokumen_uploaded'][$field] = $calon->{$field} !== null;
+            $data['dokumen_url'][$field] = $calon->{$field} !== null
+                ? url("/api/calon-santri/dokumen/{$field}")
                 : null;
         }
 
         return $data;
+    }
+
+    private function downloadDokumenFromRecord(?DataCalonSantri $calon, string $field)
+    {
+        if (!in_array($field, self::DOKUMEN_FIELDS, true)) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Jenis dokumen tidak valid',
+            ], 422);
+        }
+
+        if (!$calon || $calon->{$field} === null) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Dokumen tidak ditemukan',
+            ], 404);
+        }
+
+        $fileName = $calon->{"{$field}_nama_file"} ?: "{$field}.bin";
+        $mimeType = $calon->{"{$field}_mime_type"} ?: 'application/octet-stream';
+
+        return response($calon->{$field}, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . addslashes($fileName) . '"',
+        ]);
     }
 }
