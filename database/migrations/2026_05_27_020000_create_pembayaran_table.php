@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -19,14 +18,12 @@ return new class extends Migration
             $table->date('tanggal_bayar')->nullable();
             $table->enum('status', ['pending', 'diterima', 'ditolak'])->default('pending');
             $table->text('catatan')->nullable();
-            $table->binary('bukti_bayar')->nullable();
+            $table->longText('bukti_bayar')->nullable();
             $table->string('bukti_bayar_nama_file', 255)->nullable();
             $table->string('bukti_bayar_mime_type', 100)->nullable();
             $table->unsignedInteger('bukti_bayar_size')->nullable();
             $table->timestamps();
         });
-
-        DB::statement('ALTER TABLE pembayaran MODIFY bukti_bayar LONGBLOB NULL');
     }
 
     public function down(): void

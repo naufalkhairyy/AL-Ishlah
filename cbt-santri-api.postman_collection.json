@@ -456,7 +456,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"jenis_pembayaran\": \"pendaftaran\",\n  \"jumlah_bayar\": 500000,\n  \"metode_pembayaran\": \"transfer\",\n  \"tanggal_bayar\": \"2026-05-27\",\n  \"bukti_bayar\": \"bukti-transfer-2026-05-27.jpg\"\n}",
+          "raw": "{\n  \"jenis_pembayaran\": \"pendaftaran\",\n  \"jumlah_bayar\": 500000,\n  \"metode_pembayaran\": \"transfer\",\n  \"tanggal_bayar\": \"2026-05-27\",\n  \"bukti_bayar\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=\"\n}",
           "options": {
             "raw": {
               "language": "json"
