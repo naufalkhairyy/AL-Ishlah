@@ -46,6 +46,7 @@ class DataCalonSantriController extends Controller
         ]);
 
         $validated = array_merge($validated, $this->storeDokumenFiles($request));
+        $validated = array_merge($validated, $this->pendingDokumenStatus($request));
 
         $calon = DataCalonSantri::updateOrCreate(
             ['user_id' => $request->user()->user_id],
@@ -93,7 +94,8 @@ class DataCalonSantriController extends Controller
 
         $calon->update(array_merge(
             $validated,
-            $this->storeDokumenFiles($request)
+            $this->storeDokumenFiles($request),
+            $this->pendingDokumenStatus($request)
         ));
 
         return response()->json([
@@ -118,6 +120,31 @@ class DataCalonSantriController extends Controller
         return response()->json([
             'status' => true,
             'data'   => $this->withDokumenUrl($calon),
+        ]);
+    }
+
+    public function updateDokumenStatus(Request $request, int $id)
+    {
+        $calon = DataCalonSantri::find($id);
+
+        if (!$calon) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Data calon santri tidak ditemukan',
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'status_dokumen' => 'required|in:pending,diterima,ditolak',
+            'catatan_dokumen' => 'nullable|string',
+        ]);
+
+        $calon->update($validated);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Status dokumen calon santri berhasil diperbarui',
+            'data'    => $this->withDokumenUrl($calon->fresh()),
         ]);
     }
 
@@ -164,6 +191,18 @@ class DataCalonSantriController extends Controller
         }
 
         return false;
+    }
+
+    private function pendingDokumenStatus(Request $request): array
+    {
+        if (!$this->hasDokumenFile($request)) {
+            return [];
+        }
+
+        return [
+            'status_dokumen' => 'pending',
+            'catatan_dokumen' => null,
+        ];
     }
 
     private function withDokumenUrl(DataCalonSantri $calon): array

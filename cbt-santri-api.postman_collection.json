@@ -379,6 +379,36 @@
       }
     },
     {
+      "name": "Calon Santri - Admin Update Status Dokumen",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status_dokumen\": \"diterima\",\n  \"catatan_dokumen\": \"Dokumen lengkap\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/calon-santri/1/dokumen/status"
+      }
+    },
+    {
       "name": "Jadwal Ujian - Create",
       "event": [
         {

@@ -21,6 +21,8 @@ class DataCalonSantri extends Model
         'anak_ke',
         'alamat',
         'nisn',
+        'status_dokumen',
+        'catatan_dokumen',
         'raport_semester_4',
         'raport_semester_4_nama_file',
         'raport_semester_4_mime_type',

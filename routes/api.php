@@ -73,6 +73,7 @@ use App\Http\Controllers\API\PembayaranController;
         Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
         Route::get('/calon-santri/{id}/dokumen/{field}', [DataCalonSantriController::class, 'downloadDokumenAdmin']);
+        Route::put('/calon-santri/{id}/dokumen/status', [DataCalonSantriController::class, 'updateDokumenStatus']);
     });
 
     Route::get('/ujian/{ujian_id}/soal', [SoalController::class, 'index']);
@@ -84,9 +85,10 @@ use App\Http\Controllers\API\PembayaranController;
     Route::get('/ujian/{id}', [UjianController::class, 'show']);
 
     Route::get('/pembayaran/saya', [PembayaranController::class, 'mine']);
+    Route::get('/pembayaran/current', [PembayaranController::class, 'current']);
     Route::post('/pembayaran', [PembayaranController::class, 'store']);
-    Route::get('/pembayaran/{id}', [PembayaranController::class, 'show']);
-    Route::get('/pembayaran/{id}/bukti-bayar', [PembayaranController::class, 'downloadBuktiBayar']);
+    Route::get('/pembayaran/{id}', [PembayaranController::class, 'show'])->whereNumber('id');
+    Route::get('/pembayaran/{id}/bukti-bayar', [PembayaranController::class, 'downloadBuktiBayar'])->whereNumber('id');
 
     Route::middleware('role:admin')->group(function () {
         Route::post('/ujian/{ujian_id}/soal/import', [SoalController::class, 'import']);
@@ -105,8 +107,9 @@ use App\Http\Controllers\API\PembayaranController;
         Route::delete('/jadwal-ujian/{id}', [JadwalUjianController::class, 'destroy']);
 
         Route::get('/pembayaran', [PembayaranController::class, 'index']);
-        Route::put('/pembayaran/{id}/status', [PembayaranController::class, 'updateStatus']);
-        Route::delete('/pembayaran/{id}', [PembayaranController::class, 'destroy']);
+        Route::match(['put', 'patch'], '/pembayaran/{id}/review', [PembayaranController::class, 'review'])->whereNumber('id');
+        Route::match(['put', 'patch'], '/pembayaran/{id}/status', [PembayaranController::class, 'updateStatus'])->whereNumber('id');
+        Route::delete('/pembayaran/{id}', [PembayaranController::class, 'destroy'])->whereNumber('id');
     });
 
     Route::get('/jawaban', [JawabanController::class, 'index']);

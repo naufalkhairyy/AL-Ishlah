@@ -24,6 +24,10 @@ class Pembayaran extends Model
         'bukti_bayar_size',
     ];
 
+    protected $hidden = [
+        'bukti_bayar',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
