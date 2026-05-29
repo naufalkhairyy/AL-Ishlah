@@ -242,7 +242,7 @@
             {
               "key": "file_soal",
               "type": "file",
-              "src": []
+              "src": "samples/contoh_soal_word_admin.docx"
             },
             {
               "key": "jenis_soal",

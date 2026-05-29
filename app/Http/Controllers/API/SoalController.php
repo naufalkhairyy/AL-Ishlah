@@ -204,7 +204,7 @@ class SoalController extends Controller
     private function fileSoalRule(Request $request): string
     {
         if ($request->hasFile('file_soal')) {
-            return 'nullable|file|mimes:doc,docx|max:10240';
+            return 'nullable|file|extensions:doc,docx|max:10240';
         }
 
         return 'nullable|string|max:255';
