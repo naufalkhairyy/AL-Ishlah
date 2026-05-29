@@ -53,13 +53,21 @@ class PembayaranController extends Controller
         $validated['bukti_bayar_mime_type'] = 'text/plain';
         $validated['bukti_bayar_size'] = strlen($validated['bukti_bayar']);
 
-        $pembayaran = Pembayaran::create($validated);
+        $pembayaran = Pembayaran::updateOrCreate(
+            [
+                'user_id' => $validated['user_id'],
+                'jenis_pembayaran' => $validated['jenis_pembayaran'],
+            ],
+            $validated
+        );
 
         return response()->json([
             'status' => true,
-            'message' => 'Data pembayaran berhasil disimpan',
+            'message' => $pembayaran->wasRecentlyCreated
+                ? 'Data pembayaran berhasil disimpan'
+                : 'Data pembayaran berhasil diperbarui',
             'data' => $this->withBuktiBayarUrl($pembayaran),
-        ], 201);
+        ], $pembayaran->wasRecentlyCreated ? 201 : 200);
     }
 
     public function show(Request $request, int $id)
