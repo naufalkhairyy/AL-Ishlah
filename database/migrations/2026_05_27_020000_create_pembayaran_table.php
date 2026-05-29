@@ -13,7 +13,7 @@ return new class extends Migration
             $table->integer('user_id');
             $table->integer('santri_id')->nullable();
             $table->string('jenis_pembayaran', 100)->default('pendaftaran');
-            $table->decimal('jumlah_bayar', 12, 2);
+            $table->decimal('jumlah_bayar', 12, 2)->default(0);
             $table->string('metode_pembayaran', 50)->nullable();
             $table->date('tanggal_bayar')->nullable();
             $table->enum('status', ['pending', 'diterima', 'ditolak'])->default('pending');
