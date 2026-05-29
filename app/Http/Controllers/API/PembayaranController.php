@@ -41,22 +41,23 @@ class PembayaranController extends Controller
         $validated = $request->validate([
             'santri_id' => 'nullable|integer|exists:santri,santri_id',
             'jenis_pembayaran' => 'nullable|string|max:100',
-            'jumlah_bayar' => 'required|numeric|min:0',
+            'jumlah_bayar' => 'nullable|numeric|min:0',
             'metode_pembayaran' => 'nullable|string|max:50',
             'tanggal_bayar' => 'nullable|date',
-            'bukti_bayar' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'bukti_bayar' => 'required|string',
         ]);
 
         $validated['user_id'] = $request->user()->user_id;
         $validated['jenis_pembayaran'] = $validated['jenis_pembayaran'] ?? 'pendaftaran';
         $validated['status'] = 'pending';
-        $validated = array_merge($validated, $this->storeBuktiBayar($request));
+        $validated['bukti_bayar_mime_type'] = 'text/plain';
+        $validated['bukti_bayar_size'] = strlen($validated['bukti_bayar']);
 
         $pembayaran = Pembayaran::create($validated);
 
         return response()->json([
             'status' => true,
-            'message' => 'Bukti pembayaran berhasil diupload',
+            'message' => 'Data pembayaran berhasil disimpan',
             'data' => $this->withBuktiBayarUrl($pembayaran),
         ], 201);
     }
@@ -154,18 +155,6 @@ class PembayaranController extends Controller
             'status' => true,
             'message' => 'Pembayaran berhasil dihapus',
         ]);
-    }
-
-    private function storeBuktiBayar(Request $request): array
-    {
-        $file = $request->file('bukti_bayar');
-
-        return [
-            'bukti_bayar' => file_get_contents($file->getRealPath()),
-            'bukti_bayar_nama_file' => $file->getClientOriginalName(),
-            'bukti_bayar_mime_type' => $file->getClientMimeType(),
-            'bukti_bayar_size' => $file->getSize(),
-        ];
     }
 
     private function withBuktiBayarUrl(Pembayaran $pembayaran): array

@@ -448,37 +448,20 @@
           {
             "key": "Authorization",
             "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
           }
         ],
         "body": {
-          "mode": "formdata",
-          "formdata": [
-            {
-              "key": "jenis_pembayaran",
-              "value": "pendaftaran",
-              "type": "text"
-            },
-            {
-              "key": "jumlah_bayar",
-              "value": "500000",
-              "type": "text"
-            },
-            {
-              "key": "metode_pembayaran",
-              "value": "transfer",
-              "type": "text"
-            },
-            {
-              "key": "tanggal_bayar",
-              "value": "2026-05-27",
-              "type": "text"
-            },
-            {
-              "key": "bukti_bayar",
-              "type": "file",
-              "src": []
+          "mode": "raw",
+          "raw": "{\n  \"jenis_pembayaran\": \"pendaftaran\",\n  \"jumlah_bayar\": 500000,\n  \"metode_pembayaran\": \"transfer\",\n  \"tanggal_bayar\": \"2026-05-27\",\n  \"bukti_bayar\": \"bukti-transfer-2026-05-27.jpg\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
             }
-          ]
+          }
         },
         "url": "{{base_url}}/pembayaran"
       }
