@@ -14,14 +14,21 @@ class Soal extends Model
 
     protected $fillable = [
         'ujian_id',
+        'nomor_soal',
         'judul_soal',
         'file_soal',
         'file_soal_nama_file',
         'file_soal_mime_type',
         'file_soal_size',
         'jenis_soal',
+        'opsi_a',
+        'opsi_b',
+        'opsi_c',
+        'opsi_d',
+        'opsi_e',
         'durasi_pengerjaan',
         'jawaban_benar',
+        'bobot_nilai',
     ];
 
     protected $hidden = [

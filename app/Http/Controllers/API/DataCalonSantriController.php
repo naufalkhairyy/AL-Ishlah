@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\DataCalonSantri;
+use App\Models\Santri;
 use Illuminate\Http\Request;
 
 class DataCalonSantriController extends Controller
@@ -140,12 +141,56 @@ class DataCalonSantriController extends Controller
         ]);
 
         $calon->update($validated);
+        $santri = null;
+
+        if ($validated['status_dokumen'] === 'diterima') {
+            $santri = $this->promoteCalonToSantri($calon->fresh());
+        }
 
         return response()->json([
             'status'  => true,
-            'message' => 'Status dokumen calon santri berhasil diperbarui',
-            'data'    => $this->withDokumenUrl($calon->fresh()),
+            'message' => $santri
+                ? 'Status dokumen calon santri berhasil diperbarui dan santri berhasil dibuat'
+                : 'Status dokumen calon santri berhasil diperbarui',
+            'data'    => [
+                'calon_santri' => $this->withDokumenUrl($calon->fresh()),
+                'santri' => $santri,
+            ],
         ]);
+    }
+
+    public function promoteToSantri(Request $request, int $id)
+    {
+        $calon = DataCalonSantri::find($id);
+
+        if (!$calon) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Data calon santri tidak ditemukan',
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'no_hp' => 'nullable|string|max:30',
+            'kelas' => 'nullable|string|max:50',
+        ]);
+
+        $santri = $this->promoteCalonToSantri(
+            $calon,
+            $validated['no_hp'] ?? '-',
+            $validated['kelas'] ?? 'Calon Santri'
+        );
+
+        return response()->json([
+            'status' => true,
+            'message' => $santri->wasRecentlyCreated
+                ? 'Calon santri berhasil dibuat menjadi santri'
+                : 'Data santri berhasil diperbarui dari data calon santri',
+            'data' => [
+                'calon_santri' => $this->withDokumenUrl($calon),
+                'santri' => $santri,
+            ],
+        ], $santri->wasRecentlyCreated ? 201 : 200);
     }
 
     public function downloadDokumen(Request $request, string $field)
@@ -208,6 +253,7 @@ class DataCalonSantriController extends Controller
     private function withDokumenUrl(DataCalonSantri $calon): array
     {
         $data = $calon->toArray();
+        $data['santri_id'] = Santri::where('user_id', $calon->user_id)->value('santri_id');
         $data['dokumen_url'] = [];
         $data['dokumen_uploaded'] = [];
 
@@ -219,6 +265,22 @@ class DataCalonSantriController extends Controller
         }
 
         return $data;
+    }
+
+    private function promoteCalonToSantri(DataCalonSantri $calon, string $noHp = '-', string $kelas = 'Calon Santri'): Santri
+    {
+        return Santri::updateOrCreate(
+            ['user_id' => $calon->user_id],
+            [
+                'nama_lengkap' => $calon->nama_lengkap,
+                'tempat_lahir' => $calon->tempat_lahir,
+                'tanggal_lahir' => $calon->tanggal_lahir,
+                'jenis_kelamin' => $calon->jenis_kelamin,
+                'alamat' => $calon->alamat,
+                'no_hp' => $noHp,
+                'kelas' => $kelas,
+            ]
+        );
     }
 
     private function downloadDokumenFromRecord(?DataCalonSantri $calon, string $field)

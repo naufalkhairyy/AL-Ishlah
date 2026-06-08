@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Jawaban;
+use App\Models\Santri;
 use App\Models\Soal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -33,11 +34,13 @@ class JawabanController extends Controller
     {
         $validated = $request->validate([
             'soal_id' => 'required|integer|exists:soal,soal_id',
-            'santri_id' => 'required|integer|exists:santri,santri_id',
+            'santri_id' => 'nullable|integer|exists:santri,santri_id',
             'jawaban_text' => 'required|string',
             'nilai_jawaban' => 'nullable|numeric|min:0|max:100',
             'waktu_submit' => 'nullable|date',
         ]);
+
+        $validated['santri_id'] = $this->resolveSantriId($request, $validated['santri_id'] ?? null);
 
         if (!isset($validated['waktu_submit'])) {
             $validated['waktu_submit'] = now();
@@ -48,7 +51,7 @@ class JawabanController extends Controller
 
         if ($soal && $soal->jenis_soal === 'pg' && $soal->jawaban_benar !== null) {
             $nilai = $this->normalizeAnswer($validated['jawaban_text']) === $this->normalizeAnswer($soal->jawaban_benar)
-                ? 100
+                ? $soal->bobot_nilai
                 : 0;
         }
 
@@ -75,12 +78,14 @@ class JawabanController extends Controller
     {
         $validated = $request->validate([
             'ujian_id' => 'required|integer|exists:ujian,ujian_id',
-            'santri_id' => 'required|integer|exists:santri,santri_id',
+            'santri_id' => 'nullable|integer|exists:santri,santri_id',
             'waktu_submit' => 'nullable|date',
             'jawaban' => 'required|array|min:1',
             'jawaban.*.soal_id' => 'required|integer|distinct|exists:soal,soal_id',
             'jawaban.*.jawaban_text' => 'nullable|string',
         ]);
+
+        $validated['santri_id'] = $this->resolveSantriId($request, $validated['santri_id'] ?? null);
 
         $soalIds = collect($validated['jawaban'])->pluck('soal_id')->all();
         $soalById = Soal::where('ujian_id', $validated['ujian_id'])
@@ -104,7 +109,7 @@ class JawabanController extends Controller
 
                 if ($soal->jenis_soal === 'pg' && $soal->jawaban_benar !== null) {
                     $nilai = $this->normalizeAnswer($jawabanText) === $this->normalizeAnswer($soal->jawaban_benar)
-                        ? 100
+                        ? $soal->bobot_nilai
                         : 0;
                 }
 
@@ -205,5 +210,22 @@ class JawabanController extends Controller
     private function normalizeAnswer(?string $answer): string
     {
         return strtolower(trim((string) $answer));
+    }
+
+    private function resolveSantriId(Request $request, ?int $santriId): int
+    {
+        if ($santriId !== null) {
+            return $santriId;
+        }
+
+        $santriId = Santri::where('user_id', $request->user()->user_id)->value('santri_id');
+
+        if ($santriId === null) {
+            throw ValidationException::withMessages([
+                'santri_id' => 'Akun ini belum punya santri_id. Backend harus membuat record santri dulu sebelum calon santri bisa submit ujian.',
+            ]);
+        }
+
+        return (int) $santriId;
     }
 }

@@ -40,6 +40,7 @@ use App\Http\Controllers\API\PembayaranController;
     Route::post('/calon-santri/dokumen', [DataCalonSantriController::class, 'uploadDokumen']);
     Route::get('/calon-santri/dokumen/{field}', [DataCalonSantriController::class, 'downloadDokumen']);
     Route::get('/calon-santri', [DataCalonSantriController::class, 'show']);
+    Route::get('/santri/saya', [SantriController::class, 'mine']);
 
     Route::post('/ayah-calon-santri', [DataAyahCalonSantriController::class, 'store']);
     Route::get('/ayah-calon-santri', [DataAyahCalonSantriController::class, 'show']);
@@ -74,6 +75,7 @@ use App\Http\Controllers\API\PembayaranController;
 
         Route::get('/calon-santri/{id}/dokumen/{field}', [DataCalonSantriController::class, 'downloadDokumenAdmin']);
         Route::put('/calon-santri/{id}/dokumen/status', [DataCalonSantriController::class, 'updateDokumenStatus']);
+        Route::post('/calon-santri/{id}/promote-to-santri', [DataCalonSantriController::class, 'promoteToSantri']);
     });
 
     Route::get('/ujian/{ujian_id}/soal', [SoalController::class, 'index']);

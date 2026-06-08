@@ -15,7 +15,11 @@ class SoalController extends Controller
     // List semua soal berdasarkan ujian
     public function index($ujian_id)
     {
-        $soal = Soal::where('ujian_id', $ujian_id)->get();
+        $soal = Soal::where('ujian_id', $ujian_id)
+            ->orderByRaw('nomor_soal IS NULL')
+            ->orderBy('nomor_soal')
+            ->orderBy('soal_id')
+            ->get();
 
         return response()->json([
             'status' => true,
@@ -44,6 +48,9 @@ class SoalController extends Controller
             ->with(['jawaban' => function ($query) use ($santri_id) {
                 $query->where('santri_id', $santri_id);
             }])
+            ->orderByRaw('nomor_soal IS NULL')
+            ->orderBy('nomor_soal')
+            ->orderBy('soal_id')
             ->get();
 
         return response()->json([
@@ -57,12 +64,22 @@ class SoalController extends Controller
     {
         $validated = $request->validate([
             'ujian_id'          => 'required|integer|exists:ujian,ujian_id',
+            'nomor_soal'        => 'nullable|integer|min:1',
             'judul_soal'        => 'required|string|max:255',
             'file_soal'         => $this->fileSoalRule($request),
             'jenis_soal'        => 'required|in:pg,essay',
-            'durasi_pengerjaan' => 'required|integer',
+            'opsi_a'            => 'nullable|string',
+            'opsi_b'            => 'nullable|string',
+            'opsi_c'            => 'nullable|string',
+            'opsi_d'            => 'nullable|string',
+            'opsi_e'            => 'nullable|string',
+            'durasi_pengerjaan' => 'nullable|integer|min:0',
             'jawaban_benar'     => 'nullable|string',
+            'bobot_nilai'       => 'nullable|numeric|min:0|max:100',
         ]);
+
+        $validated['durasi_pengerjaan'] = $validated['durasi_pengerjaan'] ?? 0;
+        $validated['bobot_nilai'] = $validated['bobot_nilai'] ?? 1;
 
         if ($request->hasFile('file_soal')) {
             $validated = array_merge($validated, $this->storeFileSoal($request));
@@ -156,11 +173,18 @@ class SoalController extends Controller
         }
 
         $validated = $request->validate([
+            'nomor_soal'        => 'sometimes|nullable|integer|min:1',
             'judul_soal'        => 'sometimes|string|max:255',
             'file_soal'         => $this->fileSoalRule($request),
             'jenis_soal'        => 'sometimes|in:pg,essay',
-            'durasi_pengerjaan' => 'sometimes|integer',
+            'opsi_a'            => 'sometimes|nullable|string',
+            'opsi_b'            => 'sometimes|nullable|string',
+            'opsi_c'            => 'sometimes|nullable|string',
+            'opsi_d'            => 'sometimes|nullable|string',
+            'opsi_e'            => 'sometimes|nullable|string',
+            'durasi_pengerjaan' => 'sometimes|integer|min:0',
             'jawaban_benar'     => 'nullable|string',
+            'bobot_nilai'       => 'sometimes|numeric|min:0|max:100',
         ]);
 
         if ($request->hasFile('file_soal')) {

@@ -8,6 +8,24 @@ use App\Models\Santri;
 
 class SantriController extends Controller
 {
+    public function mine(Request $request)
+    {
+        $santri = Santri::where('user_id', $request->user()->user_id)->first();
+
+        if (!$santri) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Data santri untuk user login belum ditemukan',
+                'data' => null,
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $santri,
+        ]);
+    }
+
     // GET all santri
     public function index()
     {

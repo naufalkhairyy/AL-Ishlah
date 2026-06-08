@@ -14,10 +14,14 @@ class SoalImportService
     private const REQUIRED_HEADERS = [
         'judul_soal',
         'jenis_soal',
-        'durasi_pengerjaan',
     ];
 
     private const HEADER_ALIASES = [
+        'nomor' => 'nomor_soal',
+        'nomor soal' => 'nomor_soal',
+        'nomor_soal' => 'nomor_soal',
+        'no' => 'nomor_soal',
+        'no soal' => 'nomor_soal',
         'judul soal' => 'judul_soal',
         'judul_soal' => 'judul_soal',
         'soal' => 'judul_soal',
@@ -27,6 +31,26 @@ class SoalImportService
         'jenis soal' => 'jenis_soal',
         'jenis_soal' => 'jenis_soal',
         'jenis' => 'jenis_soal',
+        'opsi a' => 'opsi_a',
+        'opsi_a' => 'opsi_a',
+        'pilihan a' => 'opsi_a',
+        'a' => 'opsi_a',
+        'opsi b' => 'opsi_b',
+        'opsi_b' => 'opsi_b',
+        'pilihan b' => 'opsi_b',
+        'b' => 'opsi_b',
+        'opsi c' => 'opsi_c',
+        'opsi_c' => 'opsi_c',
+        'pilihan c' => 'opsi_c',
+        'c' => 'opsi_c',
+        'opsi d' => 'opsi_d',
+        'opsi_d' => 'opsi_d',
+        'pilihan d' => 'opsi_d',
+        'd' => 'opsi_d',
+        'opsi e' => 'opsi_e',
+        'opsi_e' => 'opsi_e',
+        'pilihan e' => 'opsi_e',
+        'e' => 'opsi_e',
         'durasi pengerjaan' => 'durasi_pengerjaan',
         'durasi_pengerjaan' => 'durasi_pengerjaan',
         'durasi' => 'durasi_pengerjaan',
@@ -34,6 +58,11 @@ class SoalImportService
         'jawaban_benar' => 'jawaban_benar',
         'jawaban' => 'jawaban_benar',
         'kunci jawaban' => 'jawaban_benar',
+        'kunci' => 'jawaban_benar',
+        'bobot nilai' => 'bobot_nilai',
+        'bobot_nilai' => 'bobot_nilai',
+        'bobot' => 'bobot_nilai',
+        'nilai' => 'bobot_nilai',
     ];
 
     public function parse(UploadedFile $file, int $ujianId): array
@@ -223,11 +252,18 @@ class SoalImportService
 
             $validator = Validator::make($item, [
                 'ujian_id' => 'required|integer',
+                'nomor_soal' => 'nullable|integer|min:1',
                 'judul_soal' => 'required|string|max:255',
                 'file_soal' => 'nullable|string|max:255',
                 'jenis_soal' => 'required|in:pg,essay',
-                'durasi_pengerjaan' => 'required|integer|min:1',
+                'opsi_a' => 'nullable|string',
+                'opsi_b' => 'nullable|string',
+                'opsi_c' => 'nullable|string',
+                'opsi_d' => 'nullable|string',
+                'opsi_e' => 'nullable|string',
+                'durasi_pengerjaan' => 'nullable|integer|min:0',
                 'jawaban_benar' => 'nullable|string',
+                'bobot_nilai' => 'nullable|numeric|min:0|max:100',
             ]);
 
             if ($validator->fails()) {
@@ -235,7 +271,13 @@ class SoalImportService
                 continue;
             }
 
-            $mappedRows[] = $validator->validated();
+            $validated = $validator->validated();
+            $validated = $this->nullifyEmptyOptionalFields($validated);
+            $validated['durasi_pengerjaan'] = $validated['durasi_pengerjaan'] ?? 0;
+            $validated['bobot_nilai'] = $validated['bobot_nilai'] ?? 1;
+            $validated['jawaban_benar'] = $this->normalizeAnswerKey($validated['jawaban_benar'] ?? null);
+
+            $mappedRows[] = $validated;
         }
 
         if ($errors !== []) {
@@ -272,5 +314,38 @@ class SoalImportService
         }
 
         return false;
+    }
+
+    private function normalizeAnswerKey(?string $answer): ?string
+    {
+        $answer = trim((string) $answer);
+
+        if ($answer === '') {
+            return null;
+        }
+
+        return strlen($answer) === 1 ? strtoupper($answer) : $answer;
+    }
+
+    private function nullifyEmptyOptionalFields(array $row): array
+    {
+        foreach ([
+            'nomor_soal',
+            'file_soal',
+            'opsi_a',
+            'opsi_b',
+            'opsi_c',
+            'opsi_d',
+            'opsi_e',
+            'durasi_pengerjaan',
+            'jawaban_benar',
+            'bobot_nilai',
+        ] as $field) {
+            if (array_key_exists($field, $row) && trim((string) $row[$field]) === '') {
+                $row[$field] = null;
+            }
+        }
+
+        return $row;
     }
 }

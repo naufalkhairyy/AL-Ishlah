@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\DataCalonSantri;
+use App\Models\Santri;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -109,9 +111,14 @@ class AuthController extends Controller
 
     public function authUser(Request $request)
     {
+        $user = $request->user();
+        $data = $user->toArray();
+        $data['santri_id'] = Santri::where('user_id', $user->user_id)->value('santri_id');
+        $data['calon_santri_id'] = DataCalonSantri::where('user_id', $user->user_id)->value('calon_santri_id');
+
         return response()->json([
             'status' => true,
-            'data'   => $request->user()
+            'data'   => $data,
         ]);
     }
 }
