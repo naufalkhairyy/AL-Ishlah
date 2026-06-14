@@ -13,7 +13,6 @@ class SoalImportService
 {
     private const REQUIRED_HEADERS = [
         'judul_soal',
-        'jenis_soal',
     ];
 
     private const HEADER_ALIASES = [
@@ -70,7 +69,7 @@ class SoalImportService
         $extension = strtolower($file->getClientOriginalExtension());
 
         $rows = match ($extension) {
-            'csv' => $this->parseCsv($file->getRealPath()),
+            'csv', 'txt' => $this->parseCsv($file->getRealPath()),
             'xlsx' => $this->parseXlsx($file->getRealPath()),
             default => throw ValidationException::withMessages([
                 'file' => 'Format file harus .xlsx atau .csv.',
@@ -250,12 +249,14 @@ class SoalImportService
                 continue;
             }
 
+            $item['jenis_soal'] = 'pg';
+
             $validator = Validator::make($item, [
                 'ujian_id' => 'required|integer',
                 'nomor_soal' => 'nullable|integer|min:1',
                 'judul_soal' => 'required|string|max:255',
                 'file_soal' => 'nullable|string|max:255',
-                'jenis_soal' => 'required|in:pg,essay',
+                'jenis_soal' => 'required|in:pg',
                 'opsi_a' => 'nullable|string',
                 'opsi_b' => 'nullable|string',
                 'opsi_c' => 'nullable|string',
@@ -273,6 +274,7 @@ class SoalImportService
 
             $validated = $validator->validated();
             $validated = $this->nullifyEmptyOptionalFields($validated);
+            $validated['jenis_soal'] = 'pg';
             $validated['durasi_pengerjaan'] = $validated['durasi_pengerjaan'] ?? 0;
             $validated['bobot_nilai'] = $validated['bobot_nilai'] ?? 1;
             $validated['jawaban_benar'] = $this->normalizeAnswerKey($validated['jawaban_benar'] ?? null);

@@ -73,6 +73,9 @@ use App\Http\Controllers\API\PembayaranController;
         Route::put('/users/{id}', [UserController::class, 'update']);
         Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
+        Route::get('/admin/dokumen-calon-santri', [DataCalonSantriController::class, 'dokumenList']);
+        Route::get('/calon-santri/dokumen-list', [DataCalonSantriController::class, 'dokumenList']);
+        Route::put('/calon-santri/{id}/dokumen/{field}/status', [DataCalonSantriController::class, 'updateDokumenFieldStatus']);
         Route::get('/calon-santri/{id}/dokumen/{field}', [DataCalonSantriController::class, 'downloadDokumenAdmin']);
         Route::put('/calon-santri/{id}/dokumen/status', [DataCalonSantriController::class, 'updateDokumenStatus']);
         Route::post('/calon-santri/{id}/promote-to-santri', [DataCalonSantriController::class, 'promoteToSantri']);
@@ -85,6 +88,7 @@ use App\Http\Controllers\API\PembayaranController;
 
     Route::get('/ujian', [UjianController::class, 'index']);
     Route::get('/ujian/{id}', [UjianController::class, 'show']);
+    Route::get('/ujian/{id}/timer', [UjianController::class, 'timer']);
 
     Route::get('/pembayaran/saya', [PembayaranController::class, 'mine']);
     Route::get('/pembayaran/current', [PembayaranController::class, 'current']);
@@ -103,6 +107,7 @@ use App\Http\Controllers\API\PembayaranController;
         Route::delete('/ujian/{id}', [UjianController::class, 'destroy']);
 
         Route::get('/jadwal-ujian', [JadwalUjianController::class, 'index']);
+        Route::post('/jadwal-ujian/generate', [JadwalUjianController::class, 'generate']);
         Route::get('/jadwal-ujian/{id}', [JadwalUjianController::class, 'show']);
         Route::post('/jadwal-ujian', [JadwalUjianController::class, 'store']);
         Route::put('/jadwal-ujian/{id}', [JadwalUjianController::class, 'update']);

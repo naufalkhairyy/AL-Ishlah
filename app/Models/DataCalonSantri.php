@@ -23,6 +23,8 @@ class DataCalonSantri extends Model
         'nisn',
         'status_dokumen',
         'catatan_dokumen',
+        'dokumen_status',
+        'dokumen_catatan',
         'raport_semester_4',
         'raport_semester_4_nama_file',
         'raport_semester_4_mime_type',
@@ -71,5 +73,10 @@ class DataCalonSantri extends Model
         'surat_pernyataan_lulus',
         'ktp_ayah',
         'ktp_ibu',
+    ];
+
+    protected $casts = [
+        'dokumen_status' => 'array',
+        'dokumen_catatan' => 'array',
     ];
 }

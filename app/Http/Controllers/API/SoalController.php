@@ -67,7 +67,7 @@ class SoalController extends Controller
             'nomor_soal'        => 'nullable|integer|min:1',
             'judul_soal'        => 'required|string|max:255',
             'file_soal'         => $this->fileSoalRule($request),
-            'jenis_soal'        => 'required|in:pg,essay',
+            'jenis_soal'        => 'nullable|in:pg,essay',
             'opsi_a'            => 'nullable|string',
             'opsi_b'            => 'nullable|string',
             'opsi_c'            => 'nullable|string',
@@ -80,6 +80,7 @@ class SoalController extends Controller
 
         $validated['durasi_pengerjaan'] = $validated['durasi_pengerjaan'] ?? 0;
         $validated['bobot_nilai'] = $validated['bobot_nilai'] ?? 1;
+        $validated['jenis_soal'] = 'pg';
 
         if ($request->hasFile('file_soal')) {
             $validated = array_merge($validated, $this->storeFileSoal($request));
@@ -176,7 +177,7 @@ class SoalController extends Controller
             'nomor_soal'        => 'sometimes|nullable|integer|min:1',
             'judul_soal'        => 'sometimes|string|max:255',
             'file_soal'         => $this->fileSoalRule($request),
-            'jenis_soal'        => 'sometimes|in:pg,essay',
+            'jenis_soal'        => 'sometimes|nullable|in:pg,essay',
             'opsi_a'            => 'sometimes|nullable|string',
             'opsi_b'            => 'sometimes|nullable|string',
             'opsi_c'            => 'sometimes|nullable|string',
@@ -186,6 +187,8 @@ class SoalController extends Controller
             'jawaban_benar'     => 'nullable|string',
             'bobot_nilai'       => 'sometimes|numeric|min:0|max:100',
         ]);
+
+        $validated['jenis_soal'] = 'pg';
 
         if ($request->hasFile('file_soal')) {
             $validated = array_merge($validated, $this->storeFileSoal($request));

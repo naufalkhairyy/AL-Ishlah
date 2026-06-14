@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Jawaban;
 use App\Models\Santri;
 use App\Models\Soal;
+use App\Models\Ujian;
+use App\Services\UjianTimerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -30,7 +32,7 @@ class JawabanController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, UjianTimerService $timerService)
     {
         $validated = $request->validate([
             'soal_id' => 'required|integer|exists:soal,soal_id',
@@ -55,6 +57,13 @@ class JawabanController extends Controller
                 : 0;
         }
 
+        if ($soal && $soal->ujian && $error = $timerService->submissionError($soal->ujian, $validated['santri_id'])) {
+            return response()->json([
+                'status' => false,
+                'message' => $error,
+            ], 422);
+        }
+
         $jawaban = Jawaban::updateOrCreate(
             [
                 'soal_id' => $validated['soal_id'],
@@ -64,6 +73,7 @@ class JawabanController extends Controller
                 'jawaban_text' => $validated['jawaban_text'],
                 'nilai_jawaban' => $nilai,
                 'waktu_submit' => $validated['waktu_submit'],
+                'is_final' => false,
             ]
         );
 
@@ -74,7 +84,7 @@ class JawabanController extends Controller
         ], 201);
     }
 
-    public function bulkStore(Request $request)
+    public function bulkStore(Request $request, UjianTimerService $timerService)
     {
         $validated = $request->validate([
             'ujian_id' => 'required|integer|exists:ujian,ujian_id',
@@ -87,6 +97,15 @@ class JawabanController extends Controller
 
         $validated['santri_id'] = $this->resolveSantriId($request, $validated['santri_id'] ?? null);
 
+        $ujian = Ujian::find($validated['ujian_id']);
+
+        if ($error = $timerService->submissionError($ujian, $validated['santri_id'])) {
+            return response()->json([
+                'status' => false,
+                'message' => $error,
+            ], 422);
+        }
+
         $soalIds = collect($validated['jawaban'])->pluck('soal_id')->all();
         $soalById = Soal::where('ujian_id', $validated['ujian_id'])
             ->whereIn('soal_id', $soalIds)
@@ -96,6 +115,14 @@ class JawabanController extends Controller
         if ($soalById->count() !== count($soalIds)) {
             throw ValidationException::withMessages([
                 'jawaban' => 'Semua soal_id harus berasal dari ujian yang dipilih.',
+            ]);
+        }
+
+        $totalSoal = Soal::where('ujian_id', $validated['ujian_id'])->count();
+
+        if (count($soalIds) !== $totalSoal) {
+            throw ValidationException::withMessages([
+                'jawaban' => 'Submit final harus menyertakan semua soal ujian.',
             ]);
         }
 
@@ -122,6 +149,7 @@ class JawabanController extends Controller
                         'jawaban_text' => $jawabanText,
                         'nilai_jawaban' => $nilai,
                         'waktu_submit' => $waktuSubmit,
+                        'is_final' => true,
                     ]
                 );
             })->values();

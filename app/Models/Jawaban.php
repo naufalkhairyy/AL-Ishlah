@@ -18,6 +18,7 @@ class Jawaban extends Model
         'jawaban_text',
         'nilai_jawaban',
         'waktu_submit',
+        'is_final',
     ];
 
     public function soal()

@@ -6,19 +6,23 @@ use App\Http\Controllers\Controller;
 use App\Models\DataCalonSantri;
 use App\Models\Santri;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DataCalonSantriController extends Controller
 {
     private const DOKUMEN_FIELDS = [
-        'raport_semester_4',
-        'akta_kelahiran',
-        'pas_foto',
-        'kartu_keluarga',
-        'ktp',
-        'ijazah_skl',
-        'surat_pernyataan_lulus',
-        'ktp_ayah',
-        'ktp_ibu',
+        'raport_semester_4' => 'raport_semester_4',
+        'akta_kelahiran' => 'akta_kelahiran',
+        'pas_foto' => 'pas_foto',
+        'kartu_keluarga' => 'kartu_keluarga',
+        'ktp' => 'ktp',
+        'ijazah_skl' => 'ijazah_skl',
+        'surat_pernyataan_lulus' => 'surat_pernyataan_lulus',
+        'ktp_orang_tua' => 'ktp_ayah',
+    ];
+
+    private const DOKUMEN_ALIASES = [
+        'ktp_ayah' => 'ktp_orang_tua',
     ];
 
     // Simpan data calon santri
@@ -42,12 +46,14 @@ class DataCalonSantriController extends Controller
             'ktp'            => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'ijazah_skl'     => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'surat_pernyataan_lulus' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'ktp_ayah'       => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'ktp_ibu'        => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'ktp_orang_tua'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
+
+        unset($validated['ktp_orang_tua']);
 
         $validated = array_merge($validated, $this->storeDokumenFiles($request));
         $validated = array_merge($validated, $this->pendingDokumenStatus($request));
+        $validated = array_merge($validated, $this->pendingDokumenReview($request));
 
         $calon = DataCalonSantri::updateOrCreate(
             ['user_id' => $request->user()->user_id],
@@ -73,9 +79,10 @@ class DataCalonSantriController extends Controller
             'ktp'            => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'ijazah_skl'     => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'surat_pernyataan_lulus' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'ktp_ayah'       => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'ktp_ibu'        => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'ktp_orang_tua'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
+
+        unset($validated['ktp_orang_tua']);
 
         $calon = DataCalonSantri::where('user_id', $request->user()->user_id)->first();
 
@@ -96,7 +103,8 @@ class DataCalonSantriController extends Controller
         $calon->update(array_merge(
             $validated,
             $this->storeDokumenFiles($request),
-            $this->pendingDokumenStatus($request)
+            $this->pendingDokumenStatus($request),
+            $this->pendingDokumenReview($request, $calon)
         ));
 
         return response()->json([
@@ -159,6 +167,92 @@ class DataCalonSantriController extends Controller
         ]);
     }
 
+    public function updateDokumenFieldStatus(Request $request, int $id, string $field)
+    {
+        $calon = DataCalonSantri::find($id);
+
+        if (!$calon) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Data calon santri tidak ditemukan',
+            ], 404);
+        }
+
+        $publicField = self::DOKUMEN_ALIASES[$field] ?? $field;
+        $storageField = self::DOKUMEN_FIELDS[$publicField] ?? null;
+
+        if ($storageField === null) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Jenis dokumen tidak valid',
+            ], 422);
+        }
+
+        if (!$this->isDokumenUploaded($calon, $publicField, $storageField)) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Dokumen belum diupload',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'status' => 'required|in:pending,diterima,ditolak',
+            'catatan' => 'nullable|string',
+        ]);
+
+        $dokumenStatus = $this->normalizedDokumenStatus($calon);
+        $dokumenCatatan = $this->normalizedDokumenCatatan($calon);
+
+        $dokumenStatus[$publicField] = $validated['status'];
+        $dokumenCatatan[$publicField] = $validated['catatan'] ?? null;
+
+        $calon->update([
+            'dokumen_status' => $dokumenStatus,
+            'dokumen_catatan' => $dokumenCatatan,
+            'status_dokumen' => $this->resolveGlobalDokumenStatus($calon, $dokumenStatus),
+            'catatan_dokumen' => $this->resolveGlobalDokumenCatatan($dokumenCatatan),
+        ]);
+
+        $santriIds = Santri::where('user_id', $calon->user_id)
+            ->pluck('santri_id', 'user_id');
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Status dokumen berhasil diperbarui',
+            'data' => $this->withDokumenListData($calon->fresh(), $santriIds),
+        ]);
+    }
+
+    public function dokumenList()
+    {
+        $query = DataCalonSantri::query()
+            ->select($this->dokumenListColumns())
+            ->where(function ($query) {
+                foreach (self::DOKUMEN_FIELDS as $storageField) {
+                    $query->orWhereRaw("{$storageField} is not null and length({$storageField}) > 0");
+                }
+            })
+            ->orderByDesc('updated_at')
+            ->orderByDesc('calon_santri_id');
+
+        foreach (self::DOKUMEN_FIELDS as $publicField => $storageField) {
+            $query->addSelect(DB::raw(
+                "({$storageField} is not null and length({$storageField}) > 0) as {$publicField}_uploaded"
+            ));
+        }
+
+        $calonSantri = $query->get();
+        $santriIds = Santri::whereIn('user_id', $calonSantri->pluck('user_id'))
+            ->pluck('santri_id', 'user_id');
+
+        return response()->json([
+            'status' => true,
+            'data' => $calonSantri
+                ->map(fn ($calon) => $this->withDokumenListData($calon, $santriIds))
+                ->values(),
+        ]);
+    }
+
     public function promoteToSantri(Request $request, int $id)
     {
         $calon = DataCalonSantri::find($id);
@@ -211,17 +305,17 @@ class DataCalonSantriController extends Controller
     {
         $data = [];
 
-        foreach (self::DOKUMEN_FIELDS as $field) {
-            if (!$request->hasFile($field)) {
+        foreach (self::DOKUMEN_FIELDS as $publicField => $storageField) {
+            if (!$request->hasFile($publicField)) {
                 continue;
             }
 
-            $file = $request->file($field);
+            $file = $request->file($publicField);
 
-            $data[$field] = file_get_contents($file->getRealPath());
-            $data["{$field}_nama_file"] = $file->getClientOriginalName();
-            $data["{$field}_mime_type"] = $file->getClientMimeType();
-            $data["{$field}_size"] = $file->getSize();
+            $data[$storageField] = file_get_contents($file->getRealPath());
+            $data["{$storageField}_nama_file"] = $file->getClientOriginalName();
+            $data["{$storageField}_mime_type"] = $file->getClientMimeType();
+            $data["{$storageField}_size"] = $file->getSize();
         }
 
         return $data;
@@ -229,7 +323,7 @@ class DataCalonSantriController extends Controller
 
     private function hasDokumenFile(Request $request): bool
     {
-        foreach (self::DOKUMEN_FIELDS as $field) {
+        foreach (array_keys(self::DOKUMEN_FIELDS) as $field) {
             if ($request->hasFile($field)) {
                 return true;
             }
@@ -257,14 +351,182 @@ class DataCalonSantriController extends Controller
         $data['dokumen_url'] = [];
         $data['dokumen_uploaded'] = [];
 
-        foreach (self::DOKUMEN_FIELDS as $field) {
-            $data['dokumen_uploaded'][$field] = $calon->{$field} !== null;
-            $data['dokumen_url'][$field] = $calon->{$field} !== null
-                ? url("/api/calon-santri/dokumen/{$field}")
+        foreach (self::DOKUMEN_FIELDS as $publicField => $storageField) {
+            $uploaded = $this->isDokumenUploaded($calon, $publicField, $storageField);
+
+            $data["{$publicField}_nama_file"] = $calon->{"{$storageField}_nama_file"};
+            $data["{$publicField}_mime_type"] = $calon->{"{$storageField}_mime_type"};
+            $data["{$publicField}_size"] = $calon->{"{$storageField}_size"};
+            $data['dokumen_uploaded'][$publicField] = $uploaded;
+            $data['dokumen_url'][$publicField] = $uploaded
+                ? url("/api/calon-santri/dokumen/{$publicField}")
                 : null;
+
+            if ($publicField !== $storageField) {
+                unset(
+                    $data["{$storageField}_nama_file"],
+                    $data["{$storageField}_mime_type"],
+                    $data["{$storageField}_size"]
+                );
+            }
+        }
+
+        unset(
+            $data['ktp_ibu_nama_file'],
+            $data['ktp_ibu_mime_type'],
+            $data['ktp_ibu_size']
+        );
+
+        return $data;
+    }
+
+    private function dokumenListColumns(): array
+    {
+        $columns = [
+            'calon_santri_id',
+            'user_id',
+            'nama_lengkap',
+            'status_dokumen',
+            'catatan_dokumen',
+            'dokumen_status',
+            'dokumen_catatan',
+            'updated_at',
+        ];
+
+        foreach (self::DOKUMEN_FIELDS as $storageField) {
+            $columns[] = "{$storageField}_nama_file";
+            $columns[] = "{$storageField}_mime_type";
+            $columns[] = "{$storageField}_size";
+        }
+
+        return $columns;
+    }
+
+    private function withDokumenListData(DataCalonSantri $calon, $santriIds): array
+    {
+        $data = [
+            'calon_santri_id' => $calon->calon_santri_id,
+            'user_id' => $calon->user_id,
+            'santri_id' => $santriIds[$calon->user_id] ?? null,
+            'nama_lengkap' => $calon->nama_lengkap,
+            'status_dokumen' => $calon->status_dokumen,
+            'catatan_dokumen' => $calon->catatan_dokumen,
+            'dokumen_uploaded' => [],
+            'dokumen_url' => [],
+            'dokumen_status' => [],
+            'dokumen_catatan' => [],
+            'updated_at' => optional($calon->updated_at)->toISOString(),
+        ];
+
+        $dokumenStatus = $this->normalizedDokumenStatus($calon);
+        $dokumenCatatan = $this->normalizedDokumenCatatan($calon);
+
+        foreach (self::DOKUMEN_FIELDS as $publicField => $storageField) {
+            $uploaded = $this->isDokumenUploaded($calon, $publicField, $storageField);
+
+            $data["{$publicField}_nama_file"] = $calon->{"{$storageField}_nama_file"};
+            $data["{$publicField}_mime_type"] = $calon->{"{$storageField}_mime_type"};
+            $data["{$publicField}_size"] = $calon->{"{$storageField}_size"};
+            $data['dokumen_uploaded'][$publicField] = $uploaded;
+
+            if ($uploaded) {
+                $data['dokumen_url'][$publicField] = url(
+                    "/api/calon-santri/{$calon->calon_santri_id}/dokumen/{$publicField}"
+                );
+                $data['dokumen_status'][$publicField] = $dokumenStatus[$publicField];
+                $data['dokumen_catatan'][$publicField] = $dokumenCatatan[$publicField];
+            }
         }
 
         return $data;
+    }
+
+    private function pendingDokumenReview(Request $request, ?DataCalonSantri $calon = null): array
+    {
+        if (!$this->hasDokumenFile($request)) {
+            return [];
+        }
+
+        $dokumenStatus = $calon ? $this->normalizedDokumenStatus($calon) : [];
+        $dokumenCatatan = $calon ? $this->normalizedDokumenCatatan($calon) : [];
+
+        foreach (self::DOKUMEN_FIELDS as $publicField => $storageField) {
+            if (!$request->hasFile($publicField)) {
+                continue;
+            }
+
+            $dokumenStatus[$publicField] = 'pending';
+            $dokumenCatatan[$publicField] = null;
+        }
+
+        return [
+            'dokumen_status' => $dokumenStatus,
+            'dokumen_catatan' => $dokumenCatatan,
+        ];
+    }
+
+    private function normalizedDokumenStatus(DataCalonSantri $calon): array
+    {
+        $statuses = is_array($calon->dokumen_status) ? $calon->dokumen_status : [];
+
+        foreach (self::DOKUMEN_FIELDS as $publicField => $storageField) {
+            if (!$this->isDokumenUploaded($calon, $publicField, $storageField)) {
+                unset($statuses[$publicField]);
+                continue;
+            }
+
+            if (!in_array($statuses[$publicField] ?? null, ['pending', 'diterima', 'ditolak'], true)) {
+                $statuses[$publicField] = 'pending';
+            }
+        }
+
+        return $statuses;
+    }
+
+    private function normalizedDokumenCatatan(DataCalonSantri $calon): array
+    {
+        $notes = is_array($calon->dokumen_catatan) ? $calon->dokumen_catatan : [];
+
+        foreach (self::DOKUMEN_FIELDS as $publicField => $storageField) {
+            if (!$this->isDokumenUploaded($calon, $publicField, $storageField)) {
+                unset($notes[$publicField]);
+                continue;
+            }
+
+            $notes[$publicField] = $notes[$publicField] ?? null;
+        }
+
+        return $notes;
+    }
+
+    private function resolveGlobalDokumenStatus(DataCalonSantri $calon, array $dokumenStatus): string
+    {
+        foreach (self::DOKUMEN_FIELDS as $publicField => $storageField) {
+            if (!$this->isDokumenUploaded($calon, $publicField, $storageField)
+                || ($dokumenStatus[$publicField] ?? 'pending') === 'pending') {
+                return 'pending';
+            }
+        }
+
+        return in_array('ditolak', $dokumenStatus, true) ? 'ditolak' : 'diterima';
+    }
+
+    private function resolveGlobalDokumenCatatan(array $dokumenCatatan): ?string
+    {
+        $notes = array_filter($dokumenCatatan, fn ($note) => is_string($note) && trim($note) !== '');
+
+        return $notes === [] ? null : implode("\n", $notes);
+    }
+
+    private function isDokumenUploaded(DataCalonSantri $calon, string $publicField, string $storageField): bool
+    {
+        $attributes = $calon->getAttributes();
+
+        if (array_key_exists("{$publicField}_uploaded", $attributes)) {
+            return (bool) $attributes["{$publicField}_uploaded"];
+        }
+
+        return $calon->{$storageField} !== null && $calon->{$storageField} !== '';
     }
 
     private function promoteCalonToSantri(DataCalonSantri $calon, string $noHp = '-', string $kelas = 'Calon Santri'): Santri
@@ -285,24 +547,27 @@ class DataCalonSantriController extends Controller
 
     private function downloadDokumenFromRecord(?DataCalonSantri $calon, string $field)
     {
-        if (!in_array($field, self::DOKUMEN_FIELDS, true)) {
+        $publicField = self::DOKUMEN_ALIASES[$field] ?? $field;
+        $storageField = self::DOKUMEN_FIELDS[$publicField] ?? null;
+
+        if ($storageField === null) {
             return response()->json([
                 'status'  => false,
                 'message' => 'Jenis dokumen tidak valid',
             ], 422);
         }
 
-        if (!$calon || $calon->{$field} === null) {
+        if (!$calon || !$this->isDokumenUploaded($calon, $publicField, $storageField)) {
             return response()->json([
                 'status'  => false,
                 'message' => 'Dokumen tidak ditemukan',
             ], 404);
         }
 
-        $fileName = $calon->{"{$field}_nama_file"} ?: "{$field}.bin";
-        $mimeType = $calon->{"{$field}_mime_type"} ?: 'application/octet-stream';
+        $fileName = $calon->{"{$storageField}_nama_file"} ?: "{$publicField}.bin";
+        $mimeType = $calon->{"{$storageField}_mime_type"} ?: 'application/octet-stream';
 
-        return response($calon->{$field}, 200, [
+        return response($calon->{$storageField}, 200, [
             'Content-Type' => $mimeType,
             'Content-Disposition' => 'inline; filename="' . addslashes($fileName) . '"',
         ]);
