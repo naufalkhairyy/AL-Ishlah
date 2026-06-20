@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\JadwalUjian;
 use App\Models\Jawaban;
 use App\Models\Santri;
 use App\Models\Soal;
 use App\Models\Ujian;
 use App\Services\UjianTimerService;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -99,7 +101,11 @@ class JawabanController extends Controller
 
         $ujian = Ujian::find($validated['ujian_id']);
 
-        if ($error = $timerService->submissionError($ujian, $validated['santri_id'])) {
+        if ($this->hasFinalSubmission($validated['ujian_id'], $validated['santri_id'])) {
+            return $this->alreadySubmittedResponse();
+        }
+
+        if ($error = $timerService->submissionError($ujian, $validated['santri_id'], true)) {
             return response()->json([
                 'status' => false,
                 'message' => $error,
@@ -129,6 +135,15 @@ class JawabanController extends Controller
         $waktuSubmit = $validated['waktu_submit'] ?? now();
 
         $saved = DB::transaction(function () use ($validated, $soalById, $waktuSubmit) {
+            JadwalUjian::where('ujian_id', $validated['ujian_id'])
+                ->where('santri_id', $validated['santri_id'])
+                ->lockForUpdate()
+                ->first();
+
+            if ($this->hasFinalSubmission($validated['ujian_id'], $validated['santri_id'])) {
+                $this->throwAlreadySubmitted();
+            }
+
             return collect($validated['jawaban'])->map(function ($item) use ($validated, $soalById, $waktuSubmit) {
                 $soal = $soalById[$item['soal_id']];
                 $jawabanText = trim((string) ($item['jawaban_text'] ?? ''));
@@ -238,6 +253,36 @@ class JawabanController extends Controller
     private function normalizeAnswer(?string $answer): string
     {
         return strtolower(trim((string) $answer));
+    }
+
+    private function hasFinalSubmission(int $ujianId, int $santriId): bool
+    {
+        $soalIds = Soal::where('ujian_id', $ujianId)->pluck('soal_id');
+
+        if ($soalIds->isEmpty()) {
+            return false;
+        }
+
+        $finalAnswerCount = Jawaban::where('santri_id', $santriId)
+            ->whereIn('soal_id', $soalIds)
+            ->where('is_final', true)
+            ->distinct('soal_id')
+            ->count('soal_id');
+
+        return $finalAnswerCount >= $soalIds->count();
+    }
+
+    private function alreadySubmittedResponse()
+    {
+        return response()->json([
+            'status' => false,
+            'message' => 'Anda sudah menyelesaikan ujian ini.',
+        ], 409);
+    }
+
+    private function throwAlreadySubmitted(): void
+    {
+        throw new HttpResponseException($this->alreadySubmittedResponse());
     }
 
     private function resolveSantriId(Request $request, ?int $santriId): int

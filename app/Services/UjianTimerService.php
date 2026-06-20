@@ -29,6 +29,7 @@ class UjianTimerService
         $serverTime = now($timezone);
         $isInScheduleWindow = $serverTime->greaterThanOrEqualTo($startedAt)
             && $serverTime->lessThan($endedAt);
+        $hasStarted = $serverTime->greaterThanOrEqualTo($startedAt);
         $isSubmitted = $this->isSubmitted($ujian, $santriId);
         $isFinished = $serverTime->greaterThanOrEqualTo($endedAt) || $isSubmitted;
         $remainingSeconds = $isInScheduleWindow && !$isFinished
@@ -46,6 +47,7 @@ class UjianTimerService
             'sisa_detik' => $remainingSeconds,
             'detik_menuju_mulai' => max(0, $serverTime->diffInSeconds($startedAt, false)),
             'sudah_mulai' => $isInScheduleWindow,
+            'sudah_pernah_mulai' => $hasStarted,
             'sudah_selesai' => $isFinished,
             'sudah_submit' => $isSubmitted,
         ];
@@ -58,7 +60,7 @@ class UjianTimerService
         return $status !== null && $status['sudah_selesai'];
     }
 
-    public function submissionError(Ujian $ujian, int $santriId): ?string
+    public function submissionError(Ujian $ujian, int $santriId, bool $allowExpiredFinalSubmit = false): ?string
     {
         $status = $this->status($ujian, $santriId);
 
@@ -66,12 +68,16 @@ class UjianTimerService
             return 'Jadwal ujian untuk santri ini tidak ditemukan.';
         }
 
-        if ($status['sudah_selesai']) {
-            return 'Waktu pengerjaan ujian sudah habis.';
+        if (!$status['sudah_pernah_mulai']) {
+            return 'Ujian belum dimulai.';
         }
 
-        if (!$status['sudah_mulai']) {
-            return 'Ujian belum dimulai.';
+        if ($status['sudah_submit']) {
+            return 'Jawaban final sudah pernah dikirim.';
+        }
+
+        if ($status['sudah_selesai'] && !$allowExpiredFinalSubmit) {
+            return 'Waktu pengerjaan ujian sudah habis.';
         }
 
         return null;
