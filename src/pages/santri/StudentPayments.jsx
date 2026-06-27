@@ -31,19 +31,26 @@ function pickLatestPayment(currentPayment, contextPayment) {
 export default function StudentPayments() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-  const { paymentProof, setPaymentProof, progress, syncing, refreshProgress } = useStudentPortal();
+  const { paymentProof, setPaymentProof, progress, syncing, refreshPayment } = useStudentPortal();
   const [payment, setPayment] = useState(null);
   const [selectedProof, setSelectedProof] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    refreshProgress?.();
-    const intervalId = window.setInterval(() => {
-      refreshProgress?.();
-    }, 3000);
+    let active = true;
 
-    return () => window.clearInterval(intervalId);
-  }, [refreshProgress]);
+    refreshPayment?.()
+      .then((currentPayment) => {
+        if (active) setPayment(currentPayment);
+      })
+      .catch((error) => {
+        if (active) console.warn("Gagal mengambil pembayaran backend:", error);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [refreshPayment]);
 
   const copyRekening = async () => {
     try {
@@ -75,7 +82,6 @@ export default function StudentPayments() {
       });
       setSelectedProof(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
-      refreshProgress?.();
       alert(`${file.name} berhasil dikirim. Menunggu verifikasi admin.`);
     } catch (error) {
       alert(error.message || "Gagal mengirim bukti pembayaran.");

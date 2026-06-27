@@ -49,7 +49,7 @@ function isAccessDeniedError(error) {
 
 export default function StudentExam() {
   const navigate = useNavigate();
-  const { progress, profile } = useStudentPortal();
+  const { progress, profile, refreshProgress } = useStudentPortal();
   const [backendExams, setBackendExams] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [loadingExams, setLoadingExams] = useState(true);
@@ -66,6 +66,9 @@ export default function StudentExam() {
       setScheduleNotice("");
 
       try {
+        await refreshProgress?.();
+        if (!active) return;
+
         const examData = await getExams();
         if (!active) return;
         setBackendExams(examData);
@@ -93,7 +96,7 @@ export default function StudentExam() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [refreshProgress]);
 
   const activeExams = useMemo(
     () => backendExams.filter((exam) => String(exam.status || "").toLowerCase() === "aktif"),

@@ -14,7 +14,7 @@ import { getLocalFileUrl } from "../../service/localFileStore";
 
 export default function StudentDocuments() {
   const navigate = useNavigate();
-  const { documents, progress, refreshProgress } = useStudentPortal();
+  const { documents, progress, refreshDocuments } = useStudentPortal();
   const [selectedDoc, setSelectedDoc] = useState(DOCUMENT_TYPES[0].key);
   const [uploadedDocs, setUploadedDocs] = useState([]);
   const [uploadingKey, setUploadingKey] = useState("");
@@ -22,7 +22,9 @@ export default function StudentDocuments() {
 
   const loadDocuments = async () => {
     try {
-      const backendDocuments = await getDocumentsForCurrentUser();
+      const backendDocuments = refreshDocuments
+        ? await refreshDocuments()
+        : await getDocumentsForCurrentUser();
       setUploadedDocs(backendDocuments);
     } catch (error) {
       setUploadedDocs([]);
@@ -44,7 +46,6 @@ export default function StudentDocuments() {
     try {
       await submitManualDocument(key, file);
       await loadDocuments();
-      refreshProgress?.();
       alert(`${file.name} berhasil dikirim. Menunggu verifikasi admin.`);
     } catch (error) {
       alert(error.message || "Gagal upload dokumen.");

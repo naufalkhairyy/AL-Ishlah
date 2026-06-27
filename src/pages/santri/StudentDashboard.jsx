@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { useStudentPortal } from "../../components/useStudentPortal";
 import { getDocumentSummary } from "../../service/documentService";
 
@@ -19,7 +20,11 @@ const exams = [
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
-  const { profile, documents, paymentProof, progress, syncing } = useStudentPortal();
+  const { profile, documents, paymentProof, progress, syncing, refreshProgress } = useStudentPortal();
+
+  useEffect(() => {
+    refreshProgress?.();
+  }, [refreshProgress]);
 
   const name = profile.namaPanggilan || profile.namaLengkap || "Calon Santri";
   const documentSummary = getDocumentSummary(Object.entries(documents || {}).map(([documentKey, document]) => ({

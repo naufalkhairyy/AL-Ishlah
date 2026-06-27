@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { StudentPortalContext } from "./studentPortalContextValue";
 import {
   DOCUMENT_TYPES,
@@ -11,7 +11,6 @@ import { refreshStudentSession } from "../service/authservice";
 import { getAuthUser } from "../service/api";
 
 const STORAGE_KEY_PREFIX = "student_portal_frontend_state";
-const PROGRESS_REFRESH_INTERVAL_MS = 60000;
 const SESSION_REFRESH_INTERVAL_MS = 120000;
 
 const initialState = {
@@ -96,8 +95,7 @@ function getDocumentsComplete(documents) {
 
 export function StudentPortalProvider({ children }) {
   const [state, setState] = useState(loadState);
-  const [documentsVersion, setDocumentsVersion] = useState(0);
-  const [syncing, setSyncing] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(null);
   const refreshInFlightRef = useRef(false);
   const lastSessionRefreshAtRef = useRef(0);
@@ -161,19 +159,109 @@ export function StudentPortalProvider({ children }) {
     setState(initialState);
   }, []);
 
+  const applyDocuments = useCallback((backendDocuments) => {
+    const documents = backendDocuments.length
+      ? DOCUMENT_TYPES.reduce((items, type) => {
+          const document = getDocumentByKey(backendDocuments, type.key);
+          if (!document) return items;
+          return {
+            ...items,
+            [type.key]: {
+              name: document.fileName,
+              size: document.fileSize,
+              type: document.fileType,
+              status: document.status,
+              uploadedAt: document.submittedAt,
+            },
+          };
+        }, {})
+      : {};
+
+    setState((current) => {
+      const nextState = { ...current, documents };
+      localStorage.setItem(getStudentStorageKey(), JSON.stringify(nextState));
+      return nextState;
+    });
+  }, []);
+
+  const applyPayment = useCallback((payment) => {
+    setState((current) => {
+      const nextState = {
+        ...current,
+        paymentProof: payment
+          ? {
+              name: payment.fileName,
+              size: payment.fileSize,
+              type: payment.fileType,
+              status: payment.status,
+              uploadedAt: payment.submittedAt,
+            }
+          : null,
+      };
+      localStorage.setItem(getStudentStorageKey(), JSON.stringify(nextState));
+      return nextState;
+    });
+  }, []);
+
+  const applySession = useCallback((user) => {
+    if (!user) return;
+    setState((current) => {
+      const santriId = user?.santri_id || user?.santri?.santri_id || null;
+      const calonSantriId = user?.calon_santri_id || null;
+      const nextState = {
+        ...current,
+        session: {
+          ...(current.session || {}),
+          santri_id: santriId,
+          calon_santri_id: calonSantriId,
+        },
+        profile: {
+          ...current.profile,
+          santri_id: santriId,
+          calon_santri_id: calonSantriId,
+        },
+      };
+      localStorage.setItem(getStudentStorageKey(), JSON.stringify(nextState));
+      return nextState;
+    });
+  }, []);
+
+  const refreshDocuments = useCallback(async () => {
+    const backendDocuments = await getDocumentsForCurrentUser();
+    applyDocuments(backendDocuments);
+    return backendDocuments;
+  }, [applyDocuments]);
+
+  const refreshPayment = useCallback(async () => {
+    const payment = await getCurrentUserPayment();
+    applyPayment(payment);
+    return payment;
+  }, [applyPayment]);
+
+  const refreshSession = useCallback(async ({ force = false } = {}) => {
+    const now = Date.now();
+    const shouldRefreshSession = force || now - lastSessionRefreshAtRef.current >= SESSION_REFRESH_INTERVAL_MS;
+    if (!shouldRefreshSession) {
+      const user = getAuthUser("student");
+      applySession(user);
+      return user;
+    }
+
+    lastSessionRefreshAtRef.current = now;
+    const user = await refreshStudentSession();
+    applySession(user);
+    return user;
+  }, [applySession]);
+
   const refreshProgress = useCallback(async () => {
     if (refreshInFlightRef.current) return;
     refreshInFlightRef.current = true;
     setSyncing(true);
     try {
-      const now = Date.now();
-      const shouldRefreshSession = now - lastSessionRefreshAtRef.current >= SESSION_REFRESH_INTERVAL_MS;
-      if (shouldRefreshSession) lastSessionRefreshAtRef.current = now;
-
       const [backendDocumentsResult, paymentResult, sessionResult] = await Promise.allSettled([
         getDocumentsForCurrentUser(),
         getCurrentUserPayment(),
-        shouldRefreshSession ? refreshStudentSession() : Promise.resolve(getAuthUser("student")),
+        refreshSession(),
       ]);
 
       setState((current) => {
@@ -182,11 +270,9 @@ export function StudentPortalProvider({ children }) {
         const backendDocuments = backendDocumentsResult.status === "fulfilled"
           ? backendDocumentsResult.value
           : [];
-        const allDocuments = backendDocuments;
-
-        nextState.documents = allDocuments.length
+        nextState.documents = backendDocuments.length
           ? DOCUMENT_TYPES.reduce((items, type) => {
-              const document = getDocumentByKey(allDocuments, type.key);
+              const document = getDocumentByKey(backendDocuments, type.key);
               if (!document) return items;
               return {
                 ...items,
@@ -238,37 +324,9 @@ export function StudentPortalProvider({ children }) {
       refreshInFlightRef.current = false;
       setSyncing(false);
     }
-  }, []);
-
-  useEffect(() => {
-    Promise.resolve().then(refreshProgress);
-
-    const refreshDocumentsProgress = () => {
-      setDocumentsVersion((version) => version + 1);
-      refreshProgress();
-    };
-    const refreshOnFocus = () => {
-      if (!document.hidden) refreshDocumentsProgress();
-    };
-    const intervalId = window.setInterval(refreshDocumentsProgress, PROGRESS_REFRESH_INTERVAL_MS);
-
-    window.addEventListener("manual-documents-updated", refreshDocumentsProgress);
-    window.addEventListener("manual-payments-updated", refreshDocumentsProgress);
-    window.addEventListener("storage", refreshDocumentsProgress);
-    window.addEventListener("focus", refreshDocumentsProgress);
-    document.addEventListener("visibilitychange", refreshOnFocus);
-    return () => {
-      window.clearInterval(intervalId);
-      window.removeEventListener("manual-documents-updated", refreshDocumentsProgress);
-      window.removeEventListener("manual-payments-updated", refreshDocumentsProgress);
-      window.removeEventListener("storage", refreshDocumentsProgress);
-      window.removeEventListener("focus", refreshDocumentsProgress);
-      document.removeEventListener("visibilitychange", refreshOnFocus);
-    };
-  }, [refreshProgress]);
+  }, [refreshSession]);
 
   const progress = useMemo(() => {
-    void documentsVersion;
     const profileComplete = getProfileComplete(state.profile);
     const documentsComplete = getDocumentsComplete(state.documents);
     const paymentComplete = state.paymentProof?.status === "approved";
@@ -281,7 +339,7 @@ export function StudentPortalProvider({ children }) {
       santriId,
       examAvailable: Boolean(santriId) && profileComplete && documentsComplete && paymentComplete,
     };
-  }, [state, documentsVersion]);
+  }, [state]);
 
   const value = {
     ...state,
@@ -294,6 +352,9 @@ export function StudentPortalProvider({ children }) {
     setPaymentProof,
     registerTahfidz,
     resetApplication,
+    refreshDocuments,
+    refreshPayment,
+    refreshSession,
     refreshProgress,
   };
 
