@@ -32,6 +32,14 @@ export const refreshStudentSession = async () => {
   return user;
 };
 
+function refreshStudentSessionInBackground() {
+  refreshStudentSession().catch((error) => {
+    if (![401, 403, 404].includes(error.status)) {
+      console.warn("Gagal refresh sesi santri:", error);
+    }
+  });
+}
+
 export const loginUser = async (username, password, expectedRole = "") => {
   const data = await apiRequest("/login", {
     authScope: "public",
@@ -49,11 +57,7 @@ export const loginUser = async (username, password, expectedRole = "") => {
   const scope = user?.role === "admin" ? "admin" : "student";
   saveAuthSession(data.data, scope);
   if (scope === "student") {
-    try {
-      await refreshStudentSession();
-    } catch (error) {
-      if (![401, 403, 404].includes(error.status)) throw error;
-    }
+    refreshStudentSessionInBackground();
   }
   return data;
 };
@@ -66,11 +70,7 @@ export const registerUser = async (username, password) => {
   });
 
   saveAuthSession(data.data, "student");
-  try {
-    await refreshStudentSession();
-  } catch (error) {
-    if (![401, 403, 404].includes(error.status)) throw error;
-  }
+  refreshStudentSessionInBackground();
   return data;
 };
 
