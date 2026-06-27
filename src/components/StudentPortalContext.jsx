@@ -11,6 +11,8 @@ import { refreshStudentSession } from "../service/authservice";
 import { getAuthUser } from "../service/api";
 
 const STORAGE_KEY_PREFIX = "student_portal_frontend_state";
+const PROGRESS_REFRESH_INTERVAL_MS = 60000;
+const SESSION_REFRESH_INTERVAL_MS = 120000;
 
 const initialState = {
   profile: {},
@@ -98,6 +100,7 @@ export function StudentPortalProvider({ children }) {
   const [syncing, setSyncing] = useState(true);
   const [lastSyncedAt, setLastSyncedAt] = useState(null);
   const refreshInFlightRef = useRef(false);
+  const lastSessionRefreshAtRef = useRef(0);
 
   const saveState = useCallback((updater) => {
     setState((current) => {
@@ -163,10 +166,14 @@ export function StudentPortalProvider({ children }) {
     refreshInFlightRef.current = true;
     setSyncing(true);
     try {
+      const now = Date.now();
+      const shouldRefreshSession = now - lastSessionRefreshAtRef.current >= SESSION_REFRESH_INTERVAL_MS;
+      if (shouldRefreshSession) lastSessionRefreshAtRef.current = now;
+
       const [backendDocumentsResult, paymentResult, sessionResult] = await Promise.allSettled([
         getDocumentsForCurrentUser(),
         getCurrentUserPayment(),
-        refreshStudentSession(),
+        shouldRefreshSession ? refreshStudentSession() : Promise.resolve(getAuthUser("student")),
       ]);
 
       setState((current) => {
@@ -243,7 +250,7 @@ export function StudentPortalProvider({ children }) {
     const refreshOnFocus = () => {
       if (!document.hidden) refreshDocumentsProgress();
     };
-    const intervalId = window.setInterval(refreshDocumentsProgress, 10000);
+    const intervalId = window.setInterval(refreshDocumentsProgress, PROGRESS_REFRESH_INTERVAL_MS);
 
     window.addEventListener("manual-documents-updated", refreshDocumentsProgress);
     window.addEventListener("manual-payments-updated", refreshDocumentsProgress);
