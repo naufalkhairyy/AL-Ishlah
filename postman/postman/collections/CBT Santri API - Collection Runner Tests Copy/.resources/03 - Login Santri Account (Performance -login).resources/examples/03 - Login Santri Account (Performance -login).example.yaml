@@ -1,0 +1,46 @@
+$kind: http-example
+name: 03 - Login Santri Account (Performance /login)
+request:
+  url: "{{base_url}}/login"
+  method: POST
+  headers:
+    Accept: application/json
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "username": "santri_test",
+        "password": "password123"
+      }
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    host: 127.0.0.1:8000
+    connection: close
+    x-powered-by: PHP/8.1.25
+    cache-control: no-cache, private
+    date: Fri, 26 Jun 2026 18:56:09 GMT
+    content-type: application/json
+    x-ratelimit-limit: "1000"
+    x-ratelimit-remaining: "996"
+    access-control-allow-origin: "*"
+  body:
+    type: json
+    content: |-
+      {
+        "status": true,
+        "message": "Login berhasil",
+        "data": {
+          "user": {
+            "user_id": 5,
+            "username": "santri_test",
+            "role": "calon_santri",
+            "created_at": "2026-05-20T07:07:16.000000Z",
+            "updated_at": "2026-05-20T07:07:16.000000Z"
+          },
+          "token": "673|XMOTBeA7hMqbO1XY7xURk5phmLXwp6XpBC7yeC0h85ba8ce0"
+        }
+      }
+order: 1782500648408

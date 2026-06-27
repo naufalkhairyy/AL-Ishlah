@@ -1,0 +1,45 @@
+$kind: collection
+name: CBT Santri API - Collection Runner Tests
+description: Automated Postman Collection Runner flow for CBT Santri API. Run sequentially from top to bottom.
+variables:
+  base_url: http://127.0.0.1:8000/api
+  admin_username: admin
+  admin_password: admin123
+  santri_username: santri_test{{run_suffix}}
+  santri_password: password123
+  run_suffix: "{{$timestamp}}"
+  schedule_date: ""
+  schedule_start: ""
+  schedule_end: ""
+  santri_token: ""
+  admin_token: ""
+  token: ""
+  santri_id: ""
+  ujian_id: ""
+  jadwal_id: ""
+  soal_id: ""
+  jawaban_id: ""
+scripts:
+  - type: http:beforeRequest
+    code: |-
+      if (!pm.collectionVariables.get('run_suffix') || pm.collectionVariables.get('run_suffix').includes('{{')) {
+        pm.collectionVariables.set('run_suffix', Date.now().toString());
+      }
+      const pad = (value) => String(value).padStart(2, '0');
+      const formatDate = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+      pm.collectionVariables.set('schedule_date', formatDate(new Date()));
+      pm.collectionVariables.set('schedule_start', '00:00');
+      pm.collectionVariables.set('schedule_end', '23:59');
+    language: text/javascript
+  - type: http:afterResponse
+    code: |-
+      pm.test('Response time below 5s', function () {
+        pm.expect(pm.response.responseTime).to.be.below(5000);
+      });
+    language: text/javascript
+auth:
+  - id: af9d62ef-98e1-49e0-8f5b-6227481ee8e4
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{token}}"

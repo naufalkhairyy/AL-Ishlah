@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{base_url}}/jadwal-ujian"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "ujian_id": {{ujian_id}},
+      "santri_id": {{santri_id}},
+      "tanggal": "{{schedule_date}}",
+      "waktu_mulai": "{{schedule_start}}",
+      "waktu_selesai": "{{schedule_end}}",
+      "ruang_ujian": "Lab Runner",
+      "keterangan": "Dibuat oleh Postman Collection Runner"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Jadwal ujian created', function () {
+        pm.response.to.have.status(201);
+      });
+      const json = pm.response.json();
+      pm.test('Jadwal response has id', function () {
+        pm.expect(json.status).to.eql(true);
+        pm.expect(json.data.jadwal_id).to.exist;
+      });
+      pm.collectionVariables.set('jadwal_id', json.data.jadwal_id);
+    language: text/javascript
+order: 11000

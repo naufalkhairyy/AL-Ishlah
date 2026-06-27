@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{base_url}}/auth-user"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Authenticated user is returned', function () {
+        pm.response.to.have.status(200);
+        const json = pm.response.json();
+        pm.expect(json.status).to.eql(true);
+        pm.expect(json.data).to.have.property('user_id');
+      });
+    language: text/javascript
+order: 5000

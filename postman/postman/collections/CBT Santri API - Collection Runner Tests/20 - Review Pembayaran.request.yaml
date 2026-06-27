@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{base_url}}/pembayaran/{{pembayaran_id}}/review"
+method: PATCH
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "approved",
+      "catatan_review": "Lolos testing runner"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Pembayaran reviewed', function () {
+        pm.response.to.have.status(200);
+        const json = pm.response.json();
+        pm.expect(json.success).to.eql(true);
+        pm.expect(json.status).to.eql('approved');
+      });
+    language: text/javascript
+order: 20000

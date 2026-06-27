@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{base_url}}/users/{{cleanup_user_id}}"
+method: DELETE
+headers:
+  Accept: application/json
+scripts:
+  - type: beforeRequest
+    code: |-
+      pm.collectionVariables.set('token', pm.collectionVariables.get('admin_token'));
+      pm.collectionVariables.set('cleanup_user_id', pm.collectionVariables.get('registered_user_id') || '0');
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Registered user cleanup completed', function () {
+        pm.expect([200, 404]).to.include(pm.response.code);
+      });
+      pm.collectionVariables.unset('registered_user_id');
+      pm.collectionVariables.unset('cleanup_user_id');
+      pm.collectionVariables.unset('token');
+      pm.collectionVariables.unset('admin_token');
+      pm.collectionVariables.unset('santri_token');
+    language: text/javascript
+order: 28000

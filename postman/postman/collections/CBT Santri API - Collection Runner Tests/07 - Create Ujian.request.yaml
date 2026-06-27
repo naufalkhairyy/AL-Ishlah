@@ -1,0 +1,29 @@
+$kind: http-request
+url: "{{base_url}}/ujian"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "nama_ujian": "Runner Ujian {{run_suffix}}",
+      "tanggal": "{{schedule_date}}",
+      "durasi": 1440,
+      "status": "aktif"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Ujian created', function () {
+        pm.response.to.have.status(201);
+      });
+      const json = pm.response.json();
+      pm.test('Ujian response has id', function () {
+        pm.expect(json.status).to.eql(true);
+        pm.expect(json.data.ujian_id).to.exist;
+      });
+      pm.collectionVariables.set('ujian_id', json.data.ujian_id);
+    language: text/javascript
+order: 7000

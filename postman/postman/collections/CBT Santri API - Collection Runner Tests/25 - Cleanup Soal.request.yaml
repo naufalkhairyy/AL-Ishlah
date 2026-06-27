@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{base_url}}/soal/{{soal_id}}"
+method: DELETE
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Soal cleanup completed', function () {
+        pm.expect([200, 404]).to.include(pm.response.code);
+      });
+      pm.collectionVariables.unset('soal_id');
+    language: text/javascript
+order: 25000

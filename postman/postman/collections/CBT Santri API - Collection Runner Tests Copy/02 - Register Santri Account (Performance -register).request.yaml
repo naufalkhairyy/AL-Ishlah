@@ -1,0 +1,32 @@
+$kind: http-request
+name: 02 - Register Santri Account (Performance /register)
+url: "{{base_url}}/register"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "{{santri_username}}",
+      "password": "{{santri_password}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Santri account registered', function () {
+        pm.response.to.have.status(201);
+      });
+      const json = pm.response.json();
+      pm.test('Register response has santri token', function () {
+        pm.expect(json.status).to.eql(true);
+        pm.expect(json.data.user.user_id).to.exist;
+        pm.expect(json.data.token).to.be.a('string').and.not.empty;
+      });
+      pm.collectionVariables.set('registered_user_id', json.data.user.user_id);
+      pm.collectionVariables.set('santri_token', json.data.token);
+    language: text/javascript
+order: 2000

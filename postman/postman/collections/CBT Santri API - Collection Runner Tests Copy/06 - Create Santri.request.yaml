@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{base_url}}/santri"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "nama_lengkap": "Runner Santri {{run_suffix}}",
+      "tempat_lahir": "Jakarta",
+      "tanggal_lahir": "2010-01-01",
+      "jenis_kelamin": "L",
+      "alamat": "Alamat testing collection runner",
+      "no_hp": "08120000{{run_suffix}}",
+      "kelas": "VII"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Santri created', function () {
+        pm.response.to.have.status(201);
+      });
+      const json = pm.response.json();
+      pm.test('Santri response has id', function () {
+        pm.expect(json.status).to.eql(true);
+        pm.expect(json.data.santri_id).to.exist;
+      });
+      pm.collectionVariables.set('santri_id', json.data.santri_id);
+    language: text/javascript
+order: 6000

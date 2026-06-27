@@ -1,0 +1,1174 @@
+{
+  "info": {
+    "name": "CBT Santri API - Collection Runner Tests",
+    "description": "Automated Postman Collection Runner flow for CBT Santri API. Run sequentially from top to bottom.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get('run_suffix') || pm.collectionVariables.get('run_suffix').includes('{{')) {",
+          "  pm.collectionVariables.set('run_suffix', Date.now().toString());",
+          "}",
+          "const pad = (value) => String(value).padStart(2, '0');",
+          "const formatDate = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;",
+          "pm.collectionVariables.set('schedule_date', formatDate(new Date()));",
+          "pm.collectionVariables.set('schedule_start', '00:00');",
+          "pm.collectionVariables.set('schedule_end', '23:59');"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Response time below 5s', function () {",
+          "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000/api"
+    },
+    {
+      "key": "admin_username",
+      "value": "admin"
+    },
+    {
+      "key": "admin_password",
+      "value": "admin123"
+    },
+    {
+      "key": "santri_username",
+      "value": "santri_test{{run_suffix}}"
+    },
+    {
+      "key": "santri_password",
+      "value": "password123"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "admin_token",
+      "value": ""
+    },
+    {
+      "key": "santri_token",
+      "value": ""
+    },
+    {
+      "key": "registered_user_id",
+      "value": ""
+    },
+    {
+      "key": "cleanup_user_id",
+      "value": "0"
+    },
+    {
+      "key": "run_suffix",
+      "value": "{{$timestamp}}"
+    },
+    {
+      "key": "schedule_date",
+      "value": ""
+    },
+    {
+      "key": "schedule_start",
+      "value": ""
+    },
+    {
+      "key": "schedule_end",
+      "value": ""
+    },
+    {
+      "key": "santri_id",
+      "value": ""
+    },
+    {
+      "key": "ujian_id",
+      "value": ""
+    },
+    {
+      "key": "soal_id",
+      "value": ""
+    },
+    {
+      "key": "jadwal_id",
+      "value": ""
+    },
+    {
+      "key": "pembayaran_id",
+      "value": ""
+    },
+    {
+      "key": "jawaban_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Health Check",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/test"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('API returns 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test('Health response is OK', function () {",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.message).to.eql('API MASUK');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Register Santri Account (Performance /register)",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{santri_username}}\",\n  \"password\": \"{{santri_password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/register"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Santri account registered', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test('Register response has santri token', function () {",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data.user.user_id).to.exist;",
+              "  pm.expect(json.data.token).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.collectionVariables.set('registered_user_id', json.data.user.user_id);",
+              "pm.collectionVariables.set('santri_token', json.data.token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Login Santri Account (Performance /login)",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{santri_username}}\",\n  \"password\": \"{{santri_password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/login"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Santri login succeeds', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test('Login response has santri token', function () {",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data.token).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.collectionVariables.set('santri_token', json.data.token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Admin Login",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{admin_username}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/admin/login"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Admin login succeeds', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test('Login response has token', function () {",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data.token).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.collectionVariables.set('admin_token', json.data.token);",
+              "pm.collectionVariables.set('token', json.data.token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Auth User",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/auth-user"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Authenticated user is returned', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data).to.have.property('user_id');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Create Santri",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": {{registered_user_id}},\n  \"nama_lengkap\": \"Runner Santri {{run_suffix}}\",\n  \"tempat_lahir\": \"Jakarta\",\n  \"tanggal_lahir\": \"2010-01-01\",\n  \"jenis_kelamin\": \"L\",\n  \"alamat\": \"Alamat testing collection runner\",\n  \"no_hp\": \"08120000{{run_suffix}}\",\n  \"kelas\": \"VII\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/santri"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('token', pm.collectionVariables.get('admin_token'));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Santri created', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test('Santri response has id', function () {",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data.santri_id).to.exist;",
+              "});",
+              "pm.collectionVariables.set('santri_id', json.data.santri_id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Create Ujian",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nama_ujian\": \"Runner Ujian {{run_suffix}}\",\n  \"tanggal\": \"{{schedule_date}}\",\n  \"durasi\": 1440,\n  \"status\": \"aktif\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/ujian"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('token', pm.collectionVariables.get('admin_token'));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Ujian created', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test('Ujian response has id', function () {",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data.ujian_id).to.exist;",
+              "});",
+              "pm.collectionVariables.set('ujian_id', json.data.ujian_id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - List Ujian",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/ujian"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Ujian list returned', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - Create Soal",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ujian_id\": {{ujian_id}},\n  \"nomor_soal\": 1,\n  \"judul_soal\": \"Soal runner {{run_suffix}}\",\n  \"jenis_soal\": \"pg\",\n  \"opsi_a\": \"A\",\n  \"opsi_b\": \"B\",\n  \"opsi_c\": \"C\",\n  \"opsi_d\": \"D\",\n  \"opsi_e\": \"E\",\n  \"durasi_pengerjaan\": 60,\n  \"jawaban_benar\": \"A\",\n  \"bobot_nilai\": 10\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/soal"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Soal created', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test('Soal response has id', function () {",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data.soal_id).to.exist;",
+              "});",
+              "pm.collectionVariables.set('soal_id', json.data.soal_id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - List Soal By Ujian",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/ujian/{{ujian_id}}/soal"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Soal list returned', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data).to.be.an('array');",
+              "  pm.expect(json.data.length).to.be.greaterThan(0);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 - Create Jadwal Ujian",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ujian_id\": {{ujian_id}},\n  \"santri_id\": {{santri_id}},\n  \"tanggal\": \"{{schedule_date}}\",\n  \"waktu_mulai\": \"{{schedule_start}}\",\n  \"waktu_selesai\": \"{{schedule_end}}\",\n  \"ruang_ujian\": \"Lab Runner\",\n  \"keterangan\": \"Dibuat oleh Postman Collection Runner\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/jadwal-ujian"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Jadwal ujian created', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test('Jadwal response has id', function () {",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data.jadwal_id).to.exist;",
+              "});",
+              "pm.collectionVariables.set('jadwal_id', json.data.jadwal_id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 - List Jadwal Ujian",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/jadwal-ujian?ujian_id={{ujian_id}}&santri_id={{santri_id}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Jadwal list returned', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 - Ujian Timer (Performance /ujian/start)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/ujian/{{ujian_id}}/timer?santri_id={{santri_id}}"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('token', pm.collectionVariables.get('santri_token'));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Ujian timer returned', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.status).to.eql(true);",
+              "});",
+              "pm.test('Performance target /ujian/start below 5s per request', function () {",
+              "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 - Switch To Santri Token",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('token', pm.collectionVariables.get('santri_token'));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Santri token is active', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data.role).to.eql('calon_santri');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/auth-user"
+      }
+    },
+    {
+      "name": "15 - Santri List Soal By Ujian",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/ujian/{{ujian_id}}/soal"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Santri can access soal list', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data).to.be.an('array');",
+              "  pm.expect(json.data.length).to.be.greaterThan(0);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 - Santri Submit Jawaban (Performance /ujian/submit)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"soal_id\": {{soal_id}},\n  \"santri_id\": {{santri_id}},\n  \"jawaban_text\": \"A\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/jawaban"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Santri answer submitted', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test('Jawaban response has id and score', function () {",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data.jawaban_id).to.exist;",
+              "  pm.expect(Number(json.data.nilai_jawaban)).to.eql(10);",
+              "});",
+              "pm.collectionVariables.set('jawaban_id', json.data.jawaban_id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17 - Hasil Ujian (Performance /hasil-ujian)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/ujian/{{ujian_id}}/santri/{{santri_id}}/soal-jawaban"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Hasil ujian returned', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data).to.exist;",
+              "});",
+              "pm.test('Performance target /hasil-ujian below 2.5s', function () {",
+              "  pm.expect(pm.response.responseTime).to.be.below(2500);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18 - Create Pembayaran As Santri",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"santri_id\": {{santri_id}},\n  \"jenis_pembayaran\": \"runner-{{run_suffix}}\",\n  \"jumlah_bayar\": 150000,\n  \"metode_pembayaran\": \"transfer\",\n  \"tanggal_bayar\": \"{{schedule_date}}\",\n  \"bukti_bayar\": \"data:text/plain;base64,UmVjZWlwdCB0ZXN0aW5nIHJ1bm5lcg==\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/pembayaran"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Pembayaran created or updated', function () {",
+              "  pm.expect([200, 201]).to.include(pm.response.code);",
+              "});",
+              "const json = pm.response.json();",
+              "pm.test('Pembayaran response has id', function () {",
+              "  pm.expect(json.success).to.eql(true);",
+              "  pm.expect(json.data.pembayaran_id).to.exist;",
+              "});",
+              "pm.collectionVariables.set('pembayaran_id', json.data.pembayaran_id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "19 - Switch Back To Admin Token",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('token', pm.collectionVariables.get('admin_token'));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Admin token is active', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.status).to.eql(true);",
+              "  pm.expect(json.data.role).to.eql('admin');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/auth-user"
+      }
+    },
+    {
+      "name": "20 - Review Pembayaran",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"approved\",\n  \"catatan_review\": \"Lolos testing runner\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/pembayaran/{{pembayaran_id}}/review"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Pembayaran reviewed', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(true);",
+              "  pm.expect(json.status).to.eql('approved');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "21 - Admin Dashboard Pembayaran (Performance /admin/dashboard)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/pembayaran"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Admin pembayaran list returned', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.eql(true);",
+              "});",
+              "pm.test('Admin dashboard pembayaran response below 5s', function () {",
+              "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "22 - Admin Dashboard Dokumen (Performance /admin/dashboard)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/admin/dokumen-calon-santri"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Admin dokumen list returned', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Admin dashboard dokumen response below 5s', function () {",
+              "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "23 - Cleanup Jadwal Ujian",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/jadwal-ujian/{{jadwal_id}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Jadwal cleanup completed', function () {",
+              "  pm.expect([200, 404]).to.include(pm.response.code);",
+              "});",
+              "pm.collectionVariables.unset('jadwal_id');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "24 - Cleanup Pembayaran",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/pembayaran/{{pembayaran_id}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Pembayaran cleanup completed', function () {",
+              "  pm.expect([200, 404]).to.include(pm.response.code);",
+              "});",
+              "pm.collectionVariables.unset('pembayaran_id');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "25 - Cleanup Soal",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/soal/{{soal_id}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Soal cleanup completed', function () {",
+              "  pm.expect([200, 404]).to.include(pm.response.code);",
+              "});",
+              "pm.collectionVariables.unset('soal_id');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "26 - Cleanup Ujian",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/ujian/{{ujian_id}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Ujian cleanup completed', function () {",
+              "  pm.expect([200, 404]).to.include(pm.response.code);",
+              "});",
+              "pm.collectionVariables.unset('ujian_id');",
+              "pm.collectionVariables.unset('jawaban_id');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "27 - Cleanup Santri",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/santri/{{santri_id}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Santri cleanup completed', function () {",
+              "  pm.expect([200, 404]).to.include(pm.response.code);",
+              "});",
+              "pm.collectionVariables.unset('santri_id');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "28 - Cleanup Registered User",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('token', pm.collectionVariables.get('admin_token'));",
+              "pm.collectionVariables.set('cleanup_user_id', pm.collectionVariables.get('registered_user_id') || '0');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Registered user cleanup completed', function () {",
+              "  pm.expect([200, 404]).to.include(pm.response.code);",
+              "});",
+              "pm.collectionVariables.unset('registered_user_id');",
+              "pm.collectionVariables.unset('cleanup_user_id');",
+              "pm.collectionVariables.unset('token');",
+              "pm.collectionVariables.unset('admin_token');",
+              "pm.collectionVariables.unset('santri_token');"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{base_url}}/users/{{cleanup_user_id}}"
+      }
+    }
+  ]
+}

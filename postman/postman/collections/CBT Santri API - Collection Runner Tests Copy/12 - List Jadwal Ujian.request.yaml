@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{base_url}}/jadwal-ujian?ujian_id={{ujian_id}}&santri_id={{santri_id}}"
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  ujian_id: "{{ujian_id}}"
+  santri_id: "{{santri_id}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Jadwal list returned', function () {
+        pm.response.to.have.status(200);
+        const json = pm.response.json();
+        pm.expect(json.status).to.eql(true);
+        pm.expect(json.data).to.be.an('array');
+      });
+    language: text/javascript
+order: 12000

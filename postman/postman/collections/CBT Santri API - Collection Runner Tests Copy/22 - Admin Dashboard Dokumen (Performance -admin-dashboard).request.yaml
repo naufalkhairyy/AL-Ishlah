@@ -1,0 +1,17 @@
+$kind: http-request
+name: 22 - Admin Dashboard Dokumen (Performance /admin/dashboard)
+url: "{{base_url}}/admin/dokumen-calon-santri"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Admin dokumen list returned', function () {
+        pm.response.to.have.status(200);
+      });
+      pm.test('Admin dashboard dokumen response below 5s', function () {
+        pm.expect(pm.response.responseTime).to.be.below(5000);
+      });
+    language: text/javascript
+order: 22000

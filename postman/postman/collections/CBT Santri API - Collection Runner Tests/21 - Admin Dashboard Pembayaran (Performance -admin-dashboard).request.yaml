@@ -1,0 +1,19 @@
+$kind: http-request
+name: 21 - Admin Dashboard Pembayaran (Performance /admin/dashboard)
+url: "{{base_url}}/pembayaran"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Admin pembayaran list returned', function () {
+        pm.response.to.have.status(200);
+        const json = pm.response.json();
+        pm.expect(json.success).to.eql(true);
+      });
+      pm.test('Admin dashboard pembayaran response below 5s', function () {
+        pm.expect(pm.response.responseTime).to.be.below(5000);
+      });
+    language: text/javascript
+order: 21000

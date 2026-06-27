@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{base_url}}/jadwal-ujian/{{jadwal_id}}"
+method: DELETE
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Jadwal cleanup completed', function () {
+        pm.expect([200, 404]).to.include(pm.response.code);
+      });
+      pm.collectionVariables.unset('jadwal_id');
+    language: text/javascript
+order: 23000

@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{base_url}}/santri/{{santri_id}}"
+method: DELETE
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Santri cleanup completed', function () {
+        pm.expect([200, 404]).to.include(pm.response.code);
+      });
+      pm.collectionVariables.unset('santri_id');
+    language: text/javascript
+order: 27000

@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{base_url}}/auth-user"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: beforeRequest
+    code: pm.collectionVariables.set('token', pm.collectionVariables.get('admin_token'));
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Admin token is active', function () {
+        pm.response.to.have.status(200);
+        const json = pm.response.json();
+        pm.expect(json.status).to.eql(true);
+        pm.expect(json.data.role).to.eql('admin');
+      });
+    language: text/javascript
+order: 19000

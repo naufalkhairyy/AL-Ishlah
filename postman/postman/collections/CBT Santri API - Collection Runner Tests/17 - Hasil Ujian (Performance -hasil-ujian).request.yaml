@@ -1,0 +1,20 @@
+$kind: http-request
+name: 17 - Hasil Ujian (Performance /hasil-ujian)
+url: "{{base_url}}/ujian/{{ujian_id}}/santri/{{santri_id}}/soal-jawaban"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Hasil ujian returned', function () {
+        pm.response.to.have.status(200);
+        const json = pm.response.json();
+        pm.expect(json.status).to.eql(true);
+        pm.expect(json.data).to.exist;
+      });
+      pm.test('Performance target /hasil-ujian below 2.5s', function () {
+        pm.expect(pm.response.responseTime).to.be.below(2500);
+      });
+    language: text/javascript
+order: 17000

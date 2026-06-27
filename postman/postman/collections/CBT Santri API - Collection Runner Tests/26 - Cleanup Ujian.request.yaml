@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{base_url}}/ujian/{{ujian_id}}"
+method: DELETE
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Ujian cleanup completed', function () {
+        pm.expect([200, 404]).to.include(pm.response.code);
+      });
+      pm.collectionVariables.unset('ujian_id');
+      pm.collectionVariables.unset('jawaban_id');
+    language: text/javascript
+order: 26000

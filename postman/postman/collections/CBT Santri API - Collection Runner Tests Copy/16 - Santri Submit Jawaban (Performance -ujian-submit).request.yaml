@@ -1,0 +1,30 @@
+$kind: http-request
+name: 16 - Santri Submit Jawaban (Performance /ujian/submit)
+url: "{{base_url}}/jawaban"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "soal_id": {{soal_id}},
+      "santri_id": {{santri_id}},
+      "jawaban_text": "A"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Santri answer submitted', function () {
+        pm.response.to.have.status(201);
+      });
+      const json = pm.response.json();
+      pm.test('Jawaban response has id and score', function () {
+        pm.expect(json.status).to.eql(true);
+        pm.expect(json.data.jawaban_id).to.exist;
+        pm.expect(Number(json.data.nilai_jawaban)).to.eql(10);
+      });
+      pm.collectionVariables.set('jawaban_id', json.data.jawaban_id);
+    language: text/javascript
+order: 16000

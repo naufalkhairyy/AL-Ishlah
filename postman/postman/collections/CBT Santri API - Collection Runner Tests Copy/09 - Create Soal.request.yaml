@@ -1,0 +1,37 @@
+$kind: http-request
+url: "{{base_url}}/soal"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "ujian_id": {{ujian_id}},
+      "nomor_soal": 1,
+      "judul_soal": "Soal runner {{run_suffix}}",
+      "jenis_soal": "pg",
+      "opsi_a": "A",
+      "opsi_b": "B",
+      "opsi_c": "C",
+      "opsi_d": "D",
+      "opsi_e": "E",
+      "durasi_pengerjaan": 60,
+      "jawaban_benar": "A",
+      "bobot_nilai": 10
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Soal created', function () {
+        pm.response.to.have.status(201);
+      });
+      const json = pm.response.json();
+      pm.test('Soal response has id', function () {
+        pm.expect(json.status).to.eql(true);
+        pm.expect(json.data.soal_id).to.exist;
+      });
+      pm.collectionVariables.set('soal_id', json.data.soal_id);
+    language: text/javascript
+order: 9000

@@ -1,0 +1,19 @@
+$kind: http-request
+name: 13 - Ujian Timer (Performance /ujian/start)
+url: "{{base_url}}/ujian/{{ujian_id}}/timer?santri_id={{santri_id}}"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Ujian timer returned', function () {
+        pm.response.to.have.status(200);
+        const json = pm.response.json();
+        pm.expect(json.status).to.eql(true);
+      });
+      pm.test('Performance target /ujian/start below 5s per request', function () {
+        pm.expect(pm.response.responseTime).to.be.below(5000);
+      });
+    language: text/javascript
+order: 13000

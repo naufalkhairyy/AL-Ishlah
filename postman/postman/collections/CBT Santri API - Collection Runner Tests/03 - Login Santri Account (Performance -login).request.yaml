@@ -1,0 +1,30 @@
+$kind: http-request
+name: 03 - Login Santri Account (Performance /login)
+url: "{{base_url}}/login"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "{{santri_username}}",
+      "password": "{{santri_password}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Santri login succeeds', function () {
+        pm.response.to.have.status(200);
+      });
+      const json = pm.response.json();
+      pm.test('Login response has santri token', function () {
+        pm.expect(json.status).to.eql(true);
+        pm.expect(json.data.token).to.be.a('string').and.not.empty;
+      });
+      pm.collectionVariables.set('santri_token', json.data.token);
+    language: text/javascript
+order: 3000

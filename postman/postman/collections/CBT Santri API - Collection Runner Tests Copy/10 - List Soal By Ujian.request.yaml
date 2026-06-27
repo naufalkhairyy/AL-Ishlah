@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{base_url}}/ujian/{{ujian_id}}/soal"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Soal list returned', function () {
+        pm.response.to.have.status(200);
+        const json = pm.response.json();
+        pm.expect(json.status).to.eql(true);
+        pm.expect(json.data).to.be.an('array');
+        pm.expect(json.data.length).to.be.greaterThan(0);
+      });
+    language: text/javascript
+order: 10000

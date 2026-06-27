@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{base_url}}/test"
+method: GET
+headers:
+  Accept: application/json
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('API returns 200', function () {
+        pm.response.to.have.status(200);
+      });
+      const json = pm.response.json();
+      pm.test('Health response is OK', function () {
+        pm.expect(json.status).to.eql(true);
+        pm.expect(json.message).to.eql('API MASUK');
+      });
+    language: text/javascript
+order: 1000

@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{base_url}}/pembayaran"
+method: POST
+headers:
+  Accept: application/json
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "santri_id": {{santri_id}},
+      "jenis_pembayaran": "runner-{{run_suffix}}",
+      "jumlah_bayar": 150000,
+      "metode_pembayaran": "transfer",
+      "tanggal_bayar": "{{schedule_date}}",
+      "bukti_bayar": "data:text/plain;base64,UmVjZWlwdCB0ZXN0aW5nIHJ1bm5lcg=="
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Pembayaran created or updated', function () {
+        pm.expect([200, 201]).to.include(pm.response.code);
+      });
+      const json = pm.response.json();
+      pm.test('Pembayaran response has id', function () {
+        pm.expect(json.success).to.eql(true);
+        pm.expect(json.data.pembayaran_id).to.exist;
+      });
+      pm.collectionVariables.set('pembayaran_id', json.data.pembayaran_id);
+    language: text/javascript
+order: 18000
