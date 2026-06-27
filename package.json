@@ -3,11 +3,20 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build",
+        "build:vercel": "vite build --config vite.vercel.config.js"
     },
-    "devDependencies": {
+    "dependencies": {
+        "@vitejs/plugin-react-swc": "^4.2.2",
+        "autoprefixer": "^10.5.0",
         "axios": "^1.15.0",
+        "bootstrap": "^5.3.8",
         "laravel-vite-plugin": "^1.0.0",
+        "postcss": "^8.5.10",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+        "react-router-dom": "^7.14.2",
+        "tailwindcss": "^3.4.19",
         "vite": "^5.0.0"
     }
 }
