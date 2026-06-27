@@ -119,6 +119,15 @@ use App\Http\Controllers\API\PembayaranController;
         Route::delete('/pembayaran/{id}', [PembayaranController::class, 'destroy'])->whereNumber('id');
     });
 
+
+Route::get('/env-check', function () {
+    return response()->json([
+        'DB_HOST' => env('DB_HOST'),
+        'DB_PORT' => env('DB_PORT'),
+        'DB_DATABASE' => env('DB_DATABASE'),
+        'DB_USERNAME' => env('DB_USERNAME'),
+    ]);
+});
     Route::get('/jawaban', [JawabanController::class, 'index']);
     Route::post('/jawaban/bulk', [JawabanController::class, 'bulkStore']);
     Route::get('/jawaban/{id}', [JawabanController::class, 'show']);
