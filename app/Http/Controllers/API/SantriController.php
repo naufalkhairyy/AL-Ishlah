@@ -54,6 +54,7 @@ class SantriController extends Controller
  public function store(Request $request)
 {
     $request->validate([
+        'user_id' => 'sometimes|exists:users,user_id',
         'nama_lengkap' => 'required|string',
         'tempat_lahir' => 'required|string',
         'tanggal_lahir' => 'required|date',
@@ -64,7 +65,7 @@ class SantriController extends Controller
     ]);
 
     $santri = Santri::create([
-        'user_id' => auth()->user()->user_id, // ambil dari token
+        'user_id' => $request->input('user_id', auth()->user()->user_id),
         'nama_lengkap' => $request->nama_lengkap,
         'tempat_lahir' => $request->tempat_lahir,
         'tanggal_lahir' => $request->tanggal_lahir,
