@@ -318,7 +318,9 @@ export function mapBackendDocuments(calonSantri, options = {}) {
       required: type.required,
       backendField,
       ...getBackendDocumentMeta(calonSantri, backendField, fileUrl),
-      fileDataUrl: fileUrl,
+      fileDataUrl: fileUrl
+  ? fileUrl.replace(/^http:\/\//i, "https://")
+  : fileUrl,
       status: getBackendDocumentStatus(calonSantri, type, statusDokumen, requiredDocumentsUploaded),
       statusDokumen,
       source: "backend",
