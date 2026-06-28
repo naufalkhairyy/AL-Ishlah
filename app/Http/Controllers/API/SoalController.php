@@ -111,15 +111,42 @@ class SoalController extends Controller
 
         $rows = $importService->parse($request->file('file'), (int) $ujian_id);
 
-        $created = DB::transaction(function () use ($rows) {
-            return collect($rows)->map(fn ($row) => Soal::create($row))->values();
+        $importedCount = DB::transaction(function () use ($rows) {
+            $now = now();
+            $defaultRow = [
+                'nomor_soal' => null,
+                'judul_soal' => null,
+                'file_soal' => null,
+                'file_soal_nama_file' => null,
+                'file_soal_mime_type' => null,
+                'file_soal_size' => null,
+                'jenis_soal' => 'pg',
+                'opsi_a' => null,
+                'opsi_b' => null,
+                'opsi_c' => null,
+                'opsi_d' => null,
+                'opsi_e' => null,
+                'durasi_pengerjaan' => 0,
+                'jawaban_benar' => null,
+                'bobot_nilai' => 1,
+            ];
+
+            collect($rows)
+                ->map(fn ($row) => array_merge($defaultRow, $row, [
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]))
+                ->chunk(500)
+                ->each(fn ($chunk) => DB::table('soal')->insert($chunk->all()));
+
+            return count($rows);
         });
 
         return response()->json([
             'status'  => true,
             'message' => 'Import soal berhasil',
-            'total'   => $created->count(),
-            'data'    => $created,
+            'total'   => $importedCount,
+            'data'    => [],
         ], 201);
     }
 
