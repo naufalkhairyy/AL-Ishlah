@@ -208,6 +208,7 @@ export default function StudentExamWork() {
 
   const isExamActive = Boolean(localExamSession) && !localExamSession?.submitted && remainingSeconds > 0;
   const answeredCount = questions.filter((question) => String(answers[getQuestionId(question)] || "").trim()).length;
+  const canSubmitAnswers = Boolean(localExamSession) && !localExamSession?.submitted && questions.length > 0 && !submittingAnswers;
   const disabledAnswerInput = !isExamActive || submittingAnswers;
 
   const timerMessage = useMemo(() => {
@@ -272,10 +273,7 @@ export default function StudentExamWork() {
     } catch (error) {
       const message = getSubmitErrorMessage(error, { auto });
       setSubmitError(message);
-      if (auto || error.status === 409) {
-        lockExamLocally();
-      }
-      if (message.toLowerCase().includes("habis")) {
+      if (error.status === 409) {
         lockExamLocally();
       }
       alert(message);
@@ -380,8 +378,8 @@ export default function StudentExamWork() {
             </div>
 
             <div className="student-action-row">
-              <button className="student-primary-action" type="button" disabled={disabledAnswerInput || !questions.length} onClick={() => submitAnswers()}>
-                {submittingAnswers ? "Mengirim..." : "Submit Jawaban"}
+              <button className="student-primary-action" type="button" disabled={!canSubmitAnswers} onClick={() => submitAnswers()}>
+                {submittingAnswers ? "Mengirim..." : remainingSeconds <= 0 && !localExamSession?.submitted ? "Coba Kirim Lagi" : "Submit Jawaban"}
               </button>
             </div>
           </>

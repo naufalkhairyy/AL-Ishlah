@@ -64,15 +64,26 @@ export async function apiRequest(path, options = {}) {
   const token = authScope === "public" ? null : getAuthToken(authScope);
   const isFormData = options.body instanceof FormData;
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...fetchOptions,
-    headers: {
-      Accept: "application/json",
-      ...(isFormData ? {} : { "Content-Type": "application/json" }),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
+  let response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...fetchOptions,
+      headers: {
+        Accept: "application/json",
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    });
+  } catch (requestError) {
+    const error = new Error(
+      `Gagal terhubung ke backend (${API_BASE_URL}). Periksa koneksi, domain CORS backend, atau VITE_API_BASE_URL.`
+    );
+    error.cause = requestError;
+    error.isNetworkError = true;
+    throw error;
+  }
 
   const data = await response.json().catch(() => ({}));
 
