@@ -233,11 +233,42 @@ export async function getRegistrationProfile() {
   return mapProfileFromApi({ authUser, calonSantri, sekolah, ayah, ibu, wali });
 }
 
+function getResponseRecord(response) {
+  return firstObject(
+    response?.data?.data,
+    response?.data?.calonSantri,
+    response?.data?.calon_santri,
+    response?.data,
+    response?.calonSantri,
+    response?.calon_santri,
+    response,
+  );
+}
+
+function getSavedProfileSnapshot(form, calonResponse) {
+  const calon = getResponseRecord(calonResponse);
+
+  return {
+    ...form,
+    santri_id: calon.santri_id ||
+      calon.id_santri ||
+      calon.santri?.santri_id ||
+      form.santri_id ||
+      "",
+    calon_santri_id: calon.calon_santri_id ||
+      calon.id_calon_santri ||
+      calon.id ||
+      form.calon_santri_id ||
+      "",
+    user_id: calon.user_id || form.user_id || "",
+  };
+}
+
 export async function saveRegistrationProfile(form) {
   const payloads = buildRegistrationPayloads(form);
   const hasWaliData = Object.values(payloads.wali).some((value) => String(value ?? "").trim());
 
-  await apiRequest("/calon-santri", {
+  const calonResponse = await apiRequest("/calon-santri", {
     authScope: "student",
     method: "POST",
     body: JSON.stringify(payloads.calonSantri),
@@ -270,5 +301,5 @@ export async function saveRegistrationProfile(form) {
   }
 
   await Promise.all(requests);
-  return getRegistrationProfile();
+  return getSavedProfileSnapshot(form, calonResponse);
 }
