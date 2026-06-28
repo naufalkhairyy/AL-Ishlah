@@ -29,6 +29,9 @@ use App\Http\Controllers\API\PembayaranController;
     Route::post('/login', [AuthController::class, 'login'])->name('login');
     Route::post('/admin/login', [AuthController::class, 'adminLogin']);
 
+    Route::options('/{any}', function () {
+        return response()->noContent();
+    })->where('any', '.*');
 
     Route::middleware(['auth:sanctum', 'throttle:100,1'])->group(function () {
 
