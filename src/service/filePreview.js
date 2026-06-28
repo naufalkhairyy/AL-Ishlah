@@ -2,8 +2,13 @@ import { getAuthToken } from "./api";
 
 function getApiOrigin() {
   try {
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
-    return new URL(apiBaseUrl, window.location.origin).origin;
+    const apiBaseUrl =
+      import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
+
+    return new URL(apiBaseUrl, window.location.origin).origin.replace(
+      /^http:\/\//i,
+      "https://"
+    );
   } catch {
     return window.location.origin;
   }
@@ -11,31 +16,53 @@ function getApiOrigin() {
 
 export function getPreviewUrl(url) {
   if (!url) return "";
+
   const value = String(url).trim();
 
   console.log("========== getPreviewUrl ==========");
-  console.log("URL asli :", url);
-  console.log("Value    :", value);
-  console.log("API Origin :", getApiOrigin());
+  console.log("URL asli :", value);
 
-  if (
-    value.startsWith("data:") ||
-    value.startsWith("blob:") ||
-    value.startsWith("http://") ||
-    value.startsWith("https://")
-  ) {
-    console.log("RETURN (langsung):", value);
+  // data url
+  if (value.startsWith("data:")) {
+    console.log("RETURN DATA");
     return value;
   }
 
-  if (value.startsWith("//")) {
-    const result = `${window.location.protocol}${value}`;
-    console.log("RETURN (protocol):", result);
+  // blob
+  if (value.startsWith("blob:")) {
+    console.log("RETURN BLOB");
+    return value;
+  }
+
+  // absolute url
+  if (
+    value.startsWith("http://") ||
+    value.startsWith("https://")
+  ) {
+    const result = value.replace(/^http:\/\//i, "https://");
+
+    console.log("RETURN HTTPS :", result);
+
     return result;
   }
 
-  const result = new URL(value.replace(/^\/+/, "/"), getApiOrigin()).href;
-  console.log("RETURN (gabungan):", result);
+  // protocol relative
+  if (value.startsWith("//")) {
+    const result = `https:${value}`;
+
+    console.log("RETURN // :", result);
+
+    return result;
+  }
+
+  // relative url
+  const result = new URL(
+    value.replace(/^\/+/, "/"),
+    getApiOrigin()
+  ).href.replace(/^http:\/\//i, "https://");
+
+  console.log("RETURN RELATIVE :", result);
+
   return result;
 }
 
@@ -43,18 +70,26 @@ function dataUrlToBlobUrl(dataUrl) {
   if (!dataUrl.startsWith("data:")) return dataUrl;
 
   const [meta, encodedData] = dataUrl.split(",");
-  const mime = meta.match(/^data:([^;]+)/)?.[1] || "application/octet-stream";
+
+  const mime =
+    meta.match(/^data:([^;]+)/)?.[1] ||
+    "application/octet-stream";
+
   const isBase64 = /;base64/i.test(meta);
+
   const binary = isBase64
     ? atob(encodedData || "")
     : decodeURIComponent(encodedData || "");
+
   const bytes = new Uint8Array(binary.length);
 
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
   }
 
-  return URL.createObjectURL(new Blob([bytes], { type: mime }));
+  return URL.createObjectURL(
+    new Blob([bytes], { type: mime })
+  );
 }
 
 export async function getAuthenticatedPreviewUrl(url, authScope) {
@@ -63,66 +98,84 @@ export async function getAuthenticatedPreviewUrl(url, authScope) {
   const normalizedUrl = getPreviewUrl(url);
 
   console.log("=== getAuthenticatedPreviewUrl ===");
-  console.log("Normalized URL:", normalizedUrl);
+  console.log(normalizedUrl);
 
-  if (normalizedUrl.startsWith("data:")) return dataUrlToBlobUrl(normalizedUrl);
-  if (normalizedUrl.startsWith("blob:")) return normalizedUrl;
+  if (normalizedUrl.startsWith("data:")) {
+    return dataUrlToBlobUrl(normalizedUrl);
+  }
+
+  if (normalizedUrl.startsWith("blob:")) {
+    return normalizedUrl;
+  }
 
   const token = getAuthToken(authScope);
 
-  console.log("Token:", token);
-  console.log("Fetch:", normalizedUrl);
-
   const response = await fetch(normalizedUrl, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {},
   });
 
-  console.log("Status:", response.status);
+  console.log("STATUS :", response.status);
 
-  if (!response.ok) throw new Error("Gagal mengambil file preview.");
+  if (!response.ok) {
+    throw new Error("Gagal mengambil preview.");
+  }
 
   const blob = await response.blob();
+
   return URL.createObjectURL(blob);
 }
 
-function openDirect(url, fileName = "File terupload", canPreview = true) {
-  const link = document.createElement("a");
-  link.href = url;
-  link.target = "_blank";
-  link.rel = "noopener noreferrer";
+function openDirect(url, fileName = "File", canPreview = true) {
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
 
   if (!canPreview) {
-    link.download = fileName || "File terupload";
+    a.download = fileName;
   }
 
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+  document.body.appendChild(a);
+
+  a.click();
+
+  a.remove();
 }
 
-export async function openUploadedFile(url, fileName = "File terupload", fileType = "", authScope) {
+export async function openUploadedFile(
+  url,
+  fileName = "File",
+  fileType = "",
+  authScope
+) {
   if (!url) return;
 
-  console.log("======================================");
+  console.log("==============================");
   console.log("openUploadedFile()");
   console.log("URL diterima :", url);
 
   const normalizedUrl = getPreviewUrl(url);
 
-  console.log("Normalized URL :", normalizedUrl);
-  console.log("Window Origin  :", window.location.origin);
-  console.log("API Origin     :", getApiOrigin());
+  console.log("Normalized :", normalizedUrl);
 
-  const lowerName = String(fileName || normalizedUrl).toLowerCase();
+  const lowerName = String(fileName).toLowerCase();
+
   const canPreview =
     String(fileType).startsWith("image/") ||
     fileType === "application/pdf" ||
-    normalizedUrl.startsWith("data:image/") ||
-    normalizedUrl.startsWith("data:application/pdf") ||
     /\.(jpg|jpeg|png|gif|webp|pdf)$/i.test(lowerName);
 
   if (normalizedUrl.startsWith("data:")) {
-    openDirect(dataUrlToBlobUrl(normalizedUrl), fileName, canPreview);
+    openDirect(
+      dataUrlToBlobUrl(normalizedUrl),
+      fileName,
+      canPreview
+    );
     return;
   }
 
@@ -132,43 +185,52 @@ export async function openUploadedFile(url, fileName = "File terupload", fileTyp
   }
 
   const previewWindow = window.open("", "_blank");
+
   if (!previewWindow) {
     openDirect(normalizedUrl, fileName, canPreview);
     return;
   }
 
-  try {
-    previewWindow.document.write("<p style=\"font-family:Arial,sans-serif;padding:16px\">Membuka file...</p>");
+  previewWindow.document.write(
+    "<p style='padding:20px;font-family:Arial'>Membuka file...</p>"
+  );
 
+  try {
     const token = getAuthToken(authScope);
 
-    console.log("Authorization:", token);
-    console.log("FETCH URL:", normalizedUrl);
+    console.log("TOKEN :", token);
+    console.log("FETCH :", normalizedUrl);
 
     const response = await fetch(normalizedUrl, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : {},
     });
 
-    console.log("Response Status:", response.status);
-    console.log("Response URL:", response.url);
+    console.log("STATUS :", response.status);
 
-    if (!response.ok) throw new Error("Gagal mengambil file.");
-
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
-
-    console.log("Blob URL:", blobUrl);
-
-    previewWindow.location.href = blobUrl;
-  } catch (e) {
-    console.error("ERROR openUploadedFile()", e);
-
-    if (authScope) {
-      previewWindow.document.body.innerHTML =
-        "<p style=\"font-family:Arial,sans-serif;padding:16px\">Gagal membuka file dengan sesi admin.</p>";
-      return;
+    if (!response.ok) {
+      throw new Error("Gagal mengambil file.");
     }
 
-    previewWindow.location.href = normalizedUrl;
+    const blob = await response.blob();
+
+    const blobUrl = URL.createObjectURL(blob);
+
+    console.log("BLOB :", blobUrl);
+
+    previewWindow.location.href = blobUrl;
+  } catch (err) {
+    console.error(err);
+
+    previewWindow.document.body.innerHTML = `
+      <div style="padding:20px;font-family:Arial">
+        <h3>Preview gagal dibuka</h3>
+        <p>${err.message}</p>
+        <p>${normalizedUrl}</p>
+      </div>
+    `;
   }
 }
