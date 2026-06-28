@@ -81,20 +81,26 @@ export function getManualPayments() {
   return safePayments;
 }
 
+function normalizeHttpsUrl(url) {
+  if (!url) return "";
+  return String(url).replace(/^http:\/\//i, "https://");
+}
+
 function normalizePayment(payment) {
   if (!payment) return null;
   if (payment.bukti_bayar_uploaded === false) return null;
 
   const user = getCurrentUser();
   const username = payment.username || user?.username || "Calon Santri";
-  const fileName = (
+
+  const fileName =
     payment.bukti_bayar_nama_file ||
     payment.bukti_bayar_nama ||
     payment.bukti_pembayaran_nama ||
     payment.fileName ||
-    "Bukti pembayaran"
-  );
-  const fileDataUrl = (
+    "Bukti pembayaran";
+
+  const fileDataUrl = normalizeHttpsUrl(
     payment.bukti_bayar_url ||
     payment.bukti_bayar ||
     payment.bukti_pembayaran ||
@@ -109,23 +115,83 @@ function normalizePayment(payment) {
     username,
     studentName: payment.student_name || payment.studentName || username,
     initials: getInitials(payment.student_name || payment.studentName || username),
-    category: payment.jenis_pembayaran || payment.kategori || payment.category || "Biaya Pendaftaran",
-    amount: Number(payment.jumlah_bayar || payment.nominal || payment.amount || REGISTRATION_FEE),
-    method: payment.metode_pembayaran || payment.metode || payment.method || "Transfer Bank Manual",
+
+    category:
+      payment.jenis_pembayaran ||
+      payment.kategori ||
+      payment.category ||
+      "Biaya Pendaftaran",
+
+    amount: Number(
+      payment.jumlah_bayar ||
+      payment.nominal ||
+      payment.amount ||
+      REGISTRATION_FEE
+    ),
+
+    method:
+      payment.metode_pembayaran ||
+      payment.metode ||
+      payment.method ||
+      "Transfer Bank Manual",
+
     bankAccount: {
-      bank: payment.bank || payment.bankAccount?.bank || BANK_ACCOUNT.bank,
-      number: payment.nomor_rekening || payment.bankAccount?.number || BANK_ACCOUNT.number,
-      name: payment.nama_rekening || payment.bankAccount?.name || BANK_ACCOUNT.name,
+      bank:
+        payment.bank ||
+        payment.bankAccount?.bank ||
+        BANK_ACCOUNT.bank,
+
+      number:
+        payment.nomor_rekening ||
+        payment.bankAccount?.number ||
+        BANK_ACCOUNT.number,
+
+      name:
+        payment.nama_rekening ||
+        payment.bankAccount?.name ||
+        BANK_ACCOUNT.name,
     },
+
     fileName,
-    fileType: payment.bukti_bayar_mime_type || payment.bukti_bayar_mime || payment.bukti_pembayaran_mime || payment.fileType || "File bukti transfer",
-    fileSize: payment.bukti_bayar_size || payment.bukti_pembayaran_size || payment.fileSize || null,
+
+    fileType:
+      payment.bukti_bayar_mime_type ||
+      payment.bukti_bayar_mime ||
+      payment.bukti_pembayaran_mime ||
+      payment.fileType ||
+      "application/octet-stream",
+
+    fileSize:
+      payment.bukti_bayar_size ||
+      payment.bukti_pembayaran_size ||
+      payment.fileSize ||
+      null,
+
     fileDataUrl,
+
     status: normalizePaymentStatus(payment.status),
-    submittedAt: payment.created_at || payment.submittedAt || new Date().toISOString(),
-    updatedAt: payment.updated_at || payment.updatedAt || payment.created_at || payment.submittedAt || new Date().toISOString(),
-    reviewedAt: payment.reviewed_at || payment.reviewedAt || null,
-    reviewNote: payment.catatan_review || payment.reviewNote || "",
+
+    submittedAt:
+      payment.created_at ||
+      payment.submittedAt ||
+      new Date().toISOString(),
+
+    updatedAt:
+      payment.updated_at ||
+      payment.updatedAt ||
+      payment.created_at ||
+      payment.submittedAt ||
+      new Date().toISOString(),
+
+    reviewedAt:
+      payment.reviewed_at ||
+      payment.reviewedAt ||
+      null,
+
+    reviewNote:
+      payment.catatan_review ||
+      payment.reviewNote ||
+      "",
   };
 }
 
