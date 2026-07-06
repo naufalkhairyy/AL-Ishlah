@@ -1,5 +1,6 @@
 import "../../styles/berita.css";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import PublicFooter from "../../components/PublicFooter";
 
 export default function Berita() {
   const navigate = useNavigate();
@@ -96,24 +97,7 @@ export default function Berita() {
 
       </div>
 
-      {/* FOOTER */}
-      <footer className="footer">
-        <div>
-          <h4>Pondok Pesantren</h4>
-          <p>Sistem Informasi Pesantren</p>
-        </div>
-
-        <div>
-          <h4>Menu</h4>
-          <Link to="/">Home</Link>
-          <Link to="/berita">Berita</Link>
-        </div>
-
-        <div>
-          <h4>Kontak</h4>
-          <a href="mailto:info@gmail.com">Email: info@gmail.com</a>
-        </div>
-      </footer>
+      <PublicFooter />
 
     </div>
   );

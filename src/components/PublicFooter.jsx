@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import "../styles/home.css";
 import logo from "../assets/logo.png";
 
 export default function PublicFooter() {

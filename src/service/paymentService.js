@@ -86,12 +86,34 @@ function normalizeHttpsUrl(url) {
   return String(url).replace(/^http:\/\//i, "https://");
 }
 
-function normalizePayment(payment) {
+function getPaymentStudentName(payment, username, calonByUser = new Map()) {
+  const calon = calonByUser.get(String(payment.user_id || payment.userId || ""));
+  return payment.student_name ||
+    payment.studentName ||
+    payment.nama_lengkap ||
+    payment.calon_santri?.nama_lengkap ||
+    payment.calonSantri?.nama_lengkap ||
+    calon?.nama_lengkap ||
+    "Calon Santri";
+}
+
+async function getPaymentCalonSantriMap() {
+  try {
+    const response = await apiRequest("/calon-santri", { authScope: "admin" });
+    const rows = extractPaymentRows(response);
+    return new Map(rows.map((item) => [String(item.user_id || item.user?.user_id || ""), item]).filter(([key]) => key));
+  } catch {
+    return new Map();
+  }
+}
+
+function normalizePayment(payment, calonByUser = new Map()) {
   if (!payment) return null;
   if (payment.bukti_bayar_uploaded === false) return null;
 
   const user = getCurrentUser();
   const username = payment.username || user?.username || "Calon Santri";
+  const studentName = getPaymentStudentName(payment, username, calonByUser);
 
   const fileName =
     payment.bukti_bayar_nama_file ||
@@ -113,8 +135,8 @@ function normalizePayment(payment) {
     id: payment.pembayaran_id || payment.id,
     userId: payment.user_id || payment.userId,
     username,
-    studentName: payment.student_name || payment.studentName || username,
-    initials: getInitials(payment.student_name || payment.studentName || username),
+    studentName,
+    initials: getInitials(studentName),
 
     category:
       payment.jenis_pembayaran ||
@@ -251,17 +273,20 @@ function extractPaymentRecord(response) {
 
 export async function getPayments() {
   clearPaymentCache();
-  const response = await apiRequest(`/pembayaran?_=${Date.now()}`, {
-    authScope: "admin",
-    cache: "no-store",
-    headers: {
-      "Cache-Control": "no-cache",
-      Pragma: "no-cache",
-    },
-  });
+  const [response, calonByUser] = await Promise.all([
+    apiRequest(`/pembayaran?_=${Date.now()}`, {
+      authScope: "admin",
+      cache: "no-store",
+      headers: {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      },
+    }),
+    getPaymentCalonSantriMap(),
+  ]);
 
   return extractPaymentRows(response)
-    .map(normalizePayment)
+    .map((payment) => normalizePayment(payment, calonByUser))
     .filter(Boolean)
     .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 }

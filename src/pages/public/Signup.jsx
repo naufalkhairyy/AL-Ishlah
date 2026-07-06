@@ -60,7 +60,6 @@ function Signup({ goLogin }) {
               />
             </div>
             <div>
-              <label>Role :</label>
               <input type="hidden" name="role" value="calon_santri" />
             </div>
 

@@ -161,10 +161,10 @@ export default function FinancePage({ notify }) {
   };
 
   const exportCsv = [
-    "id,username,nominal,status,tanggal_kirim,tanggal_review",
+    "id,nama_santri,nominal,status,tanggal_kirim,tanggal_review",
     ...payments.map((payment) => [
       payment.id,
-      payment.username,
+      payment.studentName || "Calon Santri",
       payment.amount,
       payment.status,
       payment.submittedAt,

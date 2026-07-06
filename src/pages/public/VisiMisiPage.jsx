@@ -1,6 +1,5 @@
 import "../../styles/VisiMisiPage.css";
-import { Link } from "react-router-dom";
-import logo from "../../assets/logo.png";
+import PublicFooter from "../../components/PublicFooter";
 
 export default function VisiMisiPage() {
   return (
@@ -54,38 +53,7 @@ export default function VisiMisiPage() {
         </p>
       </div>
 
-      {/* FOOTER */}
-      <footer className="footer">
-        <div className="footer-left">
-          <img src={logo} className="footer-logo" />
-          <p>
-            Jalan Raya Pekanbaru - Taluk Kuantan KM 30, <br />
-            Sungai Pagar, Kampar, Riau
-          </p>
-        </div>
-
-        <div>
-          <h4>Jelajah</h4>
-          <Link to="/visi-misi">Sambutan</Link>
-          <Link to="/visi-misi">Profil Sekolah</Link>
-          <Link to="/berita">Berita</Link>
-          <Link to="/fasilitas">Galeri</Link>
-        </div>
-
-        <div>
-          <h4>Halaman Umum</h4>
-          <Link to="/pendaftaran">Formulir</Link>
-          <Link to="/berita">Berita & Artikel</Link>
-          <Link to="/jadwal-biaya">Jadwal & Biaya</Link>
-          <Link to="/pendaftaran">Pendaftaran</Link>
-        </div>
-
-        <div>
-          <h4>Media Sosial</h4>
-          <a href="https://facebook.com" target="_blank" rel="noreferrer">Facebook</a>
-          <a href="https://instagram.com" target="_blank" rel="noreferrer">Instagram</a>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import Navbar from "./components/Navbar";
 import StudentLayout from "./components/StudentLayout";
 import AdminPortal from "./pages/admin/AdminPortal";
 import Berita from "./pages/public/Berita";
+import Fasilitas from "./pages/public/Fasilitas";
 import FormPendaftaran from "./pages/public/FormPendaftaran";
 import Home from "./pages/public/Home";
 import JadwalBiaya from "./pages/public/JadwalBiaya";
@@ -35,7 +36,7 @@ function App() {
         <Route path="/visi-misi" element={<VisiMisiPage />} />
         <Route path="/berita" element={<Berita />} />
         <Route path="/pendaftaran" element={<FormPendaftaran />} />
-        <Route path="/fasilitas" element={<FormPendaftaran />} />
+        <Route path="/fasilitas" element={<Fasilitas />} />
         <Route path="/jadwal-biaya" element={<JadwalBiaya />} />
         <Route path="/jadwal" element={<JadwalBiaya />} />
         <Route path="/verifikasi" element={<Verifikasi />} />

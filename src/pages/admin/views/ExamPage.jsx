@@ -15,6 +15,7 @@ import {
 } from "../../../service/examService";
 
 const optionKeys = ["a", "b", "c", "d", "e"];
+const tableSizeOptions = [10, 15, 20, 30, 50];
 const emptyQuestionForm = {
   soal_id: "",
   nomor_soal: "",
@@ -114,6 +115,11 @@ function getAnswerId(answer) {
   return answer?.jawaban_id || answer?.id || answer?.answer_id || "";
 }
 
+function isPassedStatus(value) {
+  const status = String(value || "").toLowerCase();
+  return ["lulus", "passed", "diterima", "accepted"].includes(status);
+}
+
 function formatScheduleDate(date) {
   if (!date) return "-";
   const parsed = new Date(date);
@@ -143,6 +149,9 @@ export default function ExamPage({ openModal, notify }) {
   const [editingScheduleId, setEditingScheduleId] = useState("");
   const [importResult, setImportResult] = useState(null);
   const [selectedImportFile, setSelectedImportFile] = useState(null);
+  const [questionLimit, setQuestionLimit] = useState(10);
+  const [scheduleLimit, setScheduleLimit] = useState(10);
+  const [answerLimit, setAnswerLimit] = useState(10);
   const [savingExam, setSavingExam] = useState(false);
   const [savingSchedule, setSavingSchedule] = useState(false);
   const importInputRef = useRef(null);
@@ -220,6 +229,9 @@ export default function ExamPage({ openModal, notify }) {
   const selectedExam = examData.ujian.find((exam) => String(exam.ujian_id) === String(selectedExamId));
   const importErrors = normalizeImportErrors(importResult);
   const multipleChoiceCount = questions.length;
+  const visibleQuestions = questions.slice(0, questionLimit);
+  const visibleSchedules = sortedSchedules.slice(0, scheduleLimit);
+  const visibleAnswers = examData.jawaban.slice(0, answerLimit);
   const scheduledSantriIds = useMemo(() => {
     const scheduleExamId = scheduleForm.ujian_id || selectedExamId;
     return new Set(examData.jadwal
@@ -240,6 +252,54 @@ export default function ExamPage({ openModal, notify }) {
     const student = schedule.santri || examData.santri.find((item) => String(item.santri_id) === String(santriId));
     return getStudentDisplayName(student, santriId);
   };
+  const passedStudents = useMemo(() => {
+    const rows = new Map();
+
+    examData.santri.forEach((student) => {
+      const santriId = String(student.santri_id || "");
+      const passedByStatus = isPassedStatus(student.status_kelulusan || student.status_lulus || student.kelulusan || student.status);
+      if (!santriId || !passedByStatus) return;
+      rows.set(santriId, {
+        id: santriId,
+        name: getStudentDisplayName(student, santriId),
+        source: "Status backend",
+        score: student.nilai_akhir || student.nilai_total || "-",
+        examCount: "-",
+      });
+    });
+
+    const answerGroups = new Map();
+    examData.jawaban.forEach((answer) => {
+      const santriKey = String(getAnswerStudentKey(answer) || answer.santri_id || "");
+      if (!santriKey) return;
+      const current = answerGroups.get(santriKey) || {
+        id: santriKey,
+        name: getStudentDisplayName(answer.santri, answer.santri_id),
+        scores: [],
+        exams: new Set(),
+      };
+      if (answer.nilai_jawaban !== null && answer.nilai_jawaban !== undefined && answer.nilai_jawaban !== "") {
+        current.scores.push(Number(answer.nilai_jawaban));
+      }
+      const examId = getAnswerExamId(answer);
+      if (examId) current.exams.add(String(examId));
+      answerGroups.set(santriKey, current);
+    });
+
+    answerGroups.forEach((group) => {
+      if (!group.scores.length || group.scores.some((score) => Number.isNaN(score) || score < 70)) return;
+      const average = Math.round(group.scores.reduce((total, score) => total + score, 0) / group.scores.length);
+      rows.set(group.id, {
+        id: group.id,
+        name: group.name,
+        source: "Nilai ujian",
+        score: average,
+        examCount: group.exams.size || group.scores.length,
+      });
+    });
+
+    return Array.from(rows.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [examData.jawaban, examData.santri]);
 
   const setFormField = (field, value) => {
     setQuestionForm((current) => ({ ...current, [field]: value }));
@@ -670,9 +730,17 @@ export default function ExamPage({ openModal, notify }) {
                 <h2>Daftar Soal</h2>
                 <p>Soal otomatis diurutkan berdasarkan nomor soal.</p>
               </div>
-              <span className="admin-pill admin-pill--gray">{questionLoading ? "Memuat..." : `${questions.length} soal`}</span>
+              <div className="exam-table-toolbar">
+                <label>
+                  <span>Tampil</span>
+                  <select value={questionLimit} onChange={(event) => setQuestionLimit(Number(event.target.value))}>
+                    {tableSizeOptions.map((size) => <option value={size} key={size}>{size}</option>)}
+                  </select>
+                </label>
+                <span className="admin-pill admin-pill--gray">{questionLoading ? "Memuat..." : `${questions.length} soal`}</span>
+              </div>
             </div>
-            <div className="question-table-wrap">
+            <div className="question-table-wrap question-table-wrap--scroll">
               <table className="question-table">
                 <thead>
                   <tr>
@@ -687,7 +755,7 @@ export default function ExamPage({ openModal, notify }) {
                 </thead>
                 <tbody>
                   {questionLoading && <tr><td colSpan="7">Mengambil soal dari backend...</td></tr>}
-                  {!questionLoading && questions.map((question) => (
+                  {!questionLoading && visibleQuestions.map((question) => (
                     <tr key={getQuestionId(question) || question.nomor_soal}>
                       <td><strong>{question.nomor_soal || "-"}</strong></td>
                       <td>
@@ -824,9 +892,17 @@ export default function ExamPage({ openModal, notify }) {
                 <h2>Daftar Jadwal Ujian</h2>
                 <p>Edit jadwal peserta atau salin link page khusus pelaksanaan ujian.</p>
               </div>
-              <span className="admin-pill admin-pill--gray">{sortedSchedules.length} jadwal</span>
+              <div className="exam-table-toolbar">
+                <label>
+                  <span>Tampil</span>
+                  <select value={scheduleLimit} onChange={(event) => setScheduleLimit(Number(event.target.value))}>
+                    {tableSizeOptions.map((size) => <option value={size} key={size}>{size}</option>)}
+                  </select>
+                </label>
+                <span className="admin-pill admin-pill--gray">{sortedSchedules.length} jadwal</span>
+              </div>
             </div>
-            <div className="question-table-wrap">
+            <div className="question-table-wrap question-table-wrap--scroll">
               <table className="question-table">
                 <thead>
                   <tr>
@@ -839,7 +915,7 @@ export default function ExamPage({ openModal, notify }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedSchedules.map((schedule) => (
+                  {visibleSchedules.map((schedule) => (
                     <tr key={getScheduleId(schedule) || `${getScheduleExamId(schedule)}-${getScheduleStudentId(schedule)}`}>
                       <td>
                         <strong>{schedule.ujian?.nama_ujian || `Ujian #${getScheduleExamId(schedule) || "-"}`}</strong>
@@ -875,29 +951,67 @@ export default function ExamPage({ openModal, notify }) {
                 <h2>Ringkasan Jawaban Santri</h2>
                 <p>Pantau jawaban masuk dan status penilaian dari peserta.</p>
               </div>
-              <button type="button" onClick={() => notify("Records dibuka", "Semua catatan nilai nanti dari backend.")}>Lihat Semua</button>
+              <div className="exam-table-toolbar">
+                <label>
+                  <span>Tampil</span>
+                  <select value={answerLimit} onChange={(event) => setAnswerLimit(Number(event.target.value))}>
+                    {tableSizeOptions.map((size) => <option value={size} key={size}>{size}</option>)}
+                  </select>
+                </label>
+                <button type="button" onClick={() => notify("Records dibuka", "Semua catatan nilai nanti dari backend.")}>Lihat Semua</button>
+              </div>
             </div>
             <div className="grading-cards"><span>Pending Review <b>{pendingAnswers.length} Submissions</b></span><span>Finalized <b>{gradedAnswers.length} Students</b></span></div>
-            <table>
-              <thead><tr><th>Student Name</th><th>Exam Type</th><th>Score</th><th>Action</th></tr></thead>
-              <tbody>
-                {examData.jawaban.length ? examData.jawaban.slice(0, 8).map((answer) => (
-                  <tr key={answer.jawaban_id}>
-                    <td><strong>{getStudentDisplayName(answer.santri, answer.santri_id)}</strong></td>
-                    <td>{answer.soal?.judul_soal || answer.soal?.pertanyaan || `Soal #${answer.soal_id}`}</td>
-                    <td><span className="score-pill">{answer.nilai_jawaban ?? "Review"}</span></td>
-                    <td>
-                      <div className="question-table-actions">
-                        <button type="button" onClick={() => notify("Review nilai", `Jawaban #${getAnswerId(answer)} dibuka.`)}>Review</button>
-                        <button className="text-danger" type="button" onClick={() => resetStudentExamAnswers(answer)}>Reset Ujian</button>
-                      </div>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr><td colSpan="4">Belum ada jawaban ujian di database.</td></tr>
-                )}
-              </tbody>
-            </table>
+            <div className="question-table-wrap question-table-wrap--scroll">
+              <table>
+                <thead><tr><th>Student Name</th><th>Exam Type</th><th>Score</th><th>Action</th></tr></thead>
+                <tbody>
+                  {examData.jawaban.length ? visibleAnswers.map((answer) => (
+                    <tr key={answer.jawaban_id}>
+                      <td><strong>{getStudentDisplayName(answer.santri, answer.santri_id)}</strong></td>
+                      <td>{answer.soal?.judul_soal || answer.soal?.pertanyaan || `Soal #${answer.soal_id}`}</td>
+                      <td><span className="score-pill">{answer.nilai_jawaban ?? "Review"}</span></td>
+                      <td>
+                        <div className="question-table-actions">
+                          <button type="button" onClick={() => notify("Review nilai", `Jawaban #${getAnswerId(answer)} dibuka.`)}>Review</button>
+                          <button className="text-danger" type="button" onClick={() => resetStudentExamAnswers(answer)}>Reset Ujian</button>
+                        </div>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr><td colSpan="4">Belum ada jawaban ujian di database.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article className="admin-panel reveal-card">
+            <div className="admin-panel__head">
+              <div>
+                <span className="question-step">Lulus</span>
+                <h2>Daftar Santri Lulus</h2>
+                <p>Menampilkan semua santri yang status backend-nya lulus atau semua nilai ujiannya minimal 70.</p>
+              </div>
+              <span className="admin-pill">{passedStudents.length} santri</span>
+            </div>
+            <div className="question-table-wrap question-table-wrap--scroll">
+              <table>
+                <thead><tr><th>Nama Santri</th><th>Sumber Kelulusan</th><th>Rata-rata / Nilai</th><th>Jumlah Ujian</th></tr></thead>
+                <tbody>
+                  {passedStudents.length ? passedStudents.map((student) => (
+                    <tr key={student.id}>
+                      <td><strong>{student.name}</strong><small>ID Santri: {student.id}</small></td>
+                      <td>{student.source}</td>
+                      <td><span className="score-pill">{student.score}</span></td>
+                      <td>{student.examCount}</td>
+                    </tr>
+                  )) : (
+                    <tr><td colSpan="4">Belum ada santri yang terdeteksi lulus dari status backend atau nilai ujian.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </article>
         </div>
         <aside className="exam-side exam-side--compact">
