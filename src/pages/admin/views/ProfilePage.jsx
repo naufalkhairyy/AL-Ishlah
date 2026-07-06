@@ -4,6 +4,57 @@ import QuickApplicantForm from "../components/QuickApplicantForm";
 import { getAdminApplicants, getInitials } from "../../../service/adminService";
 import { downloadText } from "../utils/downloadText";
 
+const PAGE_SIZE = 15;
+
+function formatDetailValue(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  if (typeof value === "boolean") return value ? "Ya" : "Tidak";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function formatFieldLabel(key) {
+  return String(key)
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function ApplicantDetail({ item }) {
+  const userEntries = Object.entries(item.raw.user || {});
+  const studentEntries = Object.entries(item.raw.student || {});
+
+  return (
+    <div className="applicant-detail">
+      <section>
+        <h3>Data Akun</h3>
+        <dl>
+          {userEntries.map(([key, value]) => (
+            <div key={key}>
+              <dt>{formatFieldLabel(key)}</dt>
+              <dd>{formatDetailValue(value)}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+      <section>
+        <h3>Data Calon Santri</h3>
+        {studentEntries.length ? (
+          <dl>
+            {studentEntries.map(([key, value]) => (
+              <div key={key}>
+                <dt>{formatFieldLabel(key)}</dt>
+                <dd>{formatDetailValue(value)}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <p>Data santri belum tersimpan untuk akun ini.</p>
+        )}
+      </section>
+    </div>
+  );
+}
+
 export default function ProfilePage({ openModal, notify }) {
   const [filter, setFilter] = useState("Semua Status");
   const [page, setPage] = useState(1);
@@ -57,12 +108,29 @@ export default function ProfilePage({ openModal, notify }) {
   }, [users, santri]);
 
   const filtered = filter === "Semua Status" ? rows : rows.filter((item) => item.status === filter);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
   const verifiedCount = rows.filter((item) => item.status === "Verified").length;
   const pendingCount = rows.filter((item) => item.status === "Pending").length;
   const csv = [
     "nama,username,status,tanggal_daftar",
     ...filtered.map((item) => `${item.name},${item.raw.user.username},${item.status},${item.date}`),
   ].join("\n");
+
+  const handleFilterChange = (event) => {
+    setFilter(event.target.value);
+    setPage(1);
+  };
+
+  const openApplicantDetail = (item) => {
+    openModal(
+      item.name,
+      `Username: ${item.raw.user.username}. Status data santri: ${item.status}.`,
+      <ApplicantDetail item={item} />,
+      "Detail Calon Santri",
+    );
+  };
 
   return (
     <section className="admin-page">
@@ -88,7 +156,7 @@ export default function ProfilePage({ openModal, notify }) {
 
       <article className="admin-table-card reveal-card">
         <div className="admin-table-tools">
-          <select value={filter} onChange={(event) => setFilter(event.target.value)}>
+          <select value={filter} onChange={handleFilterChange}>
             <option>Semua Status</option>
             <option>Pending</option>
             <option>Verified</option>
@@ -99,13 +167,13 @@ export default function ProfilePage({ openModal, notify }) {
         <table>
           <thead><tr><th>Nama Calon Santri</th><th>NISN</th><th>Status</th><th>Tanggal Daftar</th><th>Aksi</th></tr></thead>
           <tbody>
-            {filtered.length ? filtered.map((item) => (
+            {paginatedRows.length ? paginatedRows.map((item) => (
               <tr key={item.id}>
                 <td><span className="admin-avatar">{item.initials}</span><div><strong>{item.name}</strong><small>{item.region}</small></div></td>
                 <td>{item.nisn}</td>
                 <td><span className={`admin-status admin-status--${item.status.toLowerCase()}`}>{item.status}</span></td>
                 <td>{item.date}</td>
-                <td><button type="button" onClick={() => openModal(item.name, `Username: ${item.raw.user.username}. Status data santri: ${item.status}.`)}>Lihat Detail</button></td>
+                <td><button type="button" onClick={() => openApplicantDetail(item)}>Lihat Detail</button></td>
               </tr>
             )) : (
               <tr><td colSpan="5">Belum ada akun calon santri di database.</td></tr>
@@ -113,9 +181,10 @@ export default function ProfilePage({ openModal, notify }) {
           </tbody>
         </table>
         <div className="admin-pagination">
-          <button type="button" disabled={page === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>Sebelumnya</button>
-          {[1, 2, 3].map((number) => <button className={page === number ? "is-active" : ""} type="button" key={number} onClick={() => setPage(number)}>{number}</button>)}
-          <button type="button" onClick={() => setPage((value) => value + 1)}>Berikutnya</button>
+          <span>Halaman {currentPage} dari {totalPages}</span>
+          {totalPages > 1 && <button type="button" disabled={currentPage === 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>Sebelumnya</button>}
+          {Array.from({ length: totalPages }, (_, index) => index + 1).map((number) => <button className={currentPage === number ? "is-active" : ""} type="button" key={number} onClick={() => setPage(number)}>{number}</button>)}
+          {totalPages > 1 && <button type="button" disabled={currentPage === totalPages} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>Berikutnya</button>}
         </div>
       </article>
     </section>

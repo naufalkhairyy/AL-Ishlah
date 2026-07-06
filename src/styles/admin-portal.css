@@ -244,6 +244,10 @@ td small,
   color: #172218;
 }
 
+.admin-search:focus-within {
+  box-shadow: 0 0 0 3px rgba(7, 108, 32, 0.12);
+}
+
 .admin-search input {
   width: 100%;
   border: 0;
@@ -810,6 +814,14 @@ td small,
   gap: 12px;
   padding: 18px 28px;
   background: #f3f7ef;
+  overflow-x: auto;
+}
+
+.admin-pagination span {
+  margin-right: auto;
+  color: #52604e;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .admin-pagination button {
@@ -1139,6 +1151,49 @@ td small,
 
 .doc-detail .payment-proof-viewer {
   margin-top: 24px;
+}
+
+.doc-document-tabs {
+  display: grid;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.doc-document-tabs button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 66px;
+  padding: 12px 14px;
+  border: 1px solid #d2dfcd;
+  border-radius: 8px;
+  background: #f8fbf4;
+  color: #1c281a;
+  text-align: left;
+}
+
+.doc-document-tabs button.is-active {
+  border-color: #076c20;
+  background: #eef7ea;
+  box-shadow: inset 4px 0 0 #076c20;
+}
+
+.doc-document-tabs span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.doc-document-tabs strong,
+.doc-document-tabs small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doc-document-tabs small {
+  color: #52604e;
 }
 
 .document-proof-viewer .payment-proof-viewer__canvas {
@@ -1889,7 +1944,9 @@ td small,
 
 .admin-modal {
   position: relative;
-  width: min(520px, 100%);
+  width: min(760px, 100%);
+  max-height: min(88vh, 820px);
+  overflow: auto;
   display: grid;
   gap: 14px;
   padding: 32px;
@@ -1920,6 +1977,55 @@ td small,
   border: 0;
   border-radius: 50%;
   background: #eef3e8;
+}
+
+.applicant-detail {
+  display: grid;
+  gap: 18px;
+}
+
+.applicant-detail section {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid #d5e0d1;
+  border-radius: 10px;
+  background: #f8fbf4;
+}
+
+.applicant-detail h3 {
+  margin: 0;
+  color: #1e2b1c;
+  font-size: 15px;
+}
+
+.applicant-detail dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.applicant-detail dl div {
+  min-width: 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.applicant-detail dt {
+  color: #52604e;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.applicant-detail dd {
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+  color: #111;
+  font-weight: 700;
 }
 
 .admin-floating-help {

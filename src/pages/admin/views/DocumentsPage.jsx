@@ -9,6 +9,7 @@ import {
 } from "../../../service/documentService";
 import { getAuthenticatedPreviewUrl, openUploadedFile } from "../../../service/filePreview";
 import { getLocalFileUrl } from "../../../service/localFileStore";
+import { getInitials } from "../../../service/adminService";
 
 const statusFilters = [
   { key: "Semua", label: "Semua" },
@@ -31,6 +32,40 @@ function formatDocumentTime(value) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function getApplicantKey(document) {
+  return String(document.calonSantriId || document.userId || document.studentName || document.username || "unknown");
+}
+
+function buildApplicantGroups(documents) {
+  const groups = new Map();
+
+  documents.forEach((document) => {
+    const key = getApplicantKey(document);
+    const current = groups.get(key) || {
+      key,
+      name: document.studentName || document.username || "Calon Santri",
+      username: document.username,
+      initials: document.initials || getInitials(document.studentName || document.username || "CS"),
+      calonSantriId: document.calonSantriId,
+      santriId: document.santriId,
+      latestSubmittedAt: document.submittedAt,
+      documents: [],
+    };
+
+    current.documents.push(document);
+    current.latestSubmittedAt = [current.latestSubmittedAt, document.submittedAt]
+      .filter(Boolean)
+      .sort((a, b) => new Date(b) - new Date(a))[0] || current.latestSubmittedAt;
+    current.santriId = current.santriId || document.santriId;
+    current.calonSantriId = current.calonSantriId || document.calonSantriId;
+    groups.set(key, current);
+  });
+
+  return Array.from(groups.values()).sort((a, b) => (
+    (new Date(b.latestSubmittedAt).getTime() || 0) - (new Date(a.latestSubmittedAt).getTime() || 0)
+  ));
 }
 
 function DocumentPreview({ document }) {
@@ -141,7 +176,8 @@ function OpenDocumentButton({ document, children = "Perbesar" }) {
 export default function DocumentsPage({ notify }) {
   const [category, setCategory] = useState("Semua");
   const [statusFilter, setStatusFilter] = useState("Semua");
-  const [selected, setSelected] = useState(null);
+  const [selectedApplicantKey, setSelectedApplicantKey] = useState("");
+  const [selectedDocumentId, setSelectedDocumentId] = useState("");
   const [note, setNote] = useState("");
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -155,12 +191,16 @@ export default function DocumentsPage({ notify }) {
     try {
       const nextDocuments = await getAdminDocumentSubmissions();
       setDocuments(nextDocuments);
-      setSelected((current) => {
-        if (current && nextDocuments.some((item) => item.id === current.id)) {
-          return nextDocuments.find((item) => item.id === current.id);
-        }
-        return nextDocuments[0] || null;
-      });
+      setSelectedApplicantKey((current) => (
+        current && nextDocuments.some((item) => getApplicantKey(item) === current)
+          ? current
+          : nextDocuments[0] ? getApplicantKey(nextDocuments[0]) : ""
+      ));
+      setSelectedDocumentId((current) => (
+        current && nextDocuments.some((item) => item.id === current)
+          ? current
+          : nextDocuments[0]?.id || ""
+      ));
     } catch (requestError) {
       setError(requestError.message || "Gagal mengambil dokumen calon santri.");
     } finally {
@@ -177,19 +217,36 @@ export default function DocumentsPage({ notify }) {
     return () => window.removeEventListener("manual-documents-updated", refreshDocuments);
   }, []);
 
-  const queue = useMemo(() => documents.filter((document) => {
+  const filteredDocuments = useMemo(() => documents.filter((document) => {
     const categoryMatches = category === "Semua" || document.documentTitle === category;
     const statusMatches = statusFilter === "Semua" || document.status === statusFilter;
     return categoryMatches && statusMatches;
   }), [category, documents, statusFilter]);
 
-  const current = selected && queue.some((item) => item.id === selected.id)
-    ? selected
-    : queue[0] || null;
+  const applicantGroups = useMemo(() => buildApplicantGroups(filteredDocuments), [filteredDocuments]);
+  const currentGroup = applicantGroups.find((group) => group.key === selectedApplicantKey) || applicantGroups[0] || null;
+  const groupDocuments = currentGroup?.documents || [];
+  const current = groupDocuments.find((item) => item.id === selectedDocumentId) || groupDocuments[0] || null;
 
   const pendingCount = documents.filter((document) => document.status === "pending").length;
   const verifiedCount = documents.filter((document) => document.status === "verified").length;
   const rejectedCount = documents.filter((document) => document.status === "rejected").length;
+
+  useEffect(() => {
+    if (!currentGroup) {
+      setSelectedApplicantKey("");
+      setSelectedDocumentId("");
+      return;
+    }
+
+    if (selectedApplicantKey !== currentGroup.key) {
+      setSelectedApplicantKey(currentGroup.key);
+    }
+
+    if (!current || selectedDocumentId !== current.id) {
+      setSelectedDocumentId(current?.id || "");
+    }
+  }, [current, currentGroup, selectedApplicantKey, selectedDocumentId]);
   const completeDocument = async (status) => {
     if (!current) return;
     setReviewing(true);
@@ -278,27 +335,59 @@ export default function DocumentsPage({ notify }) {
           <div className="doc-guide"><h3>Panduan Verifikasi</h3><p>Pastikan file jelas, nama dokumen sesuai, dan data dapat dibaca sebelum disetujui.</p></div>
         </aside>
         <article className="doc-queue reveal-card">
-          <h3>Antrean Saat Ini</h3>
-          {queue.map((item) => (
-            <button className={current?.id === item.id ? "is-active" : ""} type="button" key={item.id} onClick={() => setSelected(item)}>
-              <span className="empty-thumb">{item.initials || item.documentTitle.slice(0, 2).toUpperCase()}</span>
+          <h3>Calon Santri</h3>
+          {applicantGroups.map((group) => {
+            const groupPending = group.documents.filter((document) => document.status === "pending").length;
+            const groupVerified = group.documents.filter((document) => document.status === "verified").length;
+            return (
+            <button
+              className={currentGroup?.key === group.key ? "is-active" : ""}
+              type="button"
+              key={group.key}
+              onClick={() => {
+                setSelectedApplicantKey(group.key);
+                setSelectedDocumentId(group.documents[0]?.id || "");
+                setNote("");
+              }}
+            >
+              <span className="empty-thumb">{group.initials}</span>
               <span className="doc-queue__text">
-                <strong>{item.studentName || item.username}</strong>
-                <small>{item.documentTitle}</small>
-                <em>{formatDocumentTime(item.submittedAt)}</em>
+                <strong>{group.name}</strong>
+                <small>{group.documents.length} dokumen, {groupPending} menunggu</small>
+                <em>Update {formatDocumentTime(group.latestSubmittedAt)}</em>
               </span>
-              <span className={`doc-review-badge is-${getStatusClass(item.status)}`}>{DOCUMENT_STATUS_LABELS[item.status]}</span>
+              <span className={`doc-review-badge is-${groupPending ? "pending" : "verified"}`}>{groupVerified}/{group.documents.length}</span>
             </button>
-          ))}
+            );
+          })}
           {error && <p>{error}</p>}
-          {!queue.length && !error && <p>{loading ? "Memuat dokumen..." : "Belum ada dokumen pada kategori ini."}</p>}
+          {!applicantGroups.length && !error && <p>{loading ? "Memuat dokumen..." : "Belum ada calon santri pada filter ini."}</p>}
         </article>
         <section className="doc-detail reveal-card">
           {current ? (
             <>
               <div className="admin-panel__head">
-                <div><h2>Detail Dokumen</h2><p>{current.documentTitle} - {current.studentName || current.username}</p></div>
+                <div><h2>{currentGroup?.name || "Detail Calon Santri"}</h2><p>Pilih dokumen di bawah, lalu verifikasi satu per satu.</p></div>
                 <OpenDocumentButton document={current}>Perbesar</OpenDocumentButton>
+              </div>
+              <div className="doc-document-tabs">
+                {groupDocuments.map((document) => (
+                  <button
+                    className={current.id === document.id ? "is-active" : ""}
+                    type="button"
+                    key={document.id}
+                    onClick={() => {
+                      setSelectedDocumentId(document.id);
+                      setNote(document.reviewNote || "");
+                    }}
+                  >
+                    <span>
+                      <strong>{document.documentTitle}</strong>
+                      <small>{formatDocumentTime(document.submittedAt)}</small>
+                    </span>
+                    <em className={`doc-review-badge is-${getStatusClass(document.status)}`}>{DOCUMENT_STATUS_LABELS[document.status]}</em>
+                  </button>
+                ))}
               </div>
               <DocumentPreview document={current} />
               <div className="doc-review-summary">

@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "../../service/authservice";
+import { useAppPopup } from "../../components/AppPopup";
 import "../../styles/login.css";
 import logo from "../../assets/logo.png";
 
 function Login({ goSignup, goHome, adminOnly = false }) {
   const navigate = useNavigate();
+  const { showPopup } = useAppPopup();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,7 +16,7 @@ function Login({ goSignup, goHome, adminOnly = false }) {
     event?.preventDefault();
 
     if (!username.trim() || !password.trim()) {
-      alert("Username dan password wajib diisi.");
+      showPopup("Data belum lengkap", "Username dan password wajib diisi.", "warning");
       return;
     }
 
@@ -23,7 +25,7 @@ function Login({ goSignup, goHome, adminOnly = false }) {
     try {
       const result = await loginUser(username.trim(), password, adminOnly ? "admin" : "");
       const user = result.data?.user;
-      alert(result.message || "Login berhasil.");
+      showPopup("Login berhasil", result.message || "Anda berhasil masuk.", "success");
 
       if (adminOnly || user?.role === "admin") {
         navigate("/admin/dashboard");
@@ -33,7 +35,7 @@ function Login({ goSignup, goHome, adminOnly = false }) {
         navigate("/santri/dashboard");
       }
     } catch (error) {
-      alert(error.message || "Login gagal.");
+      showPopup("Login gagal", error.message || "Periksa username dan password Anda.", "error");
     } finally {
       setLoading(false);
     }
@@ -70,7 +72,7 @@ function Login({ goSignup, goHome, adminOnly = false }) {
           </div>
 
           <div className="forgot">
-            <button type="button" onClick={() => alert("Silakan hubungi admin pesantren untuk reset password.")}>
+            <button type="button" onClick={() => showPopup("Reset password", "Silakan hubungi admin pesantren untuk reset password.", "info")}>
               Forgot password?
             </button>
           </div>

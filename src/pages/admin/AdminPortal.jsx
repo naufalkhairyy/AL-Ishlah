@@ -4,7 +4,6 @@ import "../../styles/admin-portal.css";
 import logo from "../../assets/logo.png";
 import AdminIcon from "./components/AdminIcon";
 import Modal from "./components/Modal";
-import NotificationCenter from "./components/NotificationCenter";
 import ToastStack from "./components/ToastStack";
 import { navItems } from "./data/adminData";
 import { getAuthToken, getAuthUser } from "../../service/api";
@@ -53,15 +52,6 @@ export default function AdminPortal() {
     setModal({ title, message, body, eyebrow });
   };
 
-  const openNotifications = () => {
-    openModal(
-      "Notifikasi Admin",
-      "Untuk sekarang ini masih demo frontend. Nanti bagian ini tinggal disambungkan ke endpoint backend.",
-      <NotificationCenter notify={notify} />,
-      "Backend Ready"
-    );
-  };
-
   const setSection = (target) => navigate(`/admin/${target}`);
 
   const handleLogout = async () => {
@@ -97,10 +87,6 @@ export default function AdminPortal() {
             </NavLink>
           ))}
         </nav>
-        <div className="admin-sidebar__card">
-          <small>Sistem Akademik v2.4</small>
-          <button type="button" onClick={() => notify("Pusat Bantuan", "Tiket bantuan nanti dibuat lewat API.")}>Pusat Bantuan</button>
-        </div>
         <div className="admin-sidebar__user">
           <img src={logo} alt="Logo Al-Azhar" />
           <span><strong>Admin Utama</strong><small>Administrator</small></span>
@@ -113,7 +99,6 @@ export default function AdminPortal() {
       <div className="admin-main">
         <header className="admin-topbar">
           <label className="admin-search">
-            <AdminIcon name="search" />
             <input
               type="search"
               placeholder={searchPlaceholder}
@@ -125,17 +110,12 @@ export default function AdminPortal() {
             />
           </label>
           <div className="admin-topbar__actions">
-            <button type="button" aria-label="Notifikasi" onClick={openNotifications}><AdminIcon name="bell" /><span /></button>
-            <button type="button" aria-label="Pengaturan" onClick={() => openModal("Pengaturan Admin", "Preferensi notifikasi, periode akademik, role admin, dan akses staf nanti disimpan di backend.", null, "Pengaturan")}>
-              <AdminIcon name="gear" />
-            </button>
             <div className="admin-topbar__title"><strong>Portal Administrasi Pesantren</strong><small>Senin, 24 Mei 2024</small></div>
           </div>
         </header>
         <main className="admin-content">{renderPage()}</main>
       </div>
 
-      <button className="admin-floating-help" type="button" onClick={() => notify("Helpdesk aktif", "Pesan bantuan nanti dikirim ke backend.")}>?</button>
       <ToastStack toasts={toasts} />
       <Modal modal={modal} onClose={() => setModal(null)} />
     </div>

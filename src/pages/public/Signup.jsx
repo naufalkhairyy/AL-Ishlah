@@ -2,10 +2,12 @@ import { useState } from "react";
 import "../../styles/signup.css";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../../service/authservice";
+import { useAppPopup } from "../../components/AppPopup";
 import logo from "../../assets/logo.png";
 
 function Signup({ goLogin }) {
   const navigate = useNavigate();
+  const { showPopup } = useAppPopup();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -13,17 +15,17 @@ function Signup({ goLogin }) {
 
   const handleSignup = async () => {
     if (!username.trim() || !password.trim()) {
-      alert("Username dan password wajib diisi.");
+      showPopup("Data belum lengkap", "Username dan password wajib diisi.", "warning");
       return;
     }
 
     if (password.length < 6) {
-      alert("Password minimal 6 karakter.");
+      showPopup("Password terlalu pendek", "Password minimal 6 karakter.", "warning");
       return;
     }
 
     if (password !== confirmPassword) {
-      alert("Konfirmasi password tidak sama.");
+      showPopup("Konfirmasi tidak sama", "Konfirmasi password harus sama dengan password.", "warning");
       return;
     }
 
@@ -31,10 +33,10 @@ function Signup({ goLogin }) {
 
     try {
       const result = await registerUser(username.trim(), password);
-      alert(result.message || "Akun berhasil dibuat.");
+      showPopup("Akun berhasil dibuat", result.message || "Silakan lanjut melengkapi data calon santri.", "success");
       navigate("/santri/dashboard");
     } catch (error) {
-      alert(error.message || "Signup gagal.");
+      showPopup("Signup gagal", error.message || "Akun gagal dibuat.", "error");
     } finally {
       setLoading(false);
     }
@@ -44,8 +46,8 @@ function Signup({ goLogin }) {
     <div className="signup-wrapper">
       <div className="signup-left">
         <div className="signup-box">
-          <img src={logo} className="signup-logo" />
-          <h2>Sign up into your account</h2>
+          <img src={logo} className="signup-logo" alt="Logo Al Ishlah Al Islamy" />
+          <h2>Daftar Akun Calon Santri</h2>
 
           <div className="grid">
             <div>
@@ -59,7 +61,7 @@ function Signup({ goLogin }) {
             </div>
             <div>
               <label>Role :</label>
-              <input type="text" value="calon_santri" disabled />
+              <input type="hidden" name="role" value="calon_santri" />
             </div>
 
             <div>
@@ -85,7 +87,7 @@ function Signup({ goLogin }) {
           </button>
 
           <p className="back-login" onClick={goLogin || (() => navigate("/login"))}>
-            Back to Login
+            Kembali ke Login
           </p>
         </div>
       </div>
