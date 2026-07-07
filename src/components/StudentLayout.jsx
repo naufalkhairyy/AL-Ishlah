@@ -40,7 +40,7 @@ function StudentLayoutContent() {
         <NavLink to="/santri/dashboard" className="student-brand">
           <span className="student-brand__mark">A</span>
           <span>
-            <strong>Pesantren Al Ishhlah Al Islamy</strong>
+            <strong>Pesantren Al Ishlah Al Islamy</strong>
             <small>Portal Calon Santri</small>
           </span>
         </NavLink>
@@ -74,7 +74,7 @@ function StudentLayoutContent() {
       <div className="student-main">
         <header className="student-topbar">
           <div className="student-topbar__title">
-            <strong>Al Ishhlah Digital</strong>
+            <strong>Al Ishlah Digital</strong>
             <span>Portal calon santri</span>
           </div>
           <label className="student-search">

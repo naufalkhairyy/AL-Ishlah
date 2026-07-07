@@ -90,7 +90,7 @@ export default function FinancePage({ notify }) {
       ));
       setError("");
     } catch (loadError) {
-      setError(loadError.message || "Gagal mengambil data pembayaran dari backend.");
+      setError(loadError.message || "Gagal mengambil data pembayaran.");
     }
   };
 
@@ -110,7 +110,7 @@ export default function FinancePage({ notify }) {
         })
         .catch((loadError) => {
           if (!active) return;
-          setError(loadError.message || "Gagal mengambil data pembayaran dari backend.");
+          setError(loadError.message || "Gagal mengambil data pembayaran.");
         });
     };
 
@@ -156,7 +156,7 @@ export default function FinancePage({ notify }) {
         `${payment.studentName || payment.username} ditandai ${statusLabels[status]}.`,
       );
     } catch (reviewError) {
-      notify("Gagal update status", reviewError.message || "Status pembayaran gagal diperbarui di backend.");
+      notify("Gagal update status", reviewError.message || "Status pembayaran gagal diperbarui.");
     }
   };
 

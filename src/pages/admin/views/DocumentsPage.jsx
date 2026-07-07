@@ -294,7 +294,7 @@ export default function DocumentsPage({ notify }) {
       );
       setNote("");
     } catch (requestError) {
-      notify("Gagal membuat ID santri", requestError.message || "Gagal promote calon santri.");
+      notify("Gagal membuat ID santri", requestError.message || "Gagal mengaktifkan calon santri.");
     } finally {
       setPromoting(false);
     }
@@ -305,7 +305,7 @@ export default function DocumentsPage({ notify }) {
       <div className="admin-page-head">
         <div>
           <h1>Antrean Verifikasi</h1>
-          <p>{loading ? "Mengambil dokumen dari backend..." : "Tinjau kelengkapan berkas calon santri tahun ajaran 2024/2025."}</p>
+          <p>{loading ? "Mengambil dokumen..." : "Tinjau kelengkapan berkas calon santri tahun ajaran 2024/2025."}</p>
         </div>
         <div className="admin-head-actions">
           <span className="admin-pill admin-pill--pink">{pendingCount} Menunggu</span>

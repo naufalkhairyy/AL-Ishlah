@@ -19,7 +19,7 @@ export default function NotificationCenter({ notify }) {
         </button>
       ))}
       <div className="backend-inline-note">
-        Endpoint contoh nanti: <code>GET /api/admin/notifications</code>
+        Notifikasi admin akan tampil otomatis saat ada pembaruan.
       </div>
     </div>
   );

@@ -22,9 +22,9 @@ export default function QuickApplicantForm({ notify }) {
       });
       setUsername("");
       setPassword("");
-      notify("Pendaftar ditambahkan", "Akun calon santri berhasil dibuat di backend.");
+      notify("Pendaftar ditambahkan", "Akun calon santri berhasil dibuat.");
     } catch (error) {
-      notify("Gagal menambahkan", error.message || "Backend menolak data pendaftar.");
+      notify("Gagal menambahkan", error.message || "Data pendaftar belum dapat diproses.");
     } finally {
       setSaving(false);
     }

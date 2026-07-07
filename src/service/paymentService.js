@@ -6,7 +6,7 @@ export const REGISTRATION_FEE = 350000;
 export const BANK_ACCOUNT = {
   bank: "Bank Syariah Indonesia",
   number: "71340000202415",
-  name: "Pesantren Al Ishhlah Al Islamy",
+  name: "Pesantren Al Ishlah Al Islamy",
 };
 
 export function formatCurrency(amount) {
@@ -362,7 +362,7 @@ export async function submitManualPayment(file) {
   } catch (error) {
     throw new Error(
       error.message ||
-      "Upload bukti bayar ke backend gagal. Pastikan server Laravel aktif, migration sudah dijalankan, dan coba upload ulang.",
+      "Upload bukti bayar gagal. Pastikan server aktif, data sudah siap, dan coba upload ulang.",
     );
   }
 }
@@ -417,7 +417,7 @@ export async function reviewPayment(paymentId, status, reviewNote = "") {
         if (saved?.status === status) return saved;
         if (updated?.status === status) return updated;
 
-        throw new Error("Backend merespons berhasil, tetapi status pembayaran di database belum berubah.");
+        throw new Error("Server merespons berhasil, tetapi status pembayaran di database belum berubah.");
       } catch (error) {
         lastError = error;
         if (![404, 405, 422].includes(error.status)) throw error;

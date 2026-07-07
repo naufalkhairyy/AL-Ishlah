@@ -44,7 +44,7 @@ export default function StudentPayments() {
         if (active) setPayment(currentPayment);
       })
       .catch((error) => {
-        if (active) console.warn("Gagal mengambil pembayaran backend:", error);
+        if (active) console.warn("Gagal mengambil pembayaran:", error);
       });
 
     return () => {

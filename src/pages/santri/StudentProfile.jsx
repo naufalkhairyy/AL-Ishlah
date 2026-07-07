@@ -133,7 +133,7 @@ export default function StudentProfile() {
       })
       .catch((error) => {
         if (!shouldApply()) return;
-        console.warn("Gagal mengambil profil backend:", error);
+        console.warn("Gagal mengambil profil:", error);
       })
       .finally(() => {
         if (!shouldApply()) return;
@@ -162,7 +162,7 @@ export default function StudentProfile() {
       const nextProfile = { ...form, ...savedProfile };
       setForm(nextProfile);
       updateProfile(nextProfile);
-      alert("Data profil berhasil disimpan ke backend.");
+      alert("Data profil berhasil disimpan.");
       return true;
     } catch (error) {
       alert(error.message || "Data profil gagal disimpan.");
@@ -176,10 +176,10 @@ export default function StudentProfile() {
     <section className="student-page">
       <div className="student-page-title">
         <h1>Profil Santri</h1>
-        <p>Isi data calon santri sesuai field yang dibutuhkan backend.</p>
+        <p>Isi data calon santri sesuai formulir pendaftaran.</p>
       </div>
 
-      {loading && <div className="student-note">Mengambil data profil dari backend...</div>}
+      {loading && <div className="student-note">Mengambil data profil...</div>}
 
       <div className="profile-grid">
         {sections.map((section) => (
@@ -203,7 +203,7 @@ export default function StudentProfile() {
       </div>
 
       <div className="student-note">
-        Data profil disimpan ke backend melalui endpoint calon santri, sekolah asal, ayah, ibu, dan wali.
+        Data profil calon santri, sekolah asal, ayah, ibu, dan wali akan tersimpan di sistem pendaftaran.
       </div>
       <div className="student-action-row">
         <button className="student-secondary-action" type="button" onClick={() => navigate("/santri/dashboard")}>Kembali</button>

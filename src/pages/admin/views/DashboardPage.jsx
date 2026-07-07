@@ -54,7 +54,7 @@ export default function DashboardPage({ openModal, notify, setSection }) {
       <div className="admin-page-head">
         <div>
           <h1>Assalamu'alaikum, Admin</h1>
-          <p>{loading ? "Mengambil ringkasan dari database..." : "Ringkasan pendaftaran dari database backend."}</p>
+          <p>{loading ? "Mengambil ringkasan dari database..." : "Ringkasan pendaftaran dari database."}</p>
         </div>
         <button className="admin-primary" type="button" onClick={() => openModal("Pendaftaran Baru", "Form input cepat siap digunakan untuk menambahkan calon santri manual.", <QuickApplicantForm notify={notify} />)}>
           <span>+</span> Input Pendaftaran Baru
@@ -65,9 +65,9 @@ export default function DashboardPage({ openModal, notify, setSection }) {
 
       <div className="admin-kpi-grid">
         <KpiCard title="Akun Calon Santri" value={calonUsers.length} note="Dari tabel users" badge="DB" />
-        <KpiCard title="Data Santri" value={resources.santri.length} note="Dari endpoint santri" badge="Live" />
+        <KpiCard title="Data Santri" value={resources.santri.length} note="Dari data santri" badge="Live" />
         <KpiCard title="Ujian Aktif" value={activeExams.length} note={`${resources.ujian.length} total ujian`} badge="Aktif" tone="pink" />
-        <KpiCard title="Jadwal Ujian" value={resources.jadwal.length} note="Dari endpoint jadwal-ujian" badge="DB" tone="gray" />
+        <KpiCard title="Jadwal Ujian" value={resources.jadwal.length} note="Dari jadwal ujian" badge="DB" tone="gray" />
       </div>
 
       <div className="dashboard-panels">
@@ -91,7 +91,7 @@ export default function DashboardPage({ openModal, notify, setSection }) {
               );
             })}
           </div>
-          <div className="admin-legend"><span /> Data live dari backend <i /> Tanpa endpoint statistik khusus</div>
+          <div className="admin-legend"><span /> Data live dari database <i /> Statistik sistem</div>
         </article>
 
         <aside className="admin-panel activity-panel reveal-card">
@@ -107,7 +107,7 @@ export default function DashboardPage({ openModal, notify, setSection }) {
               <p><strong>{item[0]}</strong> {item[1]} <small>{item[2]}</small></p>
             </button>
           ))}
-          <button className="admin-outline" type="button" onClick={() => openModal("Semua Aktivitas", "Daftar aktivitas lengkap nanti diambil dari backend.")}>Lihat Semua Aktivitas</button>
+          <button className="admin-outline" type="button" onClick={() => openModal("Semua Aktivitas", "Daftar aktivitas lengkap diambil dari database.")}>Lihat Semua Aktivitas</button>
         </aside>
       </div>
 

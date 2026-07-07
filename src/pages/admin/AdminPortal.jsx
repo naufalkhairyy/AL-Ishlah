@@ -4,7 +4,6 @@ import "../../styles/admin-portal.css";
 import logo from "../../assets/logo.png";
 import AdminIcon from "./components/AdminIcon";
 import Modal from "./components/Modal";
-import ToastStack from "./components/ToastStack";
 import { navItems } from "./data/adminData";
 import { getAuthToken, getAuthUser } from "../../service/api";
 import { logoutUser } from "../../service/authservice";
@@ -20,7 +19,6 @@ export default function AdminPortal() {
   const user = getAuthUser("admin");
   const isAdmin = Boolean(getAuthToken("admin") && user?.role === "admin");
   const activeSection = navItems.some((item) => item.id === section) ? section : "dashboard";
-  const [toasts, setToasts] = useState([]);
   const [modal, setModal] = useState(null);
   const searchPlaceholder = useMemo(() => ({
     dashboard: "Cari santri atau dokumen...",
@@ -35,7 +33,7 @@ export default function AdminPortal() {
       <div className="admin-auth-block">
         <section>
           <h1>Akses Admin Ditolak</h1>
-          <p>Silakan login memakai akun admin agar endpoint admin seperti data pembayaran tidak mengembalikan 403 Forbidden.</p>
+          <p>Silakan login memakai akun admin agar data administrasi dapat diakses.</p>
           <button type="button" onClick={() => navigate("/admin/login")}>Login Admin</button>
         </section>
       </div>
@@ -43,9 +41,7 @@ export default function AdminPortal() {
   }
 
   const notify = (title, message, type = "success") => {
-    const id = Date.now();
-    setToasts((items) => [...items, { id, title, message, type }]);
-    window.setTimeout(() => setToasts((items) => items.filter((item) => item.id !== id)), 3200);
+    setModal({ title, message, body: null, eyebrow: type === "error" ? "Perlu Perhatian" : "Notifikasi" });
   };
 
   const openModal = (title, message, body = null, eyebrow = "Aksi Admin") => {
@@ -58,7 +54,7 @@ export default function AdminPortal() {
     try {
       await logoutUser("admin");
     } catch {
-      // Session lokal tetap dihapus oleh logoutUser walaupun backend gagal.
+      // Session lokal tetap dihapus oleh logoutUser walaupun server tidak merespons.
     } finally {
       navigate("/admin/login", { replace: true });
     }
@@ -77,7 +73,7 @@ export default function AdminPortal() {
       <aside className="admin-sidebar">
         <NavLink className="admin-brand" to="/admin/dashboard">
           <span className="admin-brand__mark"><AdminIcon name="bank" /></span>
-          <span><strong>Al-Azhar Admin</strong><small>Portal Akademik</small></span>
+          <span><strong>Al Ishlah Admin</strong><small>Portal Akademik</small></span>
         </NavLink>
         <nav className="admin-nav" aria-label="Navigasi admin">
           {navItems.map((item) => (
@@ -88,7 +84,7 @@ export default function AdminPortal() {
           ))}
         </nav>
         <div className="admin-sidebar__user">
-          <img src={logo} alt="Logo Al-Azhar" />
+          <img src={logo} alt="Logo Al Ishlah" />
           <span><strong>Admin Utama</strong><small>Administrator</small></span>
         </div>
         <button className="admin-sidebar__logout" type="button" onClick={handleLogout}>
@@ -116,7 +112,6 @@ export default function AdminPortal() {
         <main className="admin-content">{renderPage()}</main>
       </div>
 
-      <ToastStack toasts={toasts} />
       <Modal modal={modal} onClose={() => setModal(null)} />
     </div>
   );

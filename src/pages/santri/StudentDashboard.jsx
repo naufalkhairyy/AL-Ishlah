@@ -104,7 +104,7 @@ export default function StudentDashboard() {
         <p>Dashboard Santri</p>
         <h1>Ahlan wa Sahlan, {name}!</h1>
         <span>
-          Selamat datang di portal pendaftaran Pesantren Al Ishhlah Al Islamy.
+          Selamat datang di portal pendaftaran Pesantren Al Ishlah Al Islamy.
           Lanjutkan tahap pendaftaran sampai semua langkah selesai.
         </span>
       </div>
@@ -179,7 +179,7 @@ export default function StudentDashboard() {
           <h2>Punya Pertanyaan?</h2>
           <p>Hubungi admin jika ada kendala saat mengisi profil, upload dokumen, atau pembayaran.</p>
           <button type="button" onClick={() => window.open("https://wa.me/6281234567890", "_blank")}>Live Chat</button>
-          <button type="button" onClick={() => window.location.href = "mailto:admin@alishhlah.sch.id"}>Email Admin</button>
+          <button type="button" onClick={() => window.location.href = "mailto:admin@alishlah.sch.id"}>Email Admin</button>
         </aside>
       </div>
 

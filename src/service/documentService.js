@@ -228,7 +228,7 @@ function getBackendDocumentMeta(record, backendField, fallbackUrl) {
       arrayDocument?.mime_type ||
       arrayDocument?.mimeType ||
       arrayDocument?.fileType ||
-      "File backend",
+      "File dokumen",
     fileSize: record?.[`${backendField}_size`] || arrayDocument?.size || arrayDocument?.fileSize || null,
   };
 }

@@ -81,7 +81,7 @@ export default function StudentExam() {
           if (!active) return;
           setSchedules([]);
           setScheduleNotice(isAccessDeniedError(scheduleError)
-            ? "Jadwal rinci belum dapat ditampilkan untuk akun ini. Akses tetap mengikuti jadwal yang tersedia di frontend."
+            ? "Jadwal rinci belum dapat ditampilkan untuk akun ini. Akses tetap mengikuti jadwal yang tersedia."
             : scheduleError.message || "Jadwal rinci belum dapat dimuat.");
         }
       } catch (error) {
@@ -171,7 +171,7 @@ export default function StudentExam() {
               ? "Pilih ujian aktif dari daftar di bawah. Sistem akan mengecek jadwal sebelum ruang ujian dibuka."
               : santriId
                 ? "Profil, dokumen wajib, dan pembayaran harus selesai sebelum ujian dibuka."
-                : "Admin harus menyetujui dokumen sampai backend membuat record santri."}
+                : "Admin harus menyetujui dokumen sampai data peserta ujian aktif."}
           </p>
         </div>
         <div className="exam-status-panel__stats">

@@ -130,18 +130,18 @@ function getSubmitErrorMessage(error, options = {}) {
       combined.includes("jadwal ujian untuk anda tidak sesuai") ||
       combined.includes("jadwal")
     ) {
-      return "Waktu habis. Ujian dikunci oleh timer frontend.";
+      return "Waktu habis. Ujian dikunci oleh timer.";
     }
   }
 
   if (error.status === 409) return "Anda sudah mengerjakan ujian. Silahkan tunggu hasilnya.";
-  if (error.status === 422) return message || "Payload jawaban tidak lolos validasi backend.";
+  if (error.status === 422) return message || "Jawaban tidak lolos validasi sistem.";
   if (combined.includes("ujian belum dimulai")) return "Ujian belum dimulai.";
   if (combined.includes("waktu pengerjaan ujian sudah habis")) return "Waktu pengerjaan ujian sudah habis.";
   if (combined.includes("jadwal ujian untuk santri ini tidak ditemukan")) return "Jadwal ujian untuk santri ini belum dibuat. Silakan hubungi admin.";
   if (combined.includes("jadwal ujian untuk anda tidak sesuai")) return "Jadwal ujian untuk Anda tidak sesuai.";
   if (combined.includes("santri_id")) {
-    return "Akun ini belum punya santri_id. Backend harus membuat record santri dulu sebelum calon santri bisa submit ujian.";
+    return "Akun ini belum memiliki data peserta ujian. Silakan hubungi admin sebelum mengirim jawaban.";
   }
 
   return message;
@@ -315,7 +315,7 @@ export default function StudentExamWork() {
         <div className="student-card__heading">
           <div>
             <h2>{exam?.nama_ujian || "Ujian"}</h2>
-            <p>Timer dan batas akses mengikuti jadwal ujian dari backend.</p>
+            <p>Timer dan batas akses mengikuti jadwal ujian yang sudah ditetapkan.</p>
           </div>
           <span className={`student-badge${isExamActive ? " student-badge--pink" : ""}`}>{timerMessage || "Memuat"}</span>
         </div>

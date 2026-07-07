@@ -115,14 +115,14 @@ function ApplicantEditForm({ item, onSaved, notify }) {
       notify("Data santri diperbarui", `${item.name} berhasil disimpan.`);
       await onSaved();
     } catch (requestError) {
-      notify("Gagal menyimpan data", requestError.message || "Endpoint update santri belum merespons.");
+      notify("Gagal menyimpan data", requestError.message || "Data santri belum dapat diperbarui.");
     } finally {
       setSaving(false);
     }
   };
 
   if (!studentId) {
-    return <p>Data santri belum memiliki ID, edit belum bisa dikirim ke backend.</p>;
+    return <p>Data santri belum memiliki ID, edit belum bisa dikirim.</p>;
   }
 
   return (
@@ -233,7 +233,7 @@ export default function ProfilePage({ openModal, notify }) {
   const openApplicantEdit = (item) => {
     openModal(
       `Edit ${item.name}`,
-      "Ubah data santri yang tersimpan di backend.",
+      "Ubah data santri yang tersimpan di sistem.",
       <ApplicantEditForm item={item} notify={notify} onSaved={() => loadApplicants(true)} />,
       "Edit Data Santri",
     );
@@ -245,7 +245,7 @@ export default function ProfilePage({ openModal, notify }) {
         <div>
           <span className="admin-year">TA 2024/2025</span>
           <h1>Profil Calon Santri</h1>
-          <p>{loading ? "Mengambil data calon santri dari database..." : "Kelola akun dan data calon santri dari backend."}</p>
+          <p>{loading ? "Mengambil data calon santri dari database..." : "Kelola akun dan data calon santri."}</p>
         </div>
         <div className="admin-head-actions">
           <button className="admin-outline" type="button" onClick={() => downloadText("data-calon-santri.csv", csv)}>Ekspor Data</button>
@@ -256,7 +256,7 @@ export default function ProfilePage({ openModal, notify }) {
       <div className="profile-stats">
         <KpiCard title="Total Pendaftar" value={rows.length} note="Akun role calon_santri" />
         <KpiCard title="Menunggu Data Santri" value={pendingCount} note="Belum punya record santri" badge="!" tone="pink" />
-        <article className="admin-success-card reveal-card"><p>Data Santri Tersimpan</p><strong>{verifiedCount}</strong><small>Dari endpoint santri</small></article>
+        <article className="admin-success-card reveal-card"><p>Data Santri Tersimpan</p><strong>{verifiedCount}</strong><small>Dari data santri</small></article>
       </div>
 
       {error && <div className="admin-panel reveal-card">{error}</div>}

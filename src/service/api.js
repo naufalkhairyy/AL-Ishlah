@@ -78,7 +78,7 @@ export async function apiRequest(path, options = {}) {
     });
   } catch (requestError) {
     const error = new Error(
-      `Gagal terhubung ke backend (${API_BASE_URL}). Periksa koneksi, domain CORS backend, atau VITE_API_BASE_URL.`
+      `Gagal terhubung ke server (${API_BASE_URL}). Periksa koneksi, domain CORS, atau VITE_API_BASE_URL.`
     );
     error.cause = requestError;
     error.isNetworkError = true;

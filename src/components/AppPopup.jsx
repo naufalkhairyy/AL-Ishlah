@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 const AppPopupContext = createContext({ showPopup: () => {} });
 
@@ -15,6 +15,17 @@ export function AppPopupProvider({ children }) {
       type,
     });
   }, []);
+
+  useEffect(() => {
+    const originalAlert = window.alert;
+    window.alert = (message = "") => {
+      showPopup("Notifikasi", String(message), "info");
+    };
+
+    return () => {
+      window.alert = originalAlert;
+    };
+  }, [showPopup]);
 
   const value = useMemo(() => ({ showPopup, closePopup }), [showPopup, closePopup]);
 

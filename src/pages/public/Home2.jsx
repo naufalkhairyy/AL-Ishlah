@@ -23,7 +23,7 @@ export default function Home2() {
     <>
       {/* NAVBAR */}
       <nav className="nav">
-        <div className="nav-logo">🕌 Pesantren Al-Hidayah</div>
+        <div className="nav-logo">Pesantren Al Ishlah</div>
         <ul className="nav-links">
           <li><a href="#">Beranda</a></li>
           <li><a href="#">Program</a></li>
@@ -114,7 +114,7 @@ export default function Home2() {
       <footer>
         <div className="footer-grid">
           <div className="footer-brand">
-            <h4>🕌 Pesantren Al-Hidayah</h4>
+            <h4>Pesantren Al Ishlah</h4>
             <p>Sistem Informasi Pesantren Modern yang transparan dan mudah diakses</p>
           </div>
           <div className="footer-col">
@@ -131,7 +131,7 @@ export default function Home2() {
             <p>Jl. Pesantren No. 1</p>
           </div>
         </div>
-        <div className="footer-bottom">© 2025 Pesantren Al-Hidayah. Semua hak dilindungi.</div>
+        <div className="footer-bottom">© 2025 Pesantren Al Ishlah. Semua hak dilindungi.</div>
       </footer>
     </>
   );

@@ -198,7 +198,7 @@ export default function ExamPage({ openModal, notify }) {
       const data = await getAdminExamQuestions(ujianId);
       setQuestions([...data].sort(sortByQuestionNumber));
     } catch (requestError) {
-      notify("Gagal mengambil soal", requestError.message || "Endpoint soal belum merespons.");
+      notify("Gagal mengambil soal", requestError.message || "Soal belum dapat dimuat.");
     } finally {
       setQuestionLoading(false);
     }
@@ -262,7 +262,7 @@ export default function ExamPage({ openModal, notify }) {
       rows.set(santriId, {
         id: santriId,
         name: getStudentDisplayName(student, santriId),
-        source: "Status backend",
+        source: "Status sistem",
         score: student.nilai_akhir || student.nilai_total || "-",
         examCount: "-",
       });
@@ -499,7 +499,7 @@ export default function ExamPage({ openModal, notify }) {
       return;
     }
 
-    const confirmed = window.confirm(`Reset jawaban ${studentName} untuk ujian ini? Peserta bisa mengerjakan satu kali lagi setelah record backend terhapus.`);
+    const confirmed = window.confirm(`Reset jawaban ${studentName} untuk ujian ini? Peserta bisa mengerjakan satu kali lagi setelah data jawaban terhapus.`);
     if (!confirmed) return;
 
     try {
@@ -507,7 +507,7 @@ export default function ExamPage({ openModal, notify }) {
       await refreshExamData(selectedExamId);
       notify("Jawaban direset", `${answerIds.length} jawaban ${studentName} dihapus. Peserta bisa ujian lagi bila jadwal masih terbuka.`);
     } catch (requestError) {
-      notify("Reset gagal", requestError.message || "Endpoint hapus jawaban belum tersedia di backend.");
+      notify("Reset gagal", requestError.message || "Fitur hapus jawaban belum tersedia.");
     }
   };
 
@@ -637,7 +637,7 @@ export default function ExamPage({ openModal, notify }) {
               </label>
               <label>
                 <span>Durasi Pengerjaan</span>
-                <input type="number" min="0" value={questionForm.durasi_pengerjaan} onChange={(event) => setFormField("durasi_pengerjaan", event.target.value)} placeholder="Detik atau menit sesuai backend" />
+                <input type="number" min="0" value={questionForm.durasi_pengerjaan} onChange={(event) => setFormField("durasi_pengerjaan", event.target.value)} placeholder="Detik atau menit" />
               </label>
               <label>
                 <span>File Soal</span>
@@ -754,7 +754,7 @@ export default function ExamPage({ openModal, notify }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {questionLoading && <tr><td colSpan="7">Mengambil soal dari backend...</td></tr>}
+                  {questionLoading && <tr><td colSpan="7">Mengambil soal...</td></tr>}
                   {!questionLoading && visibleQuestions.map((question) => (
                     <tr key={getQuestionId(question) || question.nomor_soal}>
                       <td><strong>{question.nomor_soal || "-"}</strong></td>
@@ -793,7 +793,7 @@ export default function ExamPage({ openModal, notify }) {
               <div>
                 <span className="question-step">5</span>
                 <h2>{editingScheduleId ? "Edit Jadwal Ujian" : "Generate Jadwal Peserta"}</h2>
-                <p>{editingScheduleId ? "Ubah tanggal, waktu, ruang, atau keterangan jadwal yang sudah dibuat." : "Backend akan membuat jadwal untuk santri eligible. Checklist peserta bersifat opsional."}</p>
+                <p>{editingScheduleId ? "Ubah tanggal, waktu, ruang, atau keterangan jadwal yang sudah dibuat." : "Sistem akan membuat jadwal untuk santri eligible. Checklist peserta bersifat opsional."}</p>
               </div>
             </div>
             <form className="question-form" onSubmit={handleScheduleSubmit}>
@@ -868,7 +868,7 @@ export default function ExamPage({ openModal, notify }) {
                     );
                   })}
                   {!schedulableSantri.length && (
-                    <div className="schedule-student-empty">Tidak ada santri belum terjadwal dari daftar frontend. Backend tetap akan memvalidasi eligible saat generate.</div>
+                    <div className="schedule-student-empty">Tidak ada santri belum terjadwal dari daftar tampilan. Sistem tetap akan memvalidasi peserta eligible saat generate.</div>
                   )}
                 </div>
               </div>}
@@ -958,7 +958,7 @@ export default function ExamPage({ openModal, notify }) {
                     {tableSizeOptions.map((size) => <option value={size} key={size}>{size}</option>)}
                   </select>
                 </label>
-                <button type="button" onClick={() => notify("Records dibuka", "Semua catatan nilai nanti dari backend.")}>Lihat Semua</button>
+                <button type="button" onClick={() => notify("Records dibuka", "Semua catatan nilai diambil dari database.")}>Lihat Semua</button>
               </div>
             </div>
             <div className="grading-cards"><span>Pending Review <b>{pendingAnswers.length} Submissions</b></span><span>Finalized <b>{gradedAnswers.length} Students</b></span></div>
@@ -991,7 +991,7 @@ export default function ExamPage({ openModal, notify }) {
               <div>
                 <span className="question-step">Lulus</span>
                 <h2>Daftar Santri Lulus</h2>
-                <p>Menampilkan semua santri yang status backend-nya lulus atau semua nilai ujiannya minimal 70.</p>
+                <p>Menampilkan semua santri yang statusnya lulus atau semua nilai ujiannya minimal 70.</p>
               </div>
               <span className="admin-pill">{passedStudents.length} santri</span>
             </div>
@@ -1007,7 +1007,7 @@ export default function ExamPage({ openModal, notify }) {
                       <td>{student.examCount}</td>
                     </tr>
                   )) : (
-                    <tr><td colSpan="4">Belum ada santri yang terdeteksi lulus dari status backend atau nilai ujian.</td></tr>
+                    <tr><td colSpan="4">Belum ada santri yang terdeteksi lulus dari status sistem atau nilai ujian.</td></tr>
                   )}
                 </tbody>
               </table>

@@ -28,7 +28,7 @@ export default function StudentDocuments() {
       setUploadedDocs(backendDocuments);
     } catch (error) {
       setUploadedDocs([]);
-      console.warn("Gagal mengambil dokumen backend:", error);
+      console.warn("Gagal mengambil dokumen:", error);
     }
   };
 

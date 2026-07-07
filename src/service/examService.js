@@ -258,7 +258,7 @@ export async function getCurrentSantriId() {
     }
   }
 
-  throw new Error("Akun ini belum punya santri_id. Backend harus membuat record santri dulu sebelum calon santri bisa submit ujian.");
+  throw new Error("Akun ini belum memiliki data peserta ujian. Silakan hubungi admin sebelum mengirim jawaban.");
 }
 
 export const getSchedules = () => (
