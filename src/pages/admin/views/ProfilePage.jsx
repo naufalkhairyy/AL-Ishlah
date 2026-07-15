@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import KpiCard from "../components/KpiCard";
 import QuickApplicantForm from "../components/QuickApplicantForm";
-import { getAdminApplicants, getApplicantDisplayName, getInitials, updateAdminSantri } from "../../../service/adminService";
+import { getAdminApplicants, getApplicantDisplayName, getInitials } from "../../../service/adminService";
 import { mapProfileFromApi } from "../../../service/registrationService";
 import { downloadText } from "../utils/downloadText";
 
@@ -211,36 +211,21 @@ function buildProfileSource(item) {
   };
 }
 
-function parseEditValue(value) {
-  const trimmed = String(value ?? "").trim();
-  if (!trimmed) return "";
-  if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
-    try {
-      return JSON.parse(trimmed);
-    } catch {
-      return value;
-    }
-  }
-  return value;
-}
-
-function ApplicantDetail({ item, onEdit }) {
+function ApplicantDetail({ item }) {
   const profileSource = buildProfileSource(item);
   const mappedProfile = mapProfileFromApi(profileSource);
   const backendSections = [
     ["Data Akun", profileSource.user],
     ["Data Profil Pendaftaran Backend", profileSource.calon],
     ["Data Santri Backend", profileSource.student],
+    ["Data Sekolah Backend", profileSource.sekolah],
+    ["Data Ayah Backend", profileSource.ayah],
+    ["Data Ibu Backend", profileSource.ibu],
+    ["Data Wali Backend", profileSource.wali],
   ].map(([title, value]) => [title, getPrimitiveDetailRows(value)]);
 
   return (
     <div className="applicant-detail">
-      <div className="applicant-detail__actions">
-        <button className="admin-primary" type="button" onClick={() => onEdit(item)} disabled={!Object.keys(item.raw.student || {}).length}>
-          Edit Data Santri
-        </button>
-        {!Object.keys(item.raw.student || {}).length && <small>Data santri belum ada, jadi belum bisa diedit dari panel ini.</small>}
-      </div>
       {formDetailSections.map((section) => (
         <section key={section.title}>
           <h3>{section.title}</h3>
@@ -254,56 +239,6 @@ function ApplicantDetail({ item, onEdit }) {
         </section>
       ))}
     </div>
-  );
-}
-
-function ApplicantEditForm({ item, onSaved, notify }) {
-  const student = item.raw.student || {};
-  const [form, setForm] = useState(() => Object.fromEntries(
-    Object.entries(student).map(([key, value]) => [key, typeof value === "object" && value !== null ? JSON.stringify(value, null, 2) : String(value ?? "")]),
-  ));
-  const [saving, setSaving] = useState(false);
-  const studentId = getStudentRecordId(student);
-
-  const setField = (key, value) => {
-    setForm((current) => ({ ...current, [key]: value }));
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setSaving(true);
-    try {
-      const payload = Object.fromEntries(Object.entries(form).map(([key, value]) => [key, parseEditValue(value)]));
-      await updateAdminSantri(studentId, payload);
-      notify("Data santri diperbarui", `${item.name} berhasil disimpan.`);
-      await onSaved();
-    } catch (requestError) {
-      notify("Gagal menyimpan data", requestError.message || "Data santri belum dapat diperbarui.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (!studentId) {
-    return <p>Data santri belum memiliki ID, edit belum bisa dikirim.</p>;
-  }
-
-  return (
-    <form className="applicant-edit-form" onSubmit={handleSubmit}>
-      {Object.entries(form).map(([key, value]) => (
-        <label key={key}>
-          <span>{formatFieldLabel(key)}</span>
-          {String(value).length > 90 || String(value).includes("\n") ? (
-            <textarea value={value} onChange={(event) => setField(key, event.target.value)} />
-          ) : (
-            <input value={value} onChange={(event) => setField(key, event.target.value)} />
-          )}
-        </label>
-      ))}
-      <div className="applicant-edit-form__actions">
-        <button className="admin-primary" type="submit" disabled={saving}>{saving ? "Menyimpan..." : "Simpan Perubahan"}</button>
-      </div>
-    </form>
   );
 }
 
@@ -411,20 +346,11 @@ export default function ProfilePage({ openModal, notify }) {
     openModal(
       item.name,
       `Status data santri: ${item.status}.`,
-      <ApplicantDetail item={item} onEdit={openApplicantEdit} />,
+      <ApplicantDetail item={item} />,
       "Detail Calon Santri",
     );
   };
   const getStatusTone = (status) => status.toLowerCase().replace(/\s+/g, "-");
-
-  const openApplicantEdit = (item) => {
-    openModal(
-      `Edit ${item.name}`,
-      "Ubah data santri yang tersimpan di sistem.",
-      <ApplicantEditForm item={item} notify={notify} onSaved={() => loadApplicants(true)} />,
-      "Edit Data Santri",
-    );
-  };
 
   return (
     <section className="admin-page">
@@ -471,7 +397,6 @@ export default function ProfilePage({ openModal, notify }) {
                 <td>
                   <div className="question-table-actions">
                     <button type="button" onClick={() => openApplicantDetail(item)}>Lihat Detail</button>
-                    <button type="button" onClick={() => openApplicantEdit(item)} disabled={!item.raw.student}>Edit</button>
                   </div>
                 </td>
               </tr>

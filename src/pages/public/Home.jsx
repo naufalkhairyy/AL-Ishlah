@@ -84,34 +84,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="impact-section page-shell" aria-label="Grafik perkembangan pesantren">
-        <div className="impact-copy">
-          <span>Grafik Perkembangan</span>
-          <h2>Data pendaftaran dan program dibuat mudah dibaca.</h2>
-          <p>Visual ringkas ini membantu calon wali santri melihat kapasitas, program, dan kesiapan PPDB secara cepat.</p>
-        </div>
-        <div className="impact-panel">
-          <div className="ring-chart" aria-label="Kuota PPDB 78 persen">
-            <strong>78%</strong>
-            <small>Kuota PPDB</small>
-          </div>
-          <div className="bar-chart">
-            {[
-              ["Tahfidz", 92],
-              ["Bahasa Arab", 84],
-              ["Akademik", 76],
-              ["Asrama", 88],
-            ].map(([label, value]) => (
-              <div className="bar-row" key={label}>
-                <span>{label}</span>
-                <div><i style={{ "--bar-value": `${value}%` }} /></div>
-                <b>{value}%</b>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="profile-band">
         <div className="page-shell profile-grid">
           <div className="profile-copy">

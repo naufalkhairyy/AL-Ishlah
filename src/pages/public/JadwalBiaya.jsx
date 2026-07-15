@@ -41,7 +41,7 @@ export default function JadwalBiaya() {
           <article className="outline-card">
             <InfoIcon type="pin" />
             <h3>Tempat</h3>
-            <p>Gedung SMPN 1 Cibadak</p>
+            <p>Pondok Pesantren Al Ishlah Al Ishlamy</p>
           </article>
         </div>
       </section>
