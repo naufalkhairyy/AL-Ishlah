@@ -44,11 +44,14 @@ class JawabanController extends Controller
             'waktu_submit' => 'nullable|date',
         ]);
 
-        $validated['santri_id'] = $this->resolveSantriId($request, $validated['santri_id'] ?? null);
-
-        if (!isset($validated['waktu_submit'])) {
-            $validated['waktu_submit'] = now();
-        }
+       $validated['santri_id'] = $this->resolveSantriId(
+    $request,
+    null
+);
+dd([
+    "user"=>$request->user()->user_id,
+    "santri_id"=>$validated['santri_id']
+]);
 
         $soal = Soal::find($validated['soal_id']);
         $nilai = $validated['nilai_jawaban'] ?? null;
@@ -173,19 +176,47 @@ class JawabanController extends Controller
         $saved = Jawaban::with(['soal', 'santri'])
             ->whereIn('jawaban_id', $saved->pluck('jawaban_id'))
             ->get();
+            $totalSoal = Soal::where('ujian_id', $validated['ujian_id'])->count();
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Jawaban berhasil disimpan',
-            'summary' => [
-                'total_soal_dikirim' => $saved->count(),
-                'pg_sudah_dinilai' => $saved->whereNotNull('nilai_jawaban')->count(),
-                'essay_menunggu_penilaian' => $saved->whereNull('nilai_jawaban')->count(),
-            ],
-            'data' => $saved,
-        ], 201);
+$jumlahBenar = $saved->filter(function ($item) {
+    return $item->nilai_jawaban !== null && $item->nilai_jawaban > 0;
+})->count();
+
+$jumlahSalah = $saved->filter(function ($item) {
+    return $item->nilai_jawaban !== null && $item->nilai_jawaban == 0;
+})->count();
+
+$jumlahKosong = $totalSoal - $saved->count();
+
+$totalBobot = Soal::where('ujian_id', $validated['ujian_id'])
+    ->sum('bobot_nilai');
+
+$nilaiAkhir = $totalBobot > 0
+    ? round(($saved->sum('nilai_jawaban') / $totalBobot) * 100, 2)
+    : 0;
+
+// Passing Grade
+$passingGrade = 75;
+
+$statusKelulusan = $nilaiAkhir >= $passingGrade
+    ? 'lulus'
+    : 'tidak_lulus';
+
+       return response()->json([
+    'status' => true,
+    'message' => 'Jawaban berhasil disimpan',
+   'summary' => [
+    'total_soal' => $totalSoal,
+    'jumlah_benar' => $jumlahBenar,
+    'jumlah_salah' => $jumlahSalah,
+    'jumlah_kosong' => $jumlahKosong,
+    'nilai_akhir' => $nilaiAkhir,
+    'passing_grade' => $passingGrade,
+    'status_kelulusan' => $statusKelulusan,
+],
+    'data' => $saved,
+], 201);
     }
-
     public function show($id)
     {
         $jawaban = Jawaban::with(['soal', 'santri'])->find($id);
@@ -284,21 +315,254 @@ class JawabanController extends Controller
     {
         throw new HttpResponseException($this->alreadySubmittedResponse());
     }
+public function hasil(Request $request)
+{
+    $user = $request->user();
 
-    private function resolveSantriId(Request $request, ?int $santriId): int
-    {
-        if ($santriId !== null) {
-            return $santriId;
-        }
-
-        $santriId = Santri::where('user_id', $request->user()->user_id)->value('santri_id');
-
-        if ($santriId === null) {
-            throw ValidationException::withMessages([
-                'santri_id' => 'Akun ini belum punya santri_id. Backend harus membuat record santri dulu sebelum calon santri bisa submit ujian.',
-            ]);
-        }
-
-        return (int) $santriId;
+    if (!$user) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Unauthenticated'
+        ], 401);
     }
+
+
+    // Ambil data santri berdasarkan user login
+    $santri = Santri::where('user_id', $user->user_id)
+        ->first();
+
+
+    if (!$santri) {
+
+        return response()->json([
+            'status' => false,
+            'message' => 'Data santri tidak ditemukan'
+        ],404);
+
+    }
+
+
+
+    // Ambil jawaban final milik santri tersebut
+    $jawaban = Jawaban::with([
+            'soal.ujian'
+        ])
+        ->where('santri_id',$santri->santri_id)
+        ->where('is_final',true)
+        ->get();
+
+
+
+    if($jawaban->isEmpty()){
+
+        return response()->json([
+            'status'=>false,
+            'message'=>'Hasil ujian belum tersedia'
+        ],404);
+
+    }
+
+
+
+
+    // Kelompokkan berdasarkan ujian
+    $hasil = $jawaban
+        ->groupBy(function($item){
+
+            return $item->soal->ujian_id;
+
+        })
+        ->map(function($items){
+
+
+            $totalBobot = $items->sum(function($item){
+
+                return $item->soal->bobot_nilai ?? 0;
+
+            });
+
+
+
+            $nilai = $totalBobot > 0
+
+                ? round(
+                    ($items->sum('nilai_jawaban') / $totalBobot) * 100,
+                    2
+                )
+
+                : 0;
+
+
+
+            return [
+
+                "nama_ujian" =>
+                    $items->first()
+                    ->soal
+                    ->ujian
+                    ->nama_ujian ?? "-",
+
+
+                "nilai"=>$nilai,
+
+
+                "status"=>
+                    $nilai >= 75
+                    ? "Lulus"
+                    : "Tidak Lulus"
+
+            ];
+
+
+        })
+        ->values();
+
+
+
+    return response()->json([
+
+        "status"=>true,
+
+        "nama_santri"=>$santri->nama_lengkap,
+
+        "data"=>$hasil
+
+    ]);
+
+}
+    private function resolveSantriId(Request $request, ?int $santriId): int
+{
+    $santriId = Santri::where(
+        'user_id',
+        $request->user()->user_id
+    )->value('santri_id');
+
+
+    if(!$santriId){
+
+        throw ValidationException::withMessages([
+            'santri_id'=>'Data santri tidak ditemukan'
+        ]);
+
+    }
+
+
+    return (int)$santriId;
+}
+public function hasilSaya(Request $request)
+{
+    $santriId = Santri::where(
+        'user_id',
+        $request->user()->user_id
+    )->value('santri_id');
+
+
+    if (!$santriId) {
+        return response()->json([
+            'status'=>false,
+            'message'=>'Data santri tidak ditemukan'
+        ],404);
+    }
+
+
+    $jawaban = Jawaban::with([
+        'soal.ujian'
+    ])
+    ->where('santri_id',$santriId)
+    ->where('is_final',1)
+    ->get();
+
+
+    if($jawaban->isEmpty()){
+
+        return response()->json([
+            'status'=>false,
+            'message'=>'Hasil ujian belum tersedia'
+        ]);
+
+    }
+
+
+    $totalBobot = $jawaban->sum(function($item){
+        return $item->soal->bobot_nilai ?? 0;
+    });
+
+
+    $nilai = $totalBobot > 0
+        ? round(
+            ($jawaban->sum('nilai_jawaban') / $totalBobot) * 100,
+            2
+        )
+        : 0;
+
+
+    return response()->json([
+        'status'=>true,
+        'data'=>[
+            'santri_id'=>$santriId,
+            'nama_santri'=>Santri::find($santriId)->nama_lengkap,
+            'nilai'=>$nilai,
+            'status'=>$nilai >= 75
+                ? 'Lulus'
+                : 'Tidak Lulus'
+        ]
+    ]);
+}
+public function hasilSemua()
+{
+    $jawaban = Jawaban::with([
+        'santri',
+        'soal.ujian'
+    ])
+    ->where('is_final', true)
+    ->get();
+
+
+    if ($jawaban->isEmpty()) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Belum ada hasil ujian'
+        ], 404);
+    }
+
+
+    $hasil = $jawaban
+        ->groupBy('santri_id')
+        ->map(function($items){
+
+            $totalBobot = $items->sum(function($item){
+                return $item->soal->bobot_nilai ?? 0;
+            });
+
+
+            $nilai = $totalBobot > 0
+                ? round(
+                    ($items->sum('nilai_jawaban') / $totalBobot) * 100,
+                    2
+                )
+                : 0;
+
+
+            return [
+                'santri_id' => $items->first()->santri_id,
+
+                'nama_santri' => 
+                    $items->first()->santri->nama_lengkap ?? '-',
+
+                'nilai' => $nilai,
+
+                'status' => $nilai >= 75
+                    ? 'Lulus'
+                    : 'Tidak Lulus'
+            ];
+
+        })
+        ->values();
+
+
+    return response()->json([
+        'status'=>true,
+        'data'=>$hasil
+    ]);
+}
 }

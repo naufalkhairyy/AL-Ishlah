@@ -14,8 +14,13 @@ use Illuminate\Support\Facades\DB;
 class JadwalUjianController extends Controller
 {
     public function index(Request $request)
-    {
-        $query = JadwalUjian::with(['ujian', 'santri']);
+{
+    $user = $request->user();
+
+    $query = JadwalUjian::with(['ujian', 'santri']);
+
+    // ADMIN
+    if ($user->role === 'admin') {
 
         if ($request->filled('ujian_id')) {
             $query->where('ujian_id', $request->ujian_id);
@@ -25,12 +30,33 @@ class JadwalUjianController extends Controller
             $query->where('santri_id', $request->santri_id);
         }
 
-        return response()->json([
-            'status' => true,
-            'data' => $query->get(),
-        ]);
+    } 
+    // SANTRI
+    else {
+
+        $santriId = Santri::where(
+            'user_id',
+            $user->user_id
+        )->value('santri_id');
+
+
+        if (!$santriId) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Santri belum terhubung dengan akun ini'
+            ], 403);
+        }
+
+
+        $query->where('santri_id', $santriId);
     }
 
+
+    return response()->json([
+        'status' => true,
+        'data' => $query->get(),
+    ]);
+}
     public function generate(Request $request)
     {
         $validated = $request->validate([
