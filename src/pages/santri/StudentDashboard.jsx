@@ -26,36 +26,47 @@ export default function StudentDashboard() {
     refreshProgress?.();
   }, [refreshProgress]);
 
-  const name = profile.namaPanggilan || profile.namaLengkap || "Calon Santri";
-  const documentSummary = getDocumentSummary(Object.entries(documents || {}).map(([documentKey, document]) => ({
-    ...document,
-    documentKey,
-    fileName: document.fileName || document.name,
-    fileSize: document.fileSize || document.size,
-  })));
+  const name = profile?.namaPanggilan || profile?.namaLengkap || "Calon Santri";
+  
+  const documentSummary = getDocumentSummary(
+    Object.entries(documents || {}).map(([documentKey, document]) => ({
+      ...document,
+      documentKey,
+      fileName: document.fileName || document.name,
+      fileSize: document.fileSize || document.size,
+    }))
+  );
+
   const documentMeta = progress.documentsComplete
     ? "Berkas sudah diverifikasi admin"
     : documentSummary.rejectedTotal
-      ? "Ada dokumen yang ditolak admin"
-      : documentSummary.pendingTotal
-        ? "Menunggu verifikasi admin"
-        : documentSummary.uploadedTotal
-          ? "Lengkapi dokumen lainnya"
-          : "Unggah dokumen wajib";
+    ? "Ada dokumen yang ditolak admin"
+    : documentSummary.pendingTotal
+    ? "Menunggu verifikasi admin"
+    : documentSummary.uploadedTotal
+    ? "Lengkapi dokumen lainnya"
+    : "Unggah dokumen wajib";
+
   const paymentMeta = syncing
     ? "Memuat status pembayaran..."
     : paymentProof?.status === "approved"
-      ? "Pembayaran disetujui admin"
-      : paymentProof?.status === "pending"
-        ? "Menunggu verifikasi admin"
-        : paymentProof?.status === "rejected"
-          ? "Pembayaran ditolak admin"
-          : "Upload bukti transfer";
+    ? "Pembayaran disetujui admin"
+    : paymentProof?.status === "pending"
+    ? "Menunggu verifikasi admin"
+    : paymentProof?.status === "rejected"
+    ? "Pembayaran ditolak admin"
+    : "Upload bukti transfer";
+
   const paymentState = progress.documentsComplete
-    ? (progress.paymentComplete ? "done" : "active")
+    ? progress.paymentComplete
+      ? "done"
+      : "active"
     : "locked";
+
   const examMeta = progress.santriId
-    ? (progress.examAvailable ? "Ujian sudah tersedia" : "Selesaikan tahap sebelumnya")
+    ? progress.examAvailable
+      ? "Ujian sudah tersedia"
+      : "Selesaikan tahap sebelumnya"
     : "Belum menjadi peserta ujian";
 
   const flow = [
@@ -68,7 +79,11 @@ export default function StudentDashboard() {
     {
       title: "Upload Dokumen",
       meta: documentMeta,
-      state: progress.profileComplete ? (progress.documentsComplete ? "done" : "active") : "locked",
+      state: progress.profileComplete
+        ? progress.documentsComplete
+          ? "done"
+          : "active"
+        : "locked",
       to: "/santri/dokumen",
     },
     {
@@ -83,20 +98,26 @@ export default function StudentDashboard() {
       state: progress.examAvailable ? "active" : "locked",
       to: "/santri/ujian",
     },
+    {
+      title: "Pengumuman",
+      meta: progress.examFinished ? "Lihat hasil ujian" : "Menunggu ujian selesai",
+      state: progress.examFinished ? "active" : "locked",
+      to: "/santri/hasil-ujian",
+    },
   ];
 
   const nextStep = flow.find((item) => item.state === "active") || flow[0];
   const statusText = progress.examAvailable
     ? "Siap Mengikuti Ujian"
     : !progress.santriId
-      ? "Belum menjadi peserta ujian"
+    ? "Belum menjadi peserta ujian"
     : syncing
-      ? "Memuat Status Pendaftaran"
+    ? "Memuat Status Pendaftaran"
     : progress.documentsComplete
-      ? paymentMeta
-      : progress.profileComplete
-        ? "Upload Dokumen"
-        : "Lengkapi Data Diri";
+    ? paymentMeta
+    : progress.profileComplete
+    ? "Upload Dokumen"
+    : "Lengkapi Data Diri";
 
   return (
     <section className="student-page">
@@ -104,7 +125,7 @@ export default function StudentDashboard() {
         <p>Dashboard Santri</p>
         <h1>Ahlan wa Sahlan, {name}!</h1>
         <span>
-          Selamat datang di portal pendaftaran Pesantren Al Ishlah Al Islamy.
+          Selamat datang di portal pendaftaran Pesantren Al Ishhlah Al Islamy.
           Lanjutkan tahap pendaftaran sampai semua langkah selesai.
         </span>
       </div>
@@ -112,10 +133,16 @@ export default function StudentDashboard() {
       <div className="verification-banner">
         <div className="verification-banner__icon">OK</div>
         <div>
-          <strong>Status Pendaftaran: <u>{statusText}</u></strong>
-          <span>Langkah berikutnya: {nextStep.title}. Klik kartu alur untuk berpindah ke halaman yang dibutuhkan.</span>
+          <strong>
+            Status Pendaftaran: <u>{statusText}</u>
+          </strong>
+          <span>
+            Langkah berikutnya: {nextStep.title}. Klik kartu alur untuk berpindah ke halaman yang dibutuhkan.
+          </span>
         </div>
-        <button type="button" onClick={() => navigate(nextStep.to)}>Lanjutkan</button>
+        <button type="button" onClick={() => navigate(nextStep.to)}>
+          Lanjutkan
+        </button>
       </div>
 
       <article className="student-card dashboard-payment-upload">
@@ -124,7 +151,11 @@ export default function StudentDashboard() {
           <h2>Upload Bukti Bayar Calon Santri</h2>
           <p>Kirim bukti transfer agar admin bisa melihat dan memverifikasi pembayaran.</p>
         </div>
-        <button type="button" className="student-primary-action" onClick={() => navigate("/santri/pembayaran")}>
+        <button
+          type="button"
+          className="student-primary-action"
+          onClick={() => navigate("/santri/pembayaran")}
+        >
           Upload Bukti Bayar
         </button>
       </article>
@@ -161,7 +192,12 @@ export default function StudentDashboard() {
             </span>
           </div>
           {exams.map((exam) => (
-            <button className="exam-row" key={exam.date} type="button" onClick={() => navigate("/santri/ujian")}>
+            <button
+              className="exam-row"
+              key={exam.date}
+              type="button"
+              onClick={() => navigate("/santri/ujian")}
+            >
               <div className="exam-row__date">
                 <span>NOV</span>
                 <strong>{exam.date}</strong>
@@ -178,8 +214,12 @@ export default function StudentDashboard() {
         <aside className="question-panel">
           <h2>Punya Pertanyaan?</h2>
           <p>Hubungi admin jika ada kendala saat mengisi profil, upload dokumen, atau pembayaran.</p>
-          <button type="button" onClick={() => window.open("https://wa.me/6281234567890", "_blank")}>Live Chat</button>
-          <button type="button" onClick={() => window.location.href = "mailto:admin@alishlah.sch.id"}>Email Admin</button>
+          <button type="button" onClick={() => window.open("https://wa.me/6281234567890", "_blank")}>
+            Live Chat
+          </button>
+          <button type="button" onClick={() => (window.location.href = "mailto:admin@alishhlah.sch.id")}>
+            Email Admin
+          </button>
         </aside>
       </div>
 

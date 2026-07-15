@@ -22,6 +22,9 @@ const initialState = {
   documents: {},
   paymentProof: null,
   tahfidzRegistered: false,
+
+  // tambahkan
+  examResult: null,
 };
 
 const requiredProfileFields = [
@@ -70,7 +73,7 @@ const requiredDocuments = DOCUMENT_TYPES
 function getStudentStorageKey() {
   const user = getAuthUser("student");
   const id = user?.user_id || user?.id || user?.username || "guest";
-  return `${STORAGE_KEY_PREFIX}:${id}`;
+  return ${STORAGE_KEY_PREFIX}:${id};
 }
 
 function loadState() {

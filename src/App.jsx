@@ -6,7 +6,6 @@ import Navbar from "./components/Navbar";
 import StudentLayout from "./components/StudentLayout";
 import AdminPortal from "./pages/admin/AdminPortal";
 import Berita from "./pages/public/Berita";
-import Fasilitas from "./pages/public/Fasilitas";
 import FormPendaftaran from "./pages/public/FormPendaftaran";
 import Home from "./pages/public/Home";
 import JadwalBiaya from "./pages/public/JadwalBiaya";
@@ -20,6 +19,9 @@ import StudentExam from "./pages/santri/StudentExam";
 import StudentExamWork from "./pages/santri/StudentExamWork";
 import StudentPayments from "./pages/santri/StudentPayments";
 import StudentProfile from "./pages/santri/StudentProfile";
+import StudentAnnouncement from "./pages/santri/StudentAnnouncement";
+import StudentExamResult from "./pages/santri/StudentExamResult";
+
 
 function App() {
   const location = useLocation();
@@ -36,7 +38,7 @@ function App() {
         <Route path="/visi-misi" element={<VisiMisiPage />} />
         <Route path="/berita" element={<Berita />} />
         <Route path="/pendaftaran" element={<FormPendaftaran />} />
-        <Route path="/fasilitas" element={<Fasilitas />} />
+        <Route path="/fasilitas" element={<FormPendaftaran />} />
         <Route path="/jadwal-biaya" element={<JadwalBiaya />} />
         <Route path="/jadwal" element={<JadwalBiaya />} />
         <Route path="/verifikasi" element={<Verifikasi />} />
@@ -51,6 +53,8 @@ function App() {
           <Route path="ujian" element={<StudentExam />} />
           <Route path="dokumen" element={<StudentDocuments />} />
           <Route path="pembayaran" element={<StudentPayments />} />
+          <Route path="pengumuman" element={<StudentAnnouncement />} />
+          <Route path="hasil-ujian" element={<StudentExamResult />} />
         </Route>
       </Routes>
     </>
