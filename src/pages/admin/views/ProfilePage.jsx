@@ -2,9 +2,89 @@ import { useEffect, useMemo, useState } from "react";
 import KpiCard from "../components/KpiCard";
 import QuickApplicantForm from "../components/QuickApplicantForm";
 import { getAdminApplicants, getApplicantDisplayName, getInitials, updateAdminSantri } from "../../../service/adminService";
+import { mapProfileFromApi } from "../../../service/registrationService";
 import { downloadText } from "../utils/downloadText";
 
 const PAGE_SIZE = 15;
+const formDetailSections = [
+  {
+    title: "Data Calon Santri",
+    fields: [
+      ["namaLengkap", "Nama Lengkap"],
+      ["namaPanggilan", "Nama Panggilan"],
+      ["tempatLahir", "Tempat Lahir"],
+      ["tanggalLahir", "Tanggal Lahir"],
+      ["jenisKelamin", "Jenis Kelamin"],
+      ["golonganDarah", "Golongan Darah"],
+      ["jumlahSaudara", "Jumlah Saudara"],
+      ["anakKe", "Anak Ke"],
+      ["alamat", "Alamat / Domisili Anak"],
+      ["nisn", "NISN"],
+    ],
+  },
+  {
+    title: "Data Sekolah Asal",
+    fields: [
+      ["namaSekolah", "Nama Sekolah"],
+      ["alamatSekolah", "Alamat Sekolah"],
+      ["kotaSekolah", "Kota / Kabupaten"],
+      ["provinsiSekolah", "Provinsi"],
+      ["tahunLulus", "Tahun Lulus"],
+    ],
+  },
+  {
+    title: "Data Ayah",
+    fields: [
+      ["namaAyah", "Nama Ayah"],
+      ["tempatLahirAyah", "Tempat Lahir"],
+      ["tanggalLahirAyah", "Tanggal Lahir"],
+      ["pekerjaanAyah", "Pekerjaan"],
+      ["pendidikanAyah", "Pendidikan"],
+      ["penghasilanAyah", "Penghasilan"],
+      ["alamatAyah", "Alamat"],
+      ["desaAyah", "Desa"],
+      ["kecamatanAyah", "Kecamatan"],
+      ["kotaAyah", "Kota / Kabupaten"],
+      ["provinsiAyah", "Provinsi"],
+      ["hpAyah", "Telepon / HP"],
+    ],
+  },
+  {
+    title: "Data Ibu",
+    fields: [
+      ["namaIbu", "Nama Ibu"],
+      ["tempatLahirIbu", "Tempat Lahir"],
+      ["tanggalLahirIbu", "Tanggal Lahir"],
+      ["pekerjaanIbu", "Pekerjaan"],
+      ["pendidikanIbu", "Pendidikan"],
+      ["penghasilanIbu", "Penghasilan"],
+      ["alamatIbu", "Alamat"],
+      ["desaIbu", "Desa"],
+      ["kecamatanIbu", "Kecamatan"],
+      ["kotaIbu", "Kota / Kabupaten"],
+      ["provinsiIbu", "Provinsi"],
+      ["hpIbu", "Telepon / HP"],
+      ["hpPondokIbu", "Nomor WA Resmi Pesantren"],
+    ],
+  },
+  {
+    title: "Data Wali",
+    fields: [
+      ["namaWali", "Nama Wali"],
+      ["tempatLahirWali", "Tempat Lahir"],
+      ["tanggalLahirWali", "Tanggal Lahir"],
+      ["pekerjaanWali", "Pekerjaan"],
+      ["pendidikanWali", "Pendidikan"],
+      ["alamatWali", "Alamat"],
+      ["desaWali", "Desa"],
+      ["kecamatanWali", "Kecamatan"],
+      ["kotaWali", "Kota / Kabupaten"],
+      ["provinsiWali", "Provinsi"],
+      ["hpWaliTambahan", "Telepon / HP"],
+      ["hubunganWali", "Hubungan Dengan Santri"],
+    ],
+  },
+];
 
 function formatDetailValue(value) {
   if (value === null || value === undefined || value === "") return "-";
@@ -17,6 +97,44 @@ function formatFieldLabel(key) {
   return String(key)
     .replace(/_/g, " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function isPlainObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value);
+}
+
+function getPrimitiveDetailRows(value, parentLabel = "") {
+  if (!value || typeof value !== "object") return [];
+
+  return Object.entries(value).flatMap(([key, item]) => {
+    const label = parentLabel ? `${parentLabel} - ${formatFieldLabel(key)}` : formatFieldLabel(key);
+
+    if (isPlainObject(item)) return getPrimitiveDetailRows(item, label);
+    if (Array.isArray(item)) {
+      if (!item.length) return [[label, "-"]];
+      if (item.every((entry) => !isPlainObject(entry) && typeof entry !== "object")) {
+        return [[label, item.join(", ")]];
+      }
+      return item.flatMap((entry, index) => getPrimitiveDetailRows(entry, `${label} ${index + 1}`));
+    }
+
+    return [[label, item]];
+  });
+}
+
+function DetailList({ rows }) {
+  if (!rows.length) return <p>Data belum tersedia.</p>;
+
+  return (
+    <dl>
+      {rows.map(([label, value], index) => (
+        <div key={`${label}-${index}`}>
+          <dt>{label}</dt>
+          <dd>{formatDetailValue(value)}</dd>
+        </div>
+      ))}
+    </dl>
+  );
 }
 
 function getStudentRecordId(student = {}) {
@@ -37,59 +155,33 @@ function parseEditValue(value) {
 }
 
 function ApplicantDetail({ item, onEdit }) {
-  const userEntries = Object.entries(item.raw.user || {});
-  const calonEntries = Object.entries(item.raw.calon || {});
-  const studentEntries = Object.entries(item.raw.student || {});
+  const mappedProfile = mapProfileFromApi(item.raw);
+  const backendSections = [
+    ["Data Akun", item.raw.user],
+    ["Data Profil Pendaftaran Backend", item.raw.calon],
+    ["Data Santri Backend", item.raw.student],
+  ].map(([title, value]) => [title, getPrimitiveDetailRows(value)]);
 
   return (
     <div className="applicant-detail">
       <div className="applicant-detail__actions">
-        <button className="admin-primary" type="button" onClick={() => onEdit(item)} disabled={!studentEntries.length}>
+        <button className="admin-primary" type="button" onClick={() => onEdit(item)} disabled={!Object.keys(item.raw.student || {}).length}>
           Edit Data Santri
         </button>
-        {!studentEntries.length && <small>Data santri belum ada, jadi belum bisa diedit dari panel ini.</small>}
+        {!Object.keys(item.raw.student || {}).length && <small>Data santri belum ada, jadi belum bisa diedit dari panel ini.</small>}
       </div>
-      <section>
-        <h3>Data Akun</h3>
-        <dl>
-          {userEntries.map(([key, value]) => (
-            <div key={key}>
-              <dt>{formatFieldLabel(key)}</dt>
-              <dd>{formatDetailValue(value)}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-      <section>
-        <h3>Data Profil Pendaftaran</h3>
-        {calonEntries.length ? (
-          <dl>
-            {calonEntries.map(([key, value]) => (
-              <div key={key}>
-                <dt>{formatFieldLabel(key)}</dt>
-                <dd>{formatDetailValue(value)}</dd>
-              </div>
-            ))}
-          </dl>
-        ) : (
-          <p>Profil pendaftaran belum diisi oleh calon santri.</p>
-        )}
-      </section>
-      <section>
-        <h3>Data Santri</h3>
-        {studentEntries.length ? (
-          <dl>
-            {studentEntries.map(([key, value]) => (
-              <div key={key}>
-                <dt>{formatFieldLabel(key)}</dt>
-                <dd>{formatDetailValue(value)}</dd>
-              </div>
-            ))}
-          </dl>
-        ) : (
-          <p>Data santri belum tersimpan untuk akun ini.</p>
-        )}
-      </section>
+      {formDetailSections.map((section) => (
+        <section key={section.title}>
+          <h3>{section.title}</h3>
+          <DetailList rows={section.fields.map(([key, label]) => [label, mappedProfile[key]])} />
+        </section>
+      ))}
+      {backendSections.map(([title, rows]) => (
+        <section key={title}>
+          <h3>{title}</h3>
+          <DetailList rows={rows} />
+        </section>
+      ))}
     </div>
   );
 }

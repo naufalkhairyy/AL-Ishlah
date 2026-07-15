@@ -10,7 +10,7 @@ const navItems = [
   { to: "/santri/ujian", label: "Ujian", icon: "exam" },
   { to: "/santri/dokumen", label: "Dokumen", icon: "folder" },
   { to: "/santri/pembayaran", label: "Pembayaran", icon: "wallet" },
-  { to: "/santri/hasil-ujian", label: "Hasil Ujian", icon: "exam" },
+  { to: "/santri/hasil-ujian", label: "Hasil Ujian", icon: "result" },
 ];
 
 export function StudentIcon({ name }) {

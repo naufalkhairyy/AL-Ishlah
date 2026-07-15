@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import BackendNotice from "../components/BackendNotice";
-import DocumentMock from "../components/DocumentMock";
 import { getAdminExamData } from "../../../service/adminService";
 import {
   createExam,
@@ -115,11 +113,6 @@ function getAnswerId(answer) {
   return answer?.jawaban_id || answer?.id || answer?.answer_id || "";
 }
 
-function isPassedStatus(value) {
-  const status = String(value || "").toLowerCase();
-  return ["lulus", "passed", "diterima", "accepted"].includes(status);
-}
-
 function formatScheduleDate(date) {
   if (!date) return "-";
   const parsed = new Date(date);
@@ -211,10 +204,6 @@ export default function ExamPage({ openModal, notify }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedExamId]);
 
-  const activeSchedules = useMemo(
-    () => examData.jadwal.filter((item) => item.ujian?.status === "aktif"),
-    [examData.jadwal],
-  );
   const sortedSchedules = useMemo(
     () => [...examData.jadwal].sort(sortSchedules),
     [examData.jadwal],
@@ -222,9 +211,6 @@ export default function ExamPage({ openModal, notify }) {
 
   const gradedAnswers = examData.jawaban.filter((answer) => answer.nilai_jawaban !== null);
   const pendingAnswers = examData.jawaban.filter((answer) => answer.nilai_jawaban === null);
-  const passingRate = examData.jawaban.length
-    ? Math.round((gradedAnswers.filter((answer) => Number(answer.nilai_jawaban) >= 70).length / examData.jawaban.length) * 100)
-    : 0;
 
   const selectedExam = examData.ujian.find((exam) => String(exam.ujian_id) === String(selectedExamId));
   const importErrors = normalizeImportErrors(importResult);
@@ -252,54 +238,6 @@ export default function ExamPage({ openModal, notify }) {
     const student = schedule.santri || examData.santri.find((item) => String(item.santri_id) === String(santriId));
     return getStudentDisplayName(student, santriId);
   };
-  const passedStudents = useMemo(() => {
-    const rows = new Map();
-
-    examData.santri.forEach((student) => {
-      const santriId = String(student.santri_id || "");
-      const passedByStatus = isPassedStatus(student.status_kelulusan || student.status_lulus || student.kelulusan || student.status);
-      if (!santriId || !passedByStatus) return;
-      rows.set(santriId, {
-        id: santriId,
-        name: getStudentDisplayName(student, santriId),
-        source: "Status sistem",
-        score: student.nilai_akhir || student.nilai_total || "-",
-        examCount: "-",
-      });
-    });
-
-    const answerGroups = new Map();
-    examData.jawaban.forEach((answer) => {
-      const santriKey = String(getAnswerStudentKey(answer) || answer.santri_id || "");
-      if (!santriKey) return;
-      const current = answerGroups.get(santriKey) || {
-        id: santriKey,
-        name: getStudentDisplayName(answer.santri, answer.santri_id),
-        scores: [],
-        exams: new Set(),
-      };
-      if (answer.nilai_jawaban !== null && answer.nilai_jawaban !== undefined && answer.nilai_jawaban !== "") {
-        current.scores.push(Number(answer.nilai_jawaban));
-      }
-      const examId = getAnswerExamId(answer);
-      if (examId) current.exams.add(String(examId));
-      answerGroups.set(santriKey, current);
-    });
-
-    answerGroups.forEach((group) => {
-      if (!group.scores.length || group.scores.some((score) => Number.isNaN(score) || score < 70)) return;
-      const average = Math.round(group.scores.reduce((total, score) => total + score, 0) / group.scores.length);
-      rows.set(group.id, {
-        id: group.id,
-        name: group.name,
-        source: "Nilai ujian",
-        score: average,
-        examCount: group.exams.size || group.scores.length,
-      });
-    });
-
-    return Array.from(rows.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [examData.jawaban, examData.santri]);
 
   const setFormField = (field, value) => {
     setQuestionForm((current) => ({ ...current, [field]: value }));
@@ -985,55 +923,7 @@ export default function ExamPage({ openModal, notify }) {
               </table>
             </div>
           </article>
-
-          <article className="admin-panel reveal-card">
-            <div className="admin-panel__head">
-              <div>
-                <span className="question-step">Lulus</span>
-                <h2>Daftar Santri Lulus</h2>
-                <p>Menampilkan semua santri yang statusnya lulus atau semua nilai ujiannya minimal 70.</p>
-              </div>
-              <span className="admin-pill">{passedStudents.length} santri</span>
-            </div>
-            <div className="question-table-wrap question-table-wrap--scroll">
-              <table>
-                <thead><tr><th>Nama Santri</th><th>Sumber Kelulusan</th><th>Rata-rata / Nilai</th><th>Jumlah Ujian</th></tr></thead>
-                <tbody>
-                  {passedStudents.length ? passedStudents.map((student) => (
-                    <tr key={student.id}>
-                      <td><strong>{student.name}</strong><small>ID Santri: {student.id}</small></td>
-                      <td>{student.source}</td>
-                      <td><span className="score-pill">{student.score}</span></td>
-                      <td>{student.examCount}</td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan="4">Belum ada santri yang terdeteksi lulus dari status sistem atau nilai ujian.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </article>
         </div>
-        <aside className="exam-side exam-side--compact">
-          <article className="admin-panel reveal-card">
-            <div className="admin-panel__head"><h2>Upcoming Exams</h2><span className="admin-pill admin-pill--pink">{activeSchedules.length} Active</span></div>
-            {loading && <p>Mengambil jadwal ujian dari database...</p>}
-            {!loading && activeSchedules.length ? activeSchedules.map((schedule) => (
-              <article className="exam-schedule" key={schedule.jadwal_id || schedule.id}>
-                <span><strong>{new Date(schedule.tanggal).getDate() || "-"}</strong>{new Date(schedule.tanggal).toLocaleString("id-ID", { month: "short" })}</span>
-                <div><h3>{schedule.ujian?.nama_ujian || "Ujian"}</h3><small>{schedule.waktu_mulai} - {schedule.waktu_selesai} - {schedule.ruang_ujian || "Ruang belum diisi"}</small></div>
-                <div className="exam-schedule__actions">
-                  <b>{getScheduleStudentId(schedule) ? "1" : "0"}<small>Participant</small></b>
-                  <button type="button" onClick={() => openModal(schedule.ujian?.nama_ujian || "Jadwal Ujian", `Santri: ${getScheduleStudentName(schedule)}, ruang ${schedule.ruang_ujian || "-"}, pukul ${schedule.waktu_mulai} - ${schedule.waktu_selesai}.`)}>Detail</button>
-                  <button type="button" onClick={() => editSchedule(schedule)}>Edit</button>
-                </div>
-              </article>
-            )) : !loading && <p>Belum ada jadwal ujian aktif di database.</p>}
-          </article>
-          <div className="admin-image-card reveal-card"><DocumentMock compact /><p>Academic Year 2024/2025</p><h2>Registration Statistics Overview</h2></div>
-          <div className="admin-panel reveal-card"><p>Passing Rate</p><strong className="big-rate">{passingRate}%</strong><small>{examData.jawaban.length} jawaban dari database</small><div className="rate-bar"><span style={{ width: `${passingRate}%` }} /></div></div>
-          <BackendNotice compact />
-        </aside>
       </div>
     </section>
   );
