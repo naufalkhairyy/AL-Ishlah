@@ -4,70 +4,19 @@ import { fileToDataUrl } from "./paymentService";
 const EXAM_QUESTION_FILES_KEY = "exam_question_files";
 const QUESTION_OPTIONS = ["a", "b", "c", "d", "e"];
 
-const fallbackArray = (value) => Array.isArray(value) ? value : [];
-const unwrapList = (response) => fallbackArray(response.data?.data ?? response.data?.soal ?? response.data ?? response);
+// ==========================================
+// HELPER UTILITIES
+// ==========================================
 
-export const getExams = () => apiRequest("/ujian", { authScope: "student" }).then((response) => unwrapList(response));
+const fallbackArray = (value) => (Array.isArray(value) ? value : []);
 
-export const createExam = (exam) => (
-  apiRequest("/ujian", {
-    method: "POST",
-    authScope: "admin",
-    body: JSON.stringify({
-      nama_ujian: exam.nama_ujian,
-      tanggal: exam.tanggal,
-      durasi: exam.durasi,
-      status: exam.status,
-    }),
-  }).then((response) => response.data?.data ?? response.data ?? response)
-);
-
-export const generateExamSchedules = (schedule) => (
-  apiRequest("/jadwal-ujian/generate", {
-    method: "POST",
-    authScope: "admin",
-    body: JSON.stringify({
-      ujian_id: schedule.ujian_id,
-      ...(schedule.santri_ids?.length ? { santri_ids: schedule.santri_ids } : {}),
-      tanggal: schedule.tanggal,
-      waktu_mulai: schedule.waktu_mulai,
-      waktu_selesai: schedule.waktu_selesai,
-      ruang_ujian: schedule.ruang_ujian,
-      keterangan: schedule.keterangan,
-    }),
-  }).then((response) => response.data?.data ?? response.data ?? response)
-);
-
-export const updateExamSchedule = (scheduleId, schedule) => (
-  apiRequest(`/jadwal-ujian/${scheduleId}`, {
-    method: "PUT",
-    authScope: "admin",
-    body: JSON.stringify({
-      ujian_id: schedule.ujian_id,
-      santri_id: schedule.santri_id,
-      tanggal: schedule.tanggal,
-      waktu_mulai: schedule.waktu_mulai,
-      waktu_selesai: schedule.waktu_selesai,
-      ruang_ujian: schedule.ruang_ujian,
-      keterangan: schedule.keterangan,
-    }),
-  }).then((response) => response.data?.data ?? response.data ?? response)
-);
-
-export const getExamQuestions = (ujianId) => (
-  apiRequest(`/ujian/${ujianId}/soal`, { authScope: "student" }).then((response) => unwrapList(response))
-);
-
-export const getExamTimer = (ujianId) => (
-  apiRequest(`/ujian/${ujianId}/timer`, { authScope: "student" }).then((response) => response.data?.data ?? response.data ?? response)
-);
-
-export const getAdminExamQuestions = (ujianId) => (
-  apiRequest(`/ujian/${ujianId}/soal`, { authScope: "admin" }).then((response) => unwrapList(response))
-);
+const unwrapList = (response) =>
+  fallbackArray(response.data?.data ?? response.data?.soal ?? response.data ?? response);
 
 function appendIfPresent(formData, key, value) {
-  if (value !== undefined && value !== null && value !== "") formData.append(key, value);
+  if (value !== undefined && value !== null && value !== "") {
+    formData.append(key, value);
+  }
 }
 
 export function buildQuestionFormData(question) {
@@ -85,7 +34,9 @@ export function buildQuestionFormData(question) {
 
   appendIfPresent(formData, "jawaban_benar", question.jawaban_benar);
 
-  if (question.file_soal instanceof File) formData.append("file_soal", question.file_soal);
+  if (question.file_soal instanceof File) {
+    formData.append("file_soal", question.file_soal);
+  }
   return formData;
 }
 
@@ -107,60 +58,6 @@ export function buildQuestionPayload(question) {
   return payload;
 }
 
-export const createExamQuestion = (question) => (
-  apiRequest("/soal", {
-    method: "POST",
-    authScope: "admin",
-    body: buildQuestionFormData(question),
-  })
-);
-
-export const updateExamQuestion = (soalId, question) => (
-  question.file_soal instanceof File
-    ? apiRequest(`/soal/${soalId}`, {
-        method: "POST",
-        authScope: "admin",
-        body: (() => {
-          const formData = buildQuestionFormData(question);
-          formData.append("_method", "PUT");
-          return formData;
-        })(),
-      })
-    : apiRequest(`/soal/${soalId}`, {
-        method: "PUT",
-        authScope: "admin",
-        body: JSON.stringify(buildQuestionPayload(question)),
-      })
-);
-
-export const deleteExamQuestion = (soalId) => (
-  apiRequest(`/soal/${soalId}`, {
-    method: "DELETE",
-    authScope: "admin",
-  })
-);
-
-export const importExamQuestions = (ujianId, file) => {
-  const formData = new FormData();
-  formData.append("file", file);
-  return apiRequest(`/ujian/${ujianId}/soal/import`, {
-    method: "POST",
-    authScope: "admin",
-    body: formData,
-  });
-};
-
-export const submitExamAnswer = ({ soalId, jawabanText }) => (
-  apiRequest("/jawaban", {
-    method: "POST",
-    authScope: "student",
-    body: JSON.stringify({
-      soal_id: soalId,
-      jawaban_text: jawabanText,
-    }),
-  })
-);
-
 export function buildExamAnswersBulkPayload({ ujianId, answers, santriId }) {
   const uniqueAnswers = new Map();
 
@@ -181,6 +78,130 @@ export function buildExamAnswersBulkPayload({ ujianId, answers, santriId }) {
   };
 }
 
+// ==========================================
+// EXAM ENDPOINTS (GETTERS)
+// ==========================================
+
+export const getExams = () =>
+  apiRequest("/ujian", { authScope: "student" }).then((response) => unwrapList(response));
+
+export const getExamQuestions = (ujianId) =>
+  apiRequest(`/ujian/${ujianId}/soal`, { authScope: "student" }).then((response) => unwrapList(response));
+
+export const getExamTimer = (ujianId) =>
+  apiRequest(`/ujian/${ujianId}/timer`, { authScope: "student" }).then(
+    (response) => response.data?.data ?? response.data ?? response
+  );
+
+export const getExamResult = () =>
+  apiRequest("/admin/hasil-ujian", { authScope: "admin" }).then((response) => response);
+
+export const getAdminExamQuestions = (ujianId) =>
+  apiRequest(`/ujian/${ujianId}/soal`, { authScope: "admin" }).then((response) => unwrapList(response));
+
+export const getSchedules = () =>
+  apiRequest("/jadwal-ujian", { authScope: "student" }).then((response) => unwrapList(response));
+
+// ==========================================
+// EXAM ENDPOINTS (MUTATIONS - ADMIN)
+// ==========================================
+
+export const createExam = (exam) =>
+  apiRequest("/ujian", {
+    method: "POST",
+    authScope: "admin",
+    body: JSON.stringify({
+      nama_ujian: exam.nama_ujian,
+      tanggal: exam.tanggal,
+      durasi: exam.durasi,
+      status: exam.status,
+    }),
+  }).then((response) => response.data?.data ?? response.data ?? response);
+
+export const generateExamSchedules = (schedule) =>
+  apiRequest("/jadwal-ujian/generate", {
+    method: "POST",
+    authScope: "admin",
+    body: JSON.stringify({
+      ujian_id: schedule.ujian_id,
+      ...(schedule.santri_ids?.length ? { santri_ids: schedule.santri_ids } : {}),
+      tanggal: schedule.tanggal,
+      waktu_mulai: schedule.waktu_mulai,
+      waktu_selesai: schedule.waktu_selesai,
+      ruang_ujian: schedule.ruang_ujian,
+      keterangan: schedule.keterangan,
+    }),
+  }).then((response) => response.data?.data ?? response.data ?? response);
+
+export const updateExamSchedule = (scheduleId, schedule) =>
+  apiRequest(`/jadwal-ujian/${scheduleId}`, {
+    method: "PUT",
+    authScope: "admin",
+    body: JSON.stringify({
+      ujian_id: schedule.ujian_id,
+      santri_id: schedule.santri_id,
+      tanggal: schedule.tanggal,
+      waktu_mulai: schedule.waktu_mulai,
+      waktu_selesai: schedule.waktu_selesai,
+      ruang_ujian: schedule.ruang_ujian,
+      keterangan: schedule.keterangan,
+    }),
+  }).then((response) => response.data?.data ?? response.data ?? response);
+
+export const createExamQuestion = (question) =>
+  apiRequest("/soal", {
+    method: "POST",
+    authScope: "admin",
+    body: buildQuestionFormData(question),
+  });
+
+export const updateExamQuestion = (soalId, question) =>
+  question.file_soal instanceof File
+    ? apiRequest(`/soal/${soalId}`, {
+        method: "POST",
+        authScope: "admin",
+        body: (() => {
+          const formData = buildQuestionFormData(question);
+          formData.append("_method", "PUT");
+          return formData;
+        })(),
+      })
+    : apiRequest(`/soal/${soalId}`, {
+        method: "PUT",
+        authScope: "admin",
+        body: JSON.stringify(buildQuestionPayload(question)),
+      });
+
+export const deleteExamQuestion = (soalId) =>
+  apiRequest(`/soal/${soalId}`, {
+    method: "DELETE",
+    authScope: "admin",
+  });
+
+export const importExamQuestions = (ujianId, file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiRequest(`/ujian/${ujianId}/soal/import`, {
+    method: "POST",
+    authScope: "admin",
+    body: formData,
+  });
+};
+
+// ==========================================
+// EXAM SUBMISSIONS (STUDENT)
+// ==========================================
+
+export const submitExamAnswer = ({ soalId, jawabanText }) =>
+  apiRequest("/jawaban", {
+    method: "POST",
+    authScope: "student",
+    body: JSON.stringify({
+      soal_id: soalId,
+      jawaban_text: jawabanText,
+    }),
+  });
+
 export const submitExamAnswersBulk = async ({ ujianId, answers }) => {
   const santriId = await getCurrentSantriId();
   const payload = buildExamAnswersBulkPayload({ ujianId, answers, santriId });
@@ -192,12 +213,15 @@ export const submitExamAnswersBulk = async ({ ujianId, answers }) => {
   });
 };
 
-export const deleteExamAnswer = (answerId) => (
+export const deleteExamAnswer = (answerId) =>
   apiRequest(`/jawaban/${answerId}`, {
     method: "DELETE",
     authScope: "admin",
-  })
-);
+  });
+
+// ==========================================
+// SANTRI IDENTITY MANAGEMENT
+// ==========================================
 
 export function getCurrentSessionSantriId() {
   const user = getAuthUser("student");
@@ -215,7 +239,9 @@ function findFirstValueByKeys(value, keys) {
   }
 
   for (const key of keys) {
-    if (value[key] !== undefined && value[key] !== null && value[key] !== "") return value[key];
+    if (value[key] !== undefined && value[key] !== null && value[key] !== "") {
+      return value[key];
+    }
   }
 
   for (const child of Object.values(value)) {
@@ -231,10 +257,12 @@ function getResponseRecord(response) {
 }
 
 function extractSantriIdFromRecord(record) {
-  return record?.santri_id ||
+  return (
+    record?.santri_id ||
     record?.santri?.santri_id ||
     findFirstValueByKeys(record, ["santri_id", "santriId"]) ||
-    "";
+    ""
+  );
 }
 
 function extractCurrentSantriId(response) {
@@ -258,12 +286,14 @@ export async function getCurrentSantriId() {
     }
   }
 
-  throw new Error("Akun ini belum memiliki data peserta ujian. Silakan hubungi admin sebelum mengirim jawaban.");
+  throw new Error(
+    "Akun ini belum punya santri_id. Backend harus membuat record santri dulu sebelum calon santri bisa submit ujian."
+  );
 }
 
-export const getSchedules = () => (
-  apiRequest("/jadwal-ujian", { authScope: "student" }).then((response) => unwrapList(response))
-);
+// ==========================================
+// LOCAL STORAGE SOAL UTILITIES
+// ==========================================
 
 function readQuestionFiles() {
   try {
@@ -294,7 +324,8 @@ export async function saveExamQuestionFile({ ujianId, examTitle, file }) {
   ];
   const allowedExtensions = [".doc", ".docx", ".pdf"];
   const lowerName = file.name.toLowerCase();
-  const isAllowed = allowedTypes.includes(file.type) || allowedExtensions.some((extension) => lowerName.endsWith(extension));
+  const isAllowed =
+    allowedTypes.includes(file.type) || allowedExtensions.some((ext) => lowerName.endsWith(ext));
 
   if (!isAllowed) {
     throw new Error("File soal harus berupa Microsoft Word (.doc/.docx) atau PDF.");
