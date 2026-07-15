@@ -1,125 +1,330 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Segoe UI", sans-serif;
+.vision-page {
+  background:
+    radial-gradient(circle at 12% 20%, rgba(29, 139, 209, 0.08), transparent 26%),
+    linear-gradient(180deg, #ffffff 0%, #f5f9f6 100%);
+  color: var(--ink, #16212c);
+  overflow-x: hidden;
 }
 
-.page {
-  background: #f5f5f5;
-}
-
-/* HEADER */
-.header {
-  height: 220px;
+.vision-hero {
+  position: relative;
+  min-height: 430px;
   display: flex;
+  align-items: flex-end;
+  margin-top: -76px;
+  padding: 150px 0 72px;
+  color: #fff;
+  background-image:
+    linear-gradient(90deg, rgba(8, 22, 30, 0.9), rgba(8, 22, 30, 0.64) 54%, rgba(8, 22, 30, 0.18)),
+    var(--hero-image);
+  background-position: center;
+  background-size: cover;
+  isolation: isolate;
+}
+
+.vision-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 110px;
+  z-index: -1;
+  background: linear-gradient(180deg, transparent, rgba(245, 249, 246, 0.92));
+}
+
+.vision-hero__content {
+  animation: visionRise 0.75s ease both;
+}
+
+.vision-hero span,
+.vision-card__eyebrow,
+.vision-program__copy span,
+.education-band > div > span {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  color: white;
+  width: fit-content;
+  min-height: 32px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.vision-hero span {
+  margin-bottom: 18px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(8px);
+}
+
+.vision-hero h1 {
+  max-width: 820px;
+  margin: 0;
+  font-size: clamp(34px, 5vw, 62px);
+  line-height: 1.08;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.vision-hero p {
+  max-width: 640px;
+  margin: 22px 0 0;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 15px;
+  line-height: 1.85;
   font-weight: 600;
-  background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
-    url("https://picsum.photos/1400/400");
+}
+
+.vision-intro {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 28px;
+  margin-top: -42px;
+  position: relative;
+  z-index: 2;
+}
+
+.vision-card {
+  min-height: 330px;
+  padding: 34px;
+  border: 1px solid rgba(20, 70, 48, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 28px 60px rgba(22, 60, 42, 0.11);
+  animation: visionRise 0.75s ease both;
+}
+
+.vision-card--main {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(7, 155, 85, 0.1), transparent 52%),
+    #fff;
+}
+
+.vision-card--main::after {
+  content: "";
+  position: absolute;
+  right: -54px;
+  bottom: -64px;
+  width: 210px;
+  height: 210px;
+  border: 28px solid rgba(29, 139, 209, 0.12);
+  border-radius: 50%;
+}
+
+.vision-card--mission {
+  animation-delay: 0.1s;
+}
+
+.vision-card__eyebrow,
+.vision-program__copy span,
+.education-band > div > span {
+  margin-bottom: 22px;
+  background: #e5fbef;
+  color: var(--green-dark, #056b3f);
+}
+
+.vision-card h2,
+.vision-program__copy h2,
+.education-band h2 {
+  margin: 0;
+  font-size: clamp(24px, 2.6vw, 36px);
+  line-height: 1.22;
+  font-weight: 800;
+}
+
+.vision-card p,
+.vision-program__copy p,
+.education-band p {
+  margin: 22px 0 0;
+  color: var(--muted, #687789);
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+.mission-list {
+  display: grid;
+  gap: 16px;
+}
+
+.mission-item {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--line, #e2e9e5);
+  border-radius: 8px;
+  background: #fff;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.mission-item:hover,
+.standard-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 34px rgba(22, 60, 42, 0.1);
+}
+
+.mission-item span {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--green, #079b55), #23a9df);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.mission-item p,
+.standard-item p {
+  margin: 0;
+  color: #334154;
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+.vision-program {
+  margin-top: 72px;
+  padding: 74px 0;
+  background: linear-gradient(180deg, #eef7f2, #f8fbf9);
+}
+
+.vision-program__grid {
+  display: grid;
+  grid-template-columns: 0.82fr 1.18fr;
+  align-items: center;
+  gap: 52px;
+}
+
+.standard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.standard-item {
+  min-height: 112px;
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid rgba(20, 70, 48, 0.08);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 42px rgba(22, 60, 42, 0.07);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.standard-item span {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at center, #fff 0 36%, transparent 37%),
+    conic-gradient(var(--green, #079b55), #23a9df, #f4b93f, var(--green, #079b55));
+}
+
+.education-band {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  align-items: center;
+  gap: 32px;
+  margin-top: 58px;
+  margin-bottom: 72px;
+  padding: 32px;
+  border: 1px solid rgba(20, 70, 48, 0.08);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 24px 56px rgba(22, 60, 42, 0.08);
+}
+
+.education-stats {
+  min-height: 170px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  border-radius: 8px;
+  color: #fff;
+  background:
+    linear-gradient(135deg, rgba(7, 155, 85, 0.92), rgba(29, 139, 209, 0.88)),
+    var(--hero-image);
+  background-position: center;
   background-size: cover;
 }
 
-/* VISI MISI */
-.visi-misi-section {
-  background: rgba(153,165,0,0.7);
-  padding: 60px 20px;
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  flex-wrap: wrap;
+.education-stats strong {
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 800;
 }
 
-.card {
-  width: 350px;
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-  animation: visiCard 0.7s ease both;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+.education-stats span {
+  font-size: 13px;
+  font-weight: 800;
 }
 
-.card:hover,
-.section-box:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 18px 36px rgba(0,0,0,0.14);
-}
-
-.card-title {
-  background: #19c463;
-  color: white;
-  text-align: center;
-  padding: 10px;
-  margin: -20px -20px 15px -20px;
-  font-weight: 600;
-}
-
-/* SECTION BOX */
-.section-box {
-  max-width: 900px;
-  margin: 40px auto;
-  background: white;
-  padding: 25px;
-  border-radius: 6px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.section-title {
-  background: #19c463;
-  color: white;
-  padding: 10px;
-  text-align: center;
-  margin-bottom: 15px;
-  font-weight: 600;
-}
-
-/* FOOTER */
-.footer {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  padding: 40px 60px;
-  background: #eee;
-  margin-top: 50px;
-}
-
-.footer-logo {
-  width: 60px;
-  margin-bottom: 10px;
-}
-
-.footer h4 {
-  margin-bottom: 10px;
-}
-
-.footer p {
-  font-size: 14px;
-  margin-bottom: 5px;
-}
-
-.footer a {
-  display: block;
-  color: #263238;
-  font-size: 14px;
-  margin-bottom: 8px;
-  text-decoration: none;
-}
-
-.footer a:hover {
-  color: #19c463;
-}
-
-@keyframes visiCard {
+@keyframes visionRise {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(24px);
   }
 
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .vision-hero {
+    min-height: 440px;
+    padding: 132px 0 58px;
+  }
+
+  .vision-intro,
+  .vision-program__grid,
+  .education-band {
+    grid-template-columns: 1fr;
+  }
+
+  .vision-card {
+    min-height: auto;
+    padding: 26px;
+  }
+
+  .vision-program {
+    margin-top: 50px;
+    padding: 56px 0;
+  }
+
+  .standard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .education-band {
+    margin-top: 42px;
+    margin-bottom: 54px;
+    padding: 24px;
+  }
+}
+
+@media (max-width: 560px) {
+  .vision-hero h1 {
+    font-size: 34px;
+  }
+
+  .mission-item,
+  .standard-item {
+    grid-template-columns: 1fr;
+  }
+
+  .mission-item span {
+    width: 42px;
+    height: 42px;
   }
 }

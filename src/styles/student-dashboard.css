@@ -151,7 +151,8 @@
 
 .student-icon--exam::before,
 .student-icon--wallet::before,
-.student-icon--folder::before {
+.student-icon--folder::before,
+.student-icon--result::before {
   inset: 3px;
 }
 
@@ -1820,6 +1821,19 @@
   width: 6px;
   height: 5px;
   border-radius: 999px;
+}
+
+.student-icon--result::before {
+  border-radius: 3px;
+}
+
+.student-icon--result::after {
+  left: 7px;
+  top: 5px;
+  width: 8px;
+  height: 11px;
+  border-width: 0 2px 2px 0;
+  transform: rotate(38deg);
 }
 
 .student-icon--logout::after {

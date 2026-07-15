@@ -141,6 +141,76 @@ function getStudentRecordId(student = {}) {
   return student.santri_id || student.id || student.id_santri || student.student_id || "";
 }
 
+function firstObject(...values) {
+  return values.find((value) => value && typeof value === "object" && !Array.isArray(value)) || {};
+}
+
+function getRecordUserId(record = {}) {
+  return record.user_id ||
+    record.user?.user_id ||
+    record.authUser?.user_id ||
+    record.calon_santri?.user_id ||
+    record.calonSantri?.user_id ||
+    record.data_calon_santri?.user_id ||
+    record.dataCalonSantri?.user_id ||
+    "";
+}
+
+function getRecordCalonSantriId(record = {}) {
+  return record.calon_santri_id ||
+    record.id_calon_santri ||
+    record.calonSantriId ||
+    record.calon_santri?.calon_santri_id ||
+    record.calonSantri?.calon_santri_id ||
+    record.data_calon_santri?.calon_santri_id ||
+    record.dataCalonSantri?.calon_santri_id ||
+    record.calon_santri?.id ||
+    record.calonSantri?.id ||
+    "";
+}
+
+function getCalonRecord(student = {}, calon = {}) {
+  return firstObject(
+    calon,
+    student.calon_santri,
+    student.calonSantri,
+    student.data_calon_santri,
+    student.dataCalonSantri,
+    student.calon,
+  );
+}
+
+function getRelatedRecord(source = {}, relation) {
+  const relationKeys = {
+    sekolah: ["sekolah", "sekolahAsal", "sekolah_asal", "sekolah_asal_calon_santri", "sekolahAsalCalonSantri"],
+    ayah: ["ayah", "ayah_calon_santri", "ayahCalonSantri"],
+    ibu: ["ibu", "ibu_calon_santri", "ibuCalonSantri"],
+    wali: ["wali", "wali_calon_santri", "waliCalonSantri"],
+  };
+
+  return firstObject(...(relationKeys[relation] || []).map((key) => source[key]));
+}
+
+function buildProfileSource(item) {
+  const user = item.raw.user || {};
+  const student = item.raw.student || {};
+  const calon = getCalonRecord(student, item.raw.calon);
+
+  return {
+    authUser: user,
+    user,
+    student,
+    santri: student,
+    calon,
+    calonSantri: calon,
+    calon_santri: calon,
+    sekolah: firstObject(getRelatedRecord(calon, "sekolah"), getRelatedRecord(student, "sekolah")),
+    ayah: firstObject(getRelatedRecord(calon, "ayah"), getRelatedRecord(student, "ayah")),
+    ibu: firstObject(getRelatedRecord(calon, "ibu"), getRelatedRecord(student, "ibu")),
+    wali: firstObject(getRelatedRecord(calon, "wali"), getRelatedRecord(student, "wali")),
+  };
+}
+
 function parseEditValue(value) {
   const trimmed = String(value ?? "").trim();
   if (!trimmed) return "";
@@ -155,11 +225,12 @@ function parseEditValue(value) {
 }
 
 function ApplicantDetail({ item, onEdit }) {
-  const mappedProfile = mapProfileFromApi(item.raw);
+  const profileSource = buildProfileSource(item);
+  const mappedProfile = mapProfileFromApi(profileSource);
   const backendSections = [
-    ["Data Akun", item.raw.user],
-    ["Data Profil Pendaftaran Backend", item.raw.calon],
-    ["Data Santri Backend", item.raw.student],
+    ["Data Akun", profileSource.user],
+    ["Data Profil Pendaftaran Backend", profileSource.calon],
+    ["Data Santri Backend", profileSource.student],
   ].map(([title, value]) => [title, getPrimitiveDetailRows(value)]);
 
   return (
@@ -267,33 +338,57 @@ export default function ProfilePage({ openModal, notify }) {
     return () => {
       active = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const rows = useMemo(() => {
-    const santriByUser = new Map(santri.map((item) => [String(item.user_id || item.user?.user_id || ""), item]));
-    const calonByUser = new Map(calonSantri.map((item) => [String(item.user_id || item.user?.user_id || ""), item]));
+    const santriByUser = new Map(santri.map((item) => [String(getRecordUserId(item)), item]).filter(([key]) => key));
+    const santriByCalonId = new Map(santri.map((item) => [String(getRecordCalonSantriId(item)), item]).filter(([key]) => key));
+    const calonByUser = new Map(calonSantri.map((item) => [String(getRecordUserId(item)), item]).filter(([key]) => key));
 
-    return users
-      .filter((user) => user.role === "calon_santri")
-      .map((user) => {
-        const student = santriByUser.get(String(user.user_id));
+    const buildRow = ({ user = {}, student, calon, idPrefix = "user" }) => {
+      const calonProfile = getCalonRecord(student, calon);
+      const profile = Object.keys(calonProfile).length ? calonProfile : student || calon || {};
+      const name = getApplicantDisplayName(profile, user.username || "Calon Santri");
+      const status = student ? "Verified" : calon ? "Profil Terisi" : "Pending";
+      const userId = user.user_id || getRecordUserId(profile) || "";
+
+      return {
+        id: `${idPrefix}-${userId || getStudentRecordId(student) || getRecordCalonSantriId(profile) || name}`,
+        initials: getInitials(name),
+        name,
+        region: profile.alamat || user.role || "calon_santri",
+        nisn: profile.nisn || "-",
+        status,
+        date: user.created_at || profile.created_at ? new Date(user.created_at || profile.created_at).toLocaleDateString("id-ID") : "-",
+        raw: { user, student, calon },
+      };
+    };
+
+    const applicantUsers = users.filter((user) => ["calon_santri", "santri"].includes(user.role));
+    const userRows = applicantUsers.map((user) => {
         const calon = calonByUser.get(String(user.user_id));
-        const profile = student || calon || {};
-        const name = getApplicantDisplayName(profile, "Calon Santri");
-        const status = student ? "Verified" : calon ? "Profil Terisi" : "Pending";
-
-        return {
-          id: user.user_id,
-          initials: getInitials(name),
-          name,
-          region: profile.alamat || user.role,
-          nisn: profile.nisn || "-",
-          status,
-          date: user.created_at ? new Date(user.created_at).toLocaleDateString("id-ID") : "-",
-          raw: { user, student, calon },
-        };
+        const student = santriByUser.get(String(user.user_id)) || santriByCalonId.get(String(getRecordCalonSantriId(calon)));
+        return buildRow({ user, student, calon });
       });
+
+    const visibleUserIds = new Set(applicantUsers.map((user) => String(user.user_id)));
+    const orphanCalonRows = calonSantri
+      .filter((item) => {
+        const userId = String(getRecordUserId(item));
+        const calonId = String(getRecordCalonSantriId(item));
+        return !visibleUserIds.has(userId) && !santriByCalonId.has(calonId);
+      })
+      .map((calon) => buildRow({ user: calon.user || {}, calon, idPrefix: "calon" }));
+    const orphanSantriRows = santri
+      .filter((item) => !visibleUserIds.has(String(getRecordUserId(item))))
+      .map((student) => buildRow({
+        user: student.user || {},
+        student,
+        calon: getCalonRecord(student),
+        idPrefix: "santri",
+      }));
+
+    return [...userRows, ...orphanCalonRows, ...orphanSantriRows];
   }, [users, santri, calonSantri]);
 
   const filtered = filter === "Semua Status" ? rows : rows.filter((item) => item.status === filter);
