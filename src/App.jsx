@@ -19,7 +19,6 @@ import StudentExam from "./pages/santri/StudentExam";
 import StudentExamWork from "./pages/santri/StudentExamWork";
 import StudentPayments from "./pages/santri/StudentPayments";
 import StudentProfile from "./pages/santri/StudentProfile";
-import StudentAnnouncement from "./pages/santri/StudentAnnouncement";
 import StudentExamResult from "./pages/santri/StudentExamResult";
 
 
@@ -53,7 +52,6 @@ function App() {
           <Route path="ujian" element={<StudentExam />} />
           <Route path="dokumen" element={<StudentDocuments />} />
           <Route path="pembayaran" element={<StudentPayments />} />
-          <Route path="pengumuman" element={<StudentAnnouncement />} />
           <Route path="hasil-ujian" element={<StudentExamResult />} />
         </Route>
       </Routes>
