@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Pembayaran;
 use Illuminate\Http\Request;
+use App\Models\DataCalonSantri;
+use App\Models\Santri;
 
 class PembayaranController extends Controller
 {
@@ -119,33 +121,67 @@ class PembayaranController extends Controller
     }
 
     public function review(Request $request, int $id)
-    {
-        $pembayaran = Pembayaran::find($id);
+{
+    $pembayaran = Pembayaran::find($id);
 
-        if (!$pembayaran) {
-            return response()->json([
-                'success' => false,
-                'status' => null,
-                'message' => 'Pembayaran tidak ditemukan',
-            ], 404);
-        }
-
-        $validated = $request->validate([
-            'status' => 'required|in:pending,approved,rejected,diterima,ditolak',
-            'catatan' => 'nullable|string',
-            'catatan_review' => 'nullable|string',
-        ]);
-
-        $pembayaran->update([
-            'status' => $this->normalizeStatus($validated['status']),
-            'catatan' => $validated['catatan_review'] ?? $validated['catatan'] ?? null,
-        ]);
-
-        return $this->paymentResponse(
-            $pembayaran->fresh(),
-            'Status pembayaran berhasil diperbarui'
-        );
+    if (!$pembayaran) {
+        return response()->json([
+            'success' => false,
+            'status' => null,
+            'message' => 'Pembayaran tidak ditemukan',
+        ], 404);
     }
+
+    $validated = $request->validate([
+        'status' => 'required|in:pending,approved,rejected,diterima,ditolak',
+        'catatan' => 'nullable|string',
+        'catatan_review' => 'nullable|string',
+    ]);
+
+    $status = $this->normalizeStatus($validated['status']);
+
+    $pembayaran->update([
+        'status' => $status,
+        'catatan' => $validated['catatan_review'] ?? $validated['catatan'] ?? null,
+    ]);
+
+    // Jika pembayaran disetujui
+    if ($status === 'approved') {
+
+        $calon = DataCalonSantri::where('user_id', $pembayaran->user_id)->first();
+
+        if ($calon && $calon->status_dokumen === 'diterima') {
+
+            $santri = Santri::where('user_id', $calon->user_id)->first();
+
+            if (!$santri) {
+$santri = Santri::create([
+    'user_id'        => $calon->user_id,
+    'nama_lengkap'   => $calon->nama_lengkap,
+    'tempat_lahir'   => $calon->tempat_lahir,
+    'tanggal_lahir'  => $calon->tanggal_lahir,
+    'jenis_kelamin'  => $calon->jenis_kelamin,
+    'alamat'         => $calon->alamat,
+    'no_hp'          => '-',
+    'kelas'          => 'Calon Santri',
+]);
+            }
+
+            // Hubungkan pembayaran dengan santri
+            if ($pembayaran->santri_id === null) {
+
+                $pembayaran->update([
+                    'santri_id' => $santri->santri_id,
+                ]);
+            }
+        }
+    }
+
+    return $this->paymentResponse(
+        $pembayaran->fresh(),
+        'Status pembayaran berhasil diperbarui'
+    );
+}
 
     public function downloadBuktiBayar(Request $request, int $id)
     {
