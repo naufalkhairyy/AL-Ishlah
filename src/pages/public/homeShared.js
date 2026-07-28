@@ -1,2 +1,2 @@
 export const heroImage =
-  "https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=1800&q=80";
+  "https://images.pexels.com/photos/32668040/pexels-photo-32668040.jpeg?auto=compress&cs=tinysrgb&w=1800";

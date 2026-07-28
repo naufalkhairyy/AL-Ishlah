@@ -6,40 +6,111 @@ import { heroImage } from "./homeShared";
 
 const news = [
   {
-    title: "Belajar di Rumah",
+    title: "Halaqah Tahfidz Santri Putri",
     date: "20 Juni",
     image:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=500&q=80",
+      "https://images.pexels.com/photos/6282020/pexels-photo-6282020.jpeg?auto=compress&cs=tinysrgb&w=500",
+    alt: "Santri putri berjilbab mengikuti halaqah tahfidz",
+    description:
+      "Santri putri mengikuti halaqah tahfidz dengan pendampingan ustadzah untuk memperkuat hafalan dan adab belajar.",
   },
   {
-    title: "Kegiatan Belajar mengajar di Pondok Pesantren",
+    title: "Kajian Kitab Santri Putra",
     date: "20 Juni",
     image:
-      "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=500&q=80",
+      "https://images.pexels.com/photos/37350652/pexels-photo-37350652.jpeg?auto=compress&cs=tinysrgb&w=500",
+    alt: "Santri putra berpakaian muslim membaca Al-Quran",
+    description:
+      "Santri putra belajar kitab dan materi diniyah dengan suasana kelas yang tertib, santun, dan berorientasi amal.",
   },
   {
-    title: "Kegiatan Belajar mengajar di Rumah",
+    title: "Pembelajaran Digital Islami",
     date: "20 Juni",
     image:
-      "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=500&q=80",
+      "https://images.pexels.com/photos/6281994/pexels-photo-6281994.jpeg?auto=compress&cs=tinysrgb&w=500",
+    alt: "Santri putri berjilbab belajar bersama menggunakan laptop",
+    description:
+      "Pembelajaran modern tetap diarahkan pada nilai pesantren melalui diskusi, tugas terstruktur, dan pendampingan guru.",
   },
   {
-    title: "Kegiatan Pembelajaran Daring",
+    title: "Pembinaan Ibadah Berjamaah",
     date: "20 Juni",
     image:
-      "https://images.unsplash.com/photo-1587614295999-6c1c1367510d?auto=format&fit=crop&w=500&q=80",
+      "https://images.pexels.com/photos/29832036/pexels-photo-29832036.jpeg?auto=compress&cs=tinysrgb&w=500",
+    alt: "Jamaah laki-laki berpakaian muslim shalat di masjid",
+    description:
+      "Kegiatan ibadah berjamaah dibiasakan agar santri tumbuh disiplin, khusyuk, dan memiliki kepedulian terhadap sesama.",
   },
 ];
 
-const agendas = ["Halaqoh", "Pembagian Ijazah", "Pemberitahuan PPDB 2024/2025"];
+const agendas = [
+  {
+    title: "Halaqah Tahfidz",
+    date: "01 - 06 - 2026",
+    description: "Setoran hafalan Al-Quran dan murajaah bersama pembimbing.",
+  },
+  {
+    title: "Pembagian Ijazah",
+    date: "08 - 06 - 2026",
+    description: "Penyerahan ijazah dan apresiasi capaian belajar santri.",
+  },
+  {
+    title: "Pemberitahuan PPDB 2026/2027",
+    date: "15 - 06 - 2026",
+    description: "Informasi jadwal, biaya, dan tahapan penerimaan santri baru.",
+  },
+];
 
 const galleries = [
-  "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=700&q=80",
-  "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=700&q=80",
+  {
+    image:
+      "https://images.pexels.com/photos/32668040/pexels-photo-32668040.jpeg?auto=compress&cs=tinysrgb&w=700",
+    alt: "Santri putri berjilbab belajar di kelas",
+  },
+  {
+    image:
+      "https://images.pexels.com/photos/37350652/pexels-photo-37350652.jpeg?auto=compress&cs=tinysrgb&w=700",
+    alt: "Santri putra membaca Al-Quran di ruang belajar",
+  },
+  {
+    image:
+      "https://images.pexels.com/photos/20627702/pexels-photo-20627702.jpeg?auto=compress&cs=tinysrgb&w=700",
+    alt: "Santri putra belajar Al-Quran bersama",
+  },
+  {
+    image:
+      "https://images.pexels.com/photos/29832030/pexels-photo-29832030.jpeg?auto=compress&cs=tinysrgb&w=700",
+    alt: "Jamaah laki-laki mengikuti shalat di masjid",
+  },
+  {
+    image:
+      "https://images.pexels.com/photos/6282012/pexels-photo-6282012.jpeg?auto=compress&cs=tinysrgb&w=700",
+    alt: "Santri putri berjilbab belajar menggunakan perangkat digital",
+  },
+  {
+    image:
+      "https://images.pexels.com/photos/36463770/pexels-photo-36463770.jpeg?auto=compress&cs=tinysrgb&w=700",
+    alt: "Laki-laki berpakaian muslim membaca Al-Quran di masjid",
+  },
+];
+
+const profileFeatures = [
+  {
+    title: "Fasilitas",
+    description: "Ruang belajar, masjid, asrama, dan area pembinaan disiapkan untuk mendukung kegiatan santri.",
+  },
+  {
+    title: "Lokasi",
+    description: "Berada di Sungai Pagar, Kampar, dengan lingkungan yang kondusif untuk belajar dan ibadah.",
+  },
+  {
+    title: "Sejarah",
+    description: "Pondok dibangun untuk menghadirkan pendidikan Islam yang seimbang antara ilmu, adab, dan kemandirian.",
+  },
+  {
+    title: "Prestasi",
+    description: "Santri dibimbing agar mampu berprestasi dalam tahfidz, akademik, dakwah, dan kegiatan keislaman.",
+  },
 ];
 
 function Dots() {
@@ -67,7 +138,7 @@ export default function Home() {
           <p>Jalan Raya Pekanbaru - Taluk Kuantan KM. 30, Sungai Pagar, Kabupaten Kampar, Riau</p>
           <div className="hero-action-row">
             <button className="green-btn" onClick={() => navigate("/pendaftaran")}>Daftar Sekarang</button>
-            <button className="ghost-btn" onClick={() => scrollTo(".app-footer")}>Contact Us</button>
+            <button className="ghost-btn" onClick={() => scrollTo(".app-footer")}>Hubungi Kami</button>
           </div>
         </div>
       </section>
@@ -77,8 +148,10 @@ export default function Home() {
         <div className="welcome-copy">
           <h2>Sambutan Mudir Pondok Pesantren Al Ishlah Al Islamy</h2>
           <p>
-            Puji dan syukur mari kita panjatkan kehadirat Allah SWT. Yang senantiasa
-            dengan sifat kasih dan sayangnya banyak memberikan nikmat ...
+            Puji syukur ke hadirat Allah SWT atas nikmat iman, ilmu, dan kesempatan
+            untuk terus membina generasi Qurani. Pondok Pesantren Al Ishlah Al
+            Islamy hadir sebagai tempat belajar yang menanamkan adab, kedisiplinan,
+            kemandirian, serta semangat berkhidmat kepada masyarakat.
           </p>
           <button className="green-btn" onClick={() => navigate("/visi-misi")}>Lebih Lanjut</button>
         </div>
@@ -89,17 +162,19 @@ export default function Home() {
           <div className="profile-copy">
             <h2>Profil Sekolah</h2>
             <p>
-              Di samping adalah profil sekolah kami secara keseluruhan dari mulai
-              bagian depan hingga seluruh fasilitas yang terdapat disekolah kami akan ...
+              Pondok Pesantren Al Ishlah Al Islamy menggabungkan pendidikan diniyah,
+              tahfidz, pembiasaan ibadah, dan pembelajaran umum dalam lingkungan
+              yang rapi dan terarah. Seluruh program dirancang untuk membentuk santri
+              yang berilmu, berakhlak, dan siap mandiri.
             </p>
             <button className="green-btn" onClick={() => navigate("/fasilitas")}>Lebih Lanjut</button>
           </div>
           <div className="feature-grid">
-            {["Fasilitas", "Lokasi", "Sejarah", "Prestasi"].map((item, index) => (
-              <article className="mini-card" key={item} onClick={() => navigate(index === 0 ? "/fasilitas" : "/visi-misi")}>
+            {profileFeatures.map((item, index) => (
+              <article className="mini-card" key={item.title} onClick={() => navigate(index === 0 ? "/fasilitas" : "/visi-misi")}>
                 <span className={`mini-icon mini-icon--${index + 1}`} />
-                <h3>{item}</h3>
-                <p>Lorem ipsum dolor sit amet adipicing aqua lorem ipsum.</p>
+                <h3>{item.title}</h3>
+                <p>{item.description}</p>
               </article>
             ))}
           </div>
@@ -111,17 +186,17 @@ export default function Home() {
           <h2>Berita dan Agenda</h2>
           <label className="search-box">
             <span className="public-icon public-icon--search" aria-hidden="true" />
-            <input placeholder="Search" onFocus={() => navigate("/berita")} />
+            <input placeholder="Cari berita" onFocus={() => navigate("/berita")} />
           </label>
         </div>
         <div className="news-layout">
           <div className="news-list">
             {filteredNews.map((item) => (
               <article className="news-item" key={item.title} onClick={() => navigate("/berita")}>
-                <img src={item.image} alt="" />
+                <img src={item.image} alt={item.alt} />
                 <div>
                   <h3>{item.title}</h3>
-                  <p>Lorem ipsum dolor sit amet adipicing amet adipci aqua lorem ipsum.</p>
+                  <p>{item.description}</p>
                   <small>{item.date}</small>
                 </div>
                 <span className="arrow" aria-hidden="true" />
@@ -130,11 +205,12 @@ export default function Home() {
           </div>
           <div className="agenda-list">
             {agendas.map((item) => (
-              <article className="agenda-item" key={item} onClick={() => navigate("/jadwal-biaya")}>
+              <article className="agenda-item" key={item.title} onClick={() => navigate("/jadwal-biaya")}>
                 <img src={logo} alt="" />
                 <div>
-                  <small>01 - 06 - 2021</small>
-                  <h3>{item}</h3>
+                  <small>{item.date}</small>
+                  <h3>{item.title}</h3>
+                  <p>{item.description}</p>
                 </div>
                 <span className="arrow" aria-hidden="true" />
               </article>
@@ -145,10 +221,10 @@ export default function Home() {
 
       <section className="gallery-band">
         <div className="page-shell">
-          <h2>Gallery</h2>
+          <h2>Galeri</h2>
           <div className="gallery-grid">
-            {galleries.map((image) => (
-              <img key={image} src={image} alt="" />
+            {galleries.map((item) => (
+              <img key={item.image} src={item.image} alt={item.alt} />
             ))}
           </div>
           <div className="gallery-action">

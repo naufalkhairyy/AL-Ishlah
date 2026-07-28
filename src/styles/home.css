@@ -317,6 +317,13 @@ body {
   line-height: 1.75;
 }
 
+.agenda-item p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
 .news-item small,
 .agenda-item small {
   color: #a3adbd;
