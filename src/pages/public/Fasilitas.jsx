@@ -4,34 +4,34 @@ import { heroImage } from "./homeShared";
 
 const facilities = [
   {
-    title: "Asrama Santri",
-    desc: "Lingkungan tinggal santri yang tertata untuk ibadah, belajar malam, dan pembinaan harian.",
-    image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=900&q=80",
+    title: "Asrama Santriwati",
+    desc: "Area tinggal santriwati berjilbab yang tertata untuk ibadah, belajar malam, pendampingan musyrifah, dan pembiasaan adab harian.",
+    image: "https://images.unsplash.com/photo-1719804320342-b7ebb6bc0ecb?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    title: "Asrama Santri Putra",
+    desc: "Lingkungan santri putra dibina agar rapi memakai baju muslim, peci, dan menjaga kedisiplinan dalam kegiatan pesantren.",
+    image: "https://cdn.langit7.id/foto/850/langit7/berita/2023/02/16/1/29831/tips-pilih-busana-muslim-pria-untuk-acara-formal-dan-informal-lkt.jpg",
   },
   {
     title: "Masjid",
-    desc: "Pusat kegiatan shalat berjamaah, halaqah, kajian, dan pembiasaan adab santri.",
+    desc: "Pusat kegiatan shalat berjamaah, halaqah, kajian kitab, tahfidz, dan pembiasaan akhlak islami bagi seluruh santri.",
     image: "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=900&q=80",
   },
   {
     title: "Ruang Kelas",
-    desc: "Ruang belajar formal untuk program diniyah, bahasa Arab, tahfidz, dan akademik.",
+    desc: "Ruang belajar formal untuk program diniyah, bahasa Arab, tahfidz, dan akademik dengan suasana yang tertib.",
     image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=900&q=80",
   },
   {
     title: "Perpustakaan",
-    desc: "Area baca dan rujukan kitab untuk mendukung budaya literasi santri.",
+    desc: "Area baca dan rujukan kitab untuk mendukung budaya literasi, diskusi, dan pendalaman materi keislaman.",
     image: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=900&q=80",
   },
   {
     title: "Lapangan",
-    desc: "Fasilitas olahraga dan kegiatan bersama agar santri tetap aktif dan sehat.",
+    desc: "Fasilitas olahraga dan kegiatan bersama agar santri tetap sehat, kompak, dan disiplin dalam aktivitas harian.",
     image: "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    title: "Kantin",
-    desc: "Tempat makan dan kebutuhan harian santri dengan pengawasan lingkungan pesantren.",
-    image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=900&q=80",
   },
 ];
 

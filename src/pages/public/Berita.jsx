@@ -2,6 +2,57 @@ import "../../styles/berita.css";
 import { useNavigate } from "react-router-dom";
 import PublicFooter from "../../components/PublicFooter";
 
+const images = {
+  santriwati:
+    "https://images.unsplash.com/photo-1719804320342-b7ebb6bc0ecb?auto=format&fit=crop&w=900&q=80",
+  santriPutra:
+    "https://cdn.langit7.id/foto/850/langit7/berita/2023/02/16/1/29831/tips-pilih-busana-muslim-pria-untuk-acara-formal-dan-informal-lkt.jpg",
+  tahfidz:
+    "https://images.unsplash.com/photo-1585036156171-384164a8c675?auto=format&fit=crop&w=900&q=80",
+  kelas:
+    "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=900&q=80",
+  masjid:
+    "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=900&q=80",
+  literasi:
+    "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=900&q=80",
+};
+
+const topArticles = [
+  {
+    title: "Santriwati Berjilbab Aktif Mengikuti Kajian Kitab",
+    desc: "Santriwati dibimbing membaca, mencatat, dan memahami materi diniyah dengan suasana belajar yang tertib.",
+    image: images.santriwati,
+  },
+  {
+    title: "Santri Putra Membiasakan Adab Berpakaian Muslim",
+    desc: "Santri putra mengenakan baju muslim dan peci sebagai bagian dari pembiasaan akhlak, kerapian, dan identitas pesantren.",
+    image: images.santriPutra,
+  },
+  {
+    title: "Program Tahfidz Menumbuhkan Kedisiplinan Harian",
+    desc: "Setoran hafalan, murajaah, dan pendampingan ustadz membantu santri menjaga target hafalan Al-Qur'an.",
+    image: images.tahfidz,
+  },
+];
+
+const bottomArticles = [
+  {
+    title: "Ruang Kelas Menjadi Pusat Pembelajaran Terpadu",
+    desc: "Pembelajaran umum dan agama disusun seimbang agar santri siap secara akademik dan spiritual.",
+    image: images.kelas,
+  },
+  {
+    title: "Masjid Sebagai Pusat Ibadah dan Pembinaan",
+    desc: "Kegiatan shalat berjamaah, halaqah, dan kajian rutin diarahkan untuk membentuk karakter islami.",
+    image: images.masjid,
+  },
+  {
+    title: "Literasi Santri Diperkuat Melalui Perpustakaan",
+    desc: "Santri didorong membaca buku pelajaran, kitab, dan referensi keislaman untuk memperluas wawasan.",
+    image: images.literasi,
+  },
+];
+
 export default function Berita() {
   const navigate = useNavigate();
   const openArticle = (title) => {
@@ -29,67 +80,48 @@ export default function Berita() {
 
         {/* GRID ATAS */}
         <div className="grid-3">
-          <div className="card" onClick={() => openArticle("Kegiatan Belajar Mengajar di Rumah")}>
-            <img src="https://picsum.photos/300/200" />
-            <h4>Kegiatan Belajar Mengajar di Rumah</h4>
-            <p>Lorem ipsum dolor sit amet...</p>
-            <button>Read More</button>
-          </div>
-
-          <div className="card" onClick={() => openArticle("Kegiatan Belajar Mengajar di Rumah")}>
-            <img src="https://picsum.photos/301/200" />
-            <h4>Kegiatan Belajar Mengajar di Rumah</h4>
-            <p>Lorem ipsum dolor sit amet...</p>
-            <button>Read More</button>
-          </div>
-
-          <div className="card" onClick={() => openArticle("Belajar dirumah")}>
-            <img src="https://picsum.photos/302/200" />
-            <h4>Belajar dirumah</h4>
-            <p>Lorem ipsum dolor sit amet...</p>
-            <button>Read More</button>
-          </div>
+          {topArticles.map((article) => (
+            <div className="card" key={article.title} onClick={() => openArticle(article.title)}>
+              <img src={article.image} alt={article.title} />
+              <h4>{article.title}</h4>
+              <p>{article.desc}</p>
+              <button>Read More</button>
+            </div>
+          ))}
         </div>
 
         {/* FEATURE BESAR */}
         <div className="feature">
-          <img src="https://picsum.photos/500/300" />
+          <img src={images.santriwati} alt="Santriwati berjilbab sedang membaca kitab" />
           <div className="feature-text">
-            <h2>Kegiatan Belajar Mengajar dirumah</h2>
+            <h2>Pembinaan Santri dan Santriwati Berbasis Adab Islami</h2>
             <p>
-              Lorem ipsum dolor sit amet consectetur adipisicing elit.
-              Mollitia quis dolor sit amet.
+              Setiap kegiatan pesantren diarahkan untuk membentuk santri yang rapi dalam ibadah,
+              santun dalam pergaulan, dan disiplin dalam belajar. Santriwati dibiasakan berjilbab
+              dengan baik, sementara santri putra dibimbing menjaga kerapian baju muslim, peci,
+              dan adab di lingkungan pesantren.
             </p>
-            <button onClick={() => openArticle("Kegiatan Belajar Mengajar dirumah")}>Read More</button>
+            <button onClick={() => openArticle("Pembinaan Santri dan Santriwati Berbasis Adab Islami")}>Read More</button>
           </div>
         </div>
 
         {/* GRID BAWAH */}
         <div className="grid-3">
-          <div className="card" onClick={() => openArticle("Kegiatan Belajar Mengajar")}>
-            <img src="https://picsum.photos/303/200" />
-            <h4>Kegiatan Belajar Mengajar</h4>
-            <button>Read More</button>
-          </div>
-
-          <div className="card" onClick={() => openArticle("Kegiatan Belajar Mengajar")}>
-            <img src="https://picsum.photos/304/200" />
-            <h4>Kegiatan Belajar Mengajar</h4>
-            <button>Read More</button>
-          </div>
-
-          <div className="card" onClick={() => openArticle("Belajar dirumah")}>
-            <img src="https://picsum.photos/305/200" />
-            <h4>Belajar dirumah</h4>
-            <button>Read More</button>
-          </div>
+          {bottomArticles.map((article) => (
+            <div className="card" key={article.title} onClick={() => openArticle(article.title)}>
+              <img src={article.image} alt={article.title} />
+              <h4>{article.title}</h4>
+              <p>{article.desc}</p>
+              <button>Read More</button>
+            </div>
+          ))}
         </div>
 
         {/* TAG */}
         <div className="tags">
           <h3>Recent Post</h3>
           <div className="tag-list">
-            {["Belajar di rumah", "Kegiatan belajar", "Artikel", "Santri"].map((tag) => (
+            {["Santriwati", "Santri putra", "Tahfidz", "Adab Islami"].map((tag) => (
               <button key={tag} onClick={() => openArticle(tag)}>{tag}</button>
             ))}
           </div>

@@ -7,8 +7,9 @@
 .berita-hero {
   height: 220px;
   background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
-    url("https://picsum.photos/1400/400");
+    url("https://images.unsplash.com/photo-1719804320342-b7ebb6bc0ecb?auto=format&fit=crop&w=1400&q=80");
   background-size: cover;
+  background-position: center;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -71,6 +72,9 @@
 
 .card img {
   width: 100%;
+  height: 190px;
+  object-fit: cover;
+  display: block;
 }
 
 .card h4 {
@@ -100,10 +104,13 @@
 .feature img {
   width: 50%;
   border-radius: 10px;
+  object-fit: cover;
 }
 
 .feature-text {
   width: 50%;
+  color: #263238;
+  line-height: 1.75;
 }
 
 .feature-text button {
