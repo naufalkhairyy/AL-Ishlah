@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import BackendNotice from "../components/BackendNotice";
-import DocumentMock from "../components/DocumentMock";
 import KpiCard from "../components/KpiCard";
 import QuickApplicantForm from "../components/QuickApplicantForm";
 import { getAdminResources, getInitials } from "../../../service/adminService";
@@ -54,7 +52,7 @@ export default function DashboardPage({ openModal, notify, setSection }) {
       <div className="admin-page-head">
         <div>
           <h1>Assalamu'alaikum, Admin</h1>
-          <p>{loading ? "Mengambil ringkasan dari database..." : "Ringkasan pendaftaran dari database."}</p>
+          <p>{loading ? "Mengambil ringkasan..." : "Ringkasan pendaftaran terbaru."}</p>
         </div>
         <button className="admin-primary" type="button" onClick={() => openModal("Pendaftaran Baru", "Form input cepat siap digunakan untuk menambahkan calon santri manual.", <QuickApplicantForm notify={notify} />)}>
           <span>+</span> Input Pendaftaran Baru
@@ -64,10 +62,10 @@ export default function DashboardPage({ openModal, notify, setSection }) {
       {error && <div className="admin-panel reveal-card">{error}</div>}
 
       <div className="admin-kpi-grid">
-        <KpiCard title="Akun Calon Santri" value={calonUsers.length} note="Dari tabel users" badge="DB" />
-        <KpiCard title="Data Santri" value={resources.santri.length} note="Dari data santri" badge="Live" />
+        <KpiCard title="Akun Calon Santri" value={calonUsers.length} note="Akun terdaftar" badge="Aktif" />
+        <KpiCard title="Data Santri" value={resources.santri.length} note="Profil tersimpan" badge="Live" />
         <KpiCard title="Ujian Aktif" value={activeExams.length} note={`${resources.ujian.length} total ujian`} badge="Aktif" tone="pink" />
-        <KpiCard title="Jadwal Ujian" value={resources.jadwal.length} note="Dari jadwal ujian" badge="DB" tone="gray" />
+        <KpiCard title="Jadwal Ujian" value={resources.jadwal.length} note="Jadwal tersusun" badge="Total" tone="gray" />
       </div>
 
       <div className="dashboard-panels">
@@ -91,23 +89,23 @@ export default function DashboardPage({ openModal, notify, setSection }) {
               );
             })}
           </div>
-          <div className="admin-legend"><span /> Data live dari database <i /> Statistik sistem</div>
+          <div className="admin-legend"><span /> Data pendaftaran <i /> Statistik sistem</div>
         </article>
 
         <aside className="admin-panel activity-panel reveal-card">
           <h2>Aktivitas Terbaru</h2>
           {[
-            [`${calonUsers.length} akun`, "calon santri tercatat.", "database users"],
-            [`${resources.santri.length} santri`, "sudah punya data santri.", "database santri"],
-            [`${resources.ujian.length} ujian`, "tersedia di sistem.", "database ujian"],
-            [`${resources.jawaban.length} jawaban`, "tersimpan untuk penilaian.", "database jawaban"],
+            [`${calonUsers.length} akun`, "calon santri tercatat.", "Pendaftaran"],
+            [`${resources.santri.length} santri`, "sudah punya profil.", "Profil santri"],
+            [`${resources.ujian.length} ujian`, "tersedia di sistem.", "Manajemen ujian"],
+            [`${resources.jawaban.length} jawaban`, "tersimpan untuk penilaian.", "Hasil ujian"],
           ].map((item, index) => (
             <button className="activity-item" type="button" key={item[0]} onClick={() => notify("Aktivitas dibuka", `${item[0]} ${item[1]}`)}>
               <span>{index + 1}</span>
               <p><strong>{item[0]}</strong> {item[1]} <small>{item[2]}</small></p>
             </button>
           ))}
-          <button className="admin-outline" type="button" onClick={() => openModal("Semua Aktivitas", "Daftar aktivitas lengkap diambil dari database.")}>Lihat Semua Aktivitas</button>
+          <button className="admin-outline" type="button" onClick={() => openModal("Semua Aktivitas", "Daftar aktivitas lengkap untuk admin.")}>Lihat Semua Aktivitas</button>
         </aside>
       </div>
 
@@ -128,23 +126,12 @@ export default function DashboardPage({ openModal, notify, setSection }) {
                 <td><button type="button" onClick={() => setSection("dokumen")}>Periksa</button></td>
               </tr>
             )) : (
-              <tr><td colSpan="5">Belum ada data santri di database.</td></tr>
+              <tr><td colSpan="5">Belum ada data santri.</td></tr>
             )}
           </tbody>
         </table>
         <button className="admin-load" type="button" onClick={() => setExpanded((current) => !current)}>{expanded ? "Tutup Antrean" : "Muat Antrean Lainnya"}</button>
       </article>
-
-      <div className="admin-bottom-grid">
-        <section className="admin-banner reveal-card">
-          <DocumentMock compact />
-          <div>
-            <h2>Integritas Akademik & Spiritual</h2>
-            <p>"Mencetak generasi berakhlaqul karimah dan menguasai ilmu."</p>
-          </div>
-        </section>
-        <BackendNotice />
-      </div>
     </section>
   );
 }

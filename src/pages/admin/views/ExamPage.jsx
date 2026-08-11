@@ -3,7 +3,6 @@ import { getAdminExamData } from "../../../service/adminService";
 import {
   createExam,
   createExamQuestion,
-  deleteExamAnswer,
   deleteExamQuestion,
   generateExamSchedules,
   getAdminExamQuestions,
@@ -94,25 +93,6 @@ function getStudentDisplayName(student, fallbackId = "") {
     (fallbackId ? `Santri #${fallbackId}` : "Santri");
 }
 
-function getAnswerExamId(answer) {
-  return answer?.ujian_id ||
-    answer?.soal?.ujian_id ||
-    answer?.soal?.ujian?.ujian_id ||
-    "";
-}
-
-function getAnswerStudentKey(answer) {
-  return answer?.santri_id ||
-    answer?.santri?.santri_id ||
-    answer?.santri?.user?.username ||
-    answer?.santri?.username ||
-    "";
-}
-
-function getAnswerId(answer) {
-  return answer?.jawaban_id || answer?.id || answer?.answer_id || "";
-}
-
 function formatScheduleDate(date) {
   if (!date) return "-";
   const parsed = new Date(date);
@@ -144,7 +124,6 @@ export default function ExamPage({ openModal, notify }) {
   const [selectedImportFile, setSelectedImportFile] = useState(null);
   const [questionLimit, setQuestionLimit] = useState(10);
   const [scheduleLimit, setScheduleLimit] = useState(10);
-  const [answerLimit, setAnswerLimit] = useState(10);
   const [savingExam, setSavingExam] = useState(false);
   const [savingSchedule, setSavingSchedule] = useState(false);
   const importInputRef = useRef(null);
@@ -209,15 +188,11 @@ export default function ExamPage({ openModal, notify }) {
     [examData.jadwal],
   );
 
-  const gradedAnswers = examData.jawaban.filter((answer) => answer.nilai_jawaban !== null);
-  const pendingAnswers = examData.jawaban.filter((answer) => answer.nilai_jawaban === null);
-
   const selectedExam = examData.ujian.find((exam) => String(exam.ujian_id) === String(selectedExamId));
   const importErrors = normalizeImportErrors(importResult);
   const multipleChoiceCount = questions.length;
   const visibleQuestions = questions.slice(0, questionLimit);
   const visibleSchedules = sortedSchedules.slice(0, scheduleLimit);
-  const visibleAnswers = examData.jawaban.slice(0, answerLimit);
   const scheduledSantriIds = useMemo(() => {
     const scheduleExamId = scheduleForm.ujian_id || selectedExamId;
     return new Set(examData.jadwal
@@ -419,33 +394,6 @@ export default function ExamPage({ openModal, notify }) {
       if (String(questionForm.soal_id) === String(soalId)) resetForm();
     } catch (requestError) {
       notify("Gagal menghapus soal", requestError.message || "Coba ulangi beberapa saat lagi.");
-    }
-  };
-
-  const resetStudentExamAnswers = async (answer) => {
-    const santriKey = getAnswerStudentKey(answer);
-    const examId = getAnswerExamId(answer);
-    const studentName = getStudentDisplayName(answer.santri, answer.santri_id);
-    const matchingAnswers = examData.jawaban.filter((item) => (
-      String(getAnswerStudentKey(item)) === String(santriKey) &&
-      String(getAnswerExamId(item) || examId) === String(examId)
-    ));
-    const answerIds = matchingAnswers.map(getAnswerId).filter(Boolean);
-
-    if (!santriKey || !examId || !answerIds.length) {
-      notify("Reset gagal", "Data santri, ujian, atau jawaban tidak lengkap.");
-      return;
-    }
-
-    const confirmed = window.confirm(`Reset jawaban ${studentName} untuk ujian ini? Peserta bisa mengerjakan satu kali lagi setelah data jawaban terhapus.`);
-    if (!confirmed) return;
-
-    try {
-      await Promise.all(answerIds.map((answerId) => deleteExamAnswer(answerId)));
-      await refreshExamData(selectedExamId);
-      notify("Jawaban direset", `${answerIds.length} jawaban ${studentName} dihapus. Peserta bisa ujian lagi bila jadwal masih terbuka.`);
-    } catch (requestError) {
-      notify("Reset gagal", requestError.message || "Fitur hapus jawaban belum tersedia.");
     }
   };
 
@@ -876,48 +824,6 @@ export default function ExamPage({ openModal, notify }) {
                   ))}
                   {!sortedSchedules.length && (
                     <tr><td colSpan="6">Belum ada jadwal ujian. Gunakan form generate jadwal di atas.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </article>
-
-          <article className="admin-panel reveal-card">
-            <div className="admin-panel__head">
-              <div>
-                <span className="question-step">7</span>
-                <h2>Ringkasan Jawaban Santri</h2>
-                <p>Pantau jawaban masuk dan status penilaian dari peserta.</p>
-              </div>
-              <div className="exam-table-toolbar">
-                <label>
-                  <span>Tampil</span>
-                  <select value={answerLimit} onChange={(event) => setAnswerLimit(Number(event.target.value))}>
-                    {tableSizeOptions.map((size) => <option value={size} key={size}>{size}</option>)}
-                  </select>
-                </label>
-                <button type="button" onClick={() => notify("Records dibuka", "Semua catatan nilai diambil dari database.")}>Lihat Semua</button>
-              </div>
-            </div>
-            <div className="grading-cards"><span>Pending Review <b>{pendingAnswers.length} Submissions</b></span><span>Finalized <b>{gradedAnswers.length} Students</b></span></div>
-            <div className="question-table-wrap question-table-wrap--scroll">
-              <table>
-                <thead><tr><th>Student Name</th><th>Exam Type</th><th>Score</th><th>Action</th></tr></thead>
-                <tbody>
-                  {examData.jawaban.length ? visibleAnswers.map((answer) => (
-                    <tr key={answer.jawaban_id}>
-                      <td><strong>{getStudentDisplayName(answer.santri, answer.santri_id)}</strong></td>
-                      <td>{answer.soal?.judul_soal || answer.soal?.pertanyaan || `Soal #${answer.soal_id}`}</td>
-                      <td><span className="score-pill">{answer.nilai_jawaban ?? "Review"}</span></td>
-                      <td>
-                        <div className="question-table-actions">
-                          <button type="button" onClick={() => notify("Review nilai", `Jawaban #${getAnswerId(answer)} dibuka.`)}>Review</button>
-                          <button className="text-danger" type="button" onClick={() => resetStudentExamAnswers(answer)}>Reset Ujian</button>
-                        </div>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr><td colSpan="4">Belum ada jawaban ujian di database.</td></tr>
                   )}
                 </tbody>
               </table>

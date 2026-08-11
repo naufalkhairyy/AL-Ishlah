@@ -57,9 +57,8 @@ export default function AdminPortal() {
           <h1>Akses Admin Ditolak</h1>
 
           <p>
-            Silakan login menggunakan akun admin agar endpoint
-            admin, seperti data pembayaran, tidak mengembalikan
-            error <strong>403 Forbidden</strong>.
+            Silakan login menggunakan akun admin agar halaman
+            administrasi dapat dibuka dengan akses yang sesuai.
           </p>
 
           <button
@@ -109,9 +108,9 @@ export default function AdminPortal() {
   const openNotifications = () => {
     openModal(
       "Notifikasi Admin",
-      "Untuk sekarang masih berupa demo frontend. Nantinya bagian ini tinggal dihubungkan ke backend.",
+      "Pembaruan penting untuk admin akan tampil di sini.",
       <NotificationCenter notify={notify} />,
-      "Backend Ready"
+      "Notifikasi"
     );
   };
 
@@ -123,7 +122,7 @@ export default function AdminPortal() {
     try {
       await logoutUser("admin");
     } catch {
-      // Session lokal tetap dihapus walaupun backend gagal.
+      // Sesi lokal tetap dihapus walaupun logout server gagal.
     } finally {
       navigate("/admin/login", {
         replace: true,
@@ -214,7 +213,7 @@ export default function AdminPortal() {
             onClick={() =>
               notify(
                 "Pusat Bantuan",
-                "Tiket bantuan nanti dibuat melalui API."
+                "Tim admin dapat mencatat kebutuhan bantuan dari sini."
               )
             }
           >
@@ -278,7 +277,7 @@ export default function AdminPortal() {
               onClick={() =>
                 openModal(
                   "Pengaturan Admin",
-                  "Preferensi notifikasi, periode akademik, role admin, dan akses staf nantinya disimpan di backend.",
+                  "Preferensi notifikasi, periode akademik, role admin, dan akses staf.",
                   null,
                   "Pengaturan"
                 )
@@ -308,7 +307,7 @@ export default function AdminPortal() {
         onClick={() =>
           notify(
             "Helpdesk aktif",
-            "Pesan bantuan nanti dikirim ke backend."
+            "Pesan bantuan siap diterima admin."
           )
         }
       >

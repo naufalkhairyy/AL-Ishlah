@@ -216,12 +216,12 @@ function ApplicantDetail({ item }) {
   const mappedProfile = mapProfileFromApi(profileSource);
   const backendSections = [
     ["Data Akun", profileSource.user],
-    ["Data Profil Pendaftaran Backend", profileSource.calon],
-    ["Data Santri Backend", profileSource.student],
-    ["Data Sekolah Backend", profileSource.sekolah],
-    ["Data Ayah Backend", profileSource.ayah],
-    ["Data Ibu Backend", profileSource.ibu],
-    ["Data Wali Backend", profileSource.wali],
+    ["Data Profil Pendaftaran", profileSource.calon],
+    ["Data Santri", profileSource.student],
+    ["Data Sekolah", profileSource.sekolah],
+    ["Data Ayah", profileSource.ayah],
+    ["Data Ibu", profileSource.ibu],
+    ["Data Wali", profileSource.wali],
   ].map(([title, value]) => [title, getPrimitiveDetailRows(value)]);
 
   return (
@@ -358,7 +358,7 @@ export default function ProfilePage({ openModal, notify }) {
         <div>
           <span className="admin-year">TA 2024/2025</span>
           <h1>Profil Calon Santri</h1>
-          <p>{loading ? "Mengambil data calon santri dari database..." : "Kelola akun dan data calon santri."}</p>
+          <p>{loading ? "Mengambil data calon santri..." : "Kelola akun dan data calon santri."}</p>
         </div>
         <div className="admin-head-actions">
           <button className="admin-outline" type="button" onClick={() => downloadText("data-calon-santri.csv", csv)}>Ekspor Data</button>
@@ -367,9 +367,9 @@ export default function ProfilePage({ openModal, notify }) {
       </div>
 
       <div className="profile-stats">
-        <KpiCard title="Total Pendaftar" value={rows.length} note="Akun role calon_santri" />
-        <KpiCard title="Menunggu Data Santri" value={pendingCount} note="Belum punya record santri" badge="!" tone="pink" />
-        <article className="admin-success-card reveal-card"><p>Data Santri Tersimpan</p><strong>{verifiedCount}</strong><small>Dari data santri</small></article>
+        <KpiCard title="Total Pendaftar" value={rows.length} note="Akun calon santri" />
+        <KpiCard title="Menunggu Data Santri" value={pendingCount} note="Belum punya profil santri" badge="!" tone="pink" />
+        <article className="admin-success-card reveal-card"><p>Data Santri Tersimpan</p><strong>{verifiedCount}</strong><small>Profil santri aktif</small></article>
       </div>
 
       {error && <div className="admin-panel reveal-card">{error}</div>}
@@ -401,7 +401,7 @@ export default function ProfilePage({ openModal, notify }) {
                 </td>
               </tr>
             )) : (
-              <tr><td colSpan="5">Belum ada akun calon santri di database.</td></tr>
+              <tr><td colSpan="5">Belum ada akun calon santri.</td></tr>
             )}
           </tbody>
         </table>

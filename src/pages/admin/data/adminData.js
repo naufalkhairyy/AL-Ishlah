@@ -27,16 +27,7 @@ export const paymentsSeed = [
 ];
 
 export const notificationSeed = [
-  { id: 1, title: "12 berkas menunggu", detail: "Verifikasi dokumen belum tersambung backend.", time: "Realtime nanti dari API" },
-  { id: 2, title: "42 transaksi pending", detail: "Data pembayaran akan diambil dari endpoint keuangan.", time: "Menunggu backend" },
-  { id: 3, title: "3 jadwal ujian aktif", detail: "Sinkronisasi jadwal bisa disambungkan ke database ujian.", time: "Demo frontend" },
-];
-
-
-export const backendFeatures = [
-  "Notifikasi realtime admin",
-  "Sinkronisasi data calon santri",
-  "Upload dan preview dokumen asli",
-  "Verifikasi pembayaran dari database",
-  "Export laporan PDF/CSV dari server",
+  { id: 1, title: "12 berkas menunggu", detail: "Verifikasi dokumen perlu ditinjau admin.", time: "Terbaru" },
+  { id: 2, title: "42 transaksi pending", detail: "Data pembayaran menunggu pemeriksaan.", time: "Terbaru" },
+  { id: 3, title: "3 jadwal ujian aktif", detail: "Jadwal ujian siap digunakan peserta.", time: "Terbaru" },
 ];

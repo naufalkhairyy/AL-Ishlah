@@ -34,6 +34,124 @@ function formatDocumentTime(value) {
   });
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function getSafeFileName(value) {
+  return String(value || "dokumen-santri")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "dokumen-santri";
+}
+
+function isImageDocument(document, source = "") {
+  const lowerName = String(document.fileName || source).toLowerCase();
+  return document.fileType?.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp)$/i.test(lowerName);
+}
+
+function isPdfDocument(document, source = "") {
+  const lowerName = String(document.fileName || source).toLowerCase();
+  return document.fileType === "application/pdf" || lowerName.endsWith(".pdf");
+}
+
+async function getDocumentPreviewSource(document) {
+  if (document.fileDataUrl) {
+    try {
+      return await getAuthenticatedPreviewUrl(document.fileDataUrl, "admin");
+    } catch {
+      return document.localFileKey ? getLocalFileUrl(document.localFileKey) : "";
+    }
+  }
+
+  return document.localFileKey ? getLocalFileUrl(document.localFileKey) : "";
+}
+
+async function printApplicantDocumentsPdf(group) {
+  if (!group?.documents?.length) throw new Error("Dokumen calon santri belum tersedia.");
+
+  const previewDocuments = await Promise.all(group.documents.map(async (document) => ({
+    ...document,
+    previewSource: await getDocumentPreviewSource(document),
+  })));
+  const printableName = `${getSafeFileName(group.name)}-dokumen.pdf`;
+  const generatedAt = new Date().toLocaleString("id-ID");
+  const rows = previewDocuments.map((document, index) => {
+    const statusLabel = DOCUMENT_STATUS_LABELS[document.status] || document.status || "-";
+    const meta = [
+      ["Status", statusLabel],
+      ["File", document.fileName || "-"],
+      ["Tipe", `${document.fileType || "File"} (${formatFileSize(document.fileSize)})`],
+      ["Upload", document.submittedAt ? new Date(document.submittedAt).toLocaleString("id-ID") : "-"],
+      ["Catatan", document.reviewNote || "-"],
+    ];
+    const preview = (() => {
+      if (!document.previewSource) return "<div class='empty'>Preview file tidak tersedia.</div>";
+      if (isImageDocument(document, document.previewSource)) {
+        return `<img src="${escapeHtml(document.previewSource)}" alt="${escapeHtml(document.documentTitle)}" />`;
+      }
+      if (isPdfDocument(document, document.previewSource)) {
+        return `<iframe src="${escapeHtml(document.previewSource)}" title="${escapeHtml(document.documentTitle)}"></iframe>`;
+      }
+      return `<a href="${escapeHtml(document.previewSource)}" target="_blank" rel="noreferrer">Buka file dokumen</a>`;
+    })();
+
+    return `
+      <section class="doc-page">
+        <h2>${index + 1}. ${escapeHtml(document.documentTitle)}</h2>
+        <dl>${meta.map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>
+        <div class="preview">${preview}</div>
+      </section>
+    `;
+  }).join("");
+
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) throw new Error("Popup browser diblokir. Izinkan popup untuk mengunduh PDF dokumen.");
+
+  printWindow.document.write(`<!doctype html>
+    <html>
+      <head>
+        <title>${escapeHtml(printableName)}</title>
+        <style>
+          @page { size: A4; margin: 14mm; }
+          * { box-sizing: border-box; }
+          body { margin: 0; color: #172218; font-family: Arial, sans-serif; }
+          header { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 2px solid #087020; }
+          h1 { margin: 0 0 6px; font-size: 24px; }
+          h2 { margin: 0 0 12px; font-size: 18px; color: #087020; }
+          p { margin: 0; color: #52604e; }
+          dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0 0 14px; }
+          dl div { padding: 9px 10px; border: 1px solid #d6e5d1; border-radius: 6px; }
+          dt { color: #52604e; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+          dd { margin: 3px 0 0; font-weight: 700; word-break: break-word; }
+          .doc-page { page-break-after: always; }
+          .doc-page:last-child { page-break-after: auto; }
+          .preview { min-height: 620px; display: grid; place-items: center; border: 1px solid #d6e5d1; border-radius: 8px; overflow: hidden; background: #f7fbf4; }
+          img, iframe { width: 100%; height: 620px; border: 0; object-fit: contain; }
+          .empty { color: #52604e; font-weight: 700; }
+        </style>
+      </head>
+      <body>
+        <header>
+          <h1>Dokumen Calon Santri - ${escapeHtml(group.name)}</h1>
+          <p>ID Calon Santri: ${escapeHtml(group.calonSantriId || "-")} | ID Santri: ${escapeHtml(group.santriId || "-")} | Dicetak: ${escapeHtml(generatedAt)}</p>
+        </header>
+        ${rows}
+        <script>
+          document.title = ${JSON.stringify(printableName)};
+          window.addEventListener("load", () => setTimeout(() => window.print(), 700));
+        </script>
+      </body>
+    </html>`);
+  printWindow.document.close();
+}
+
 function getApplicantKey(document) {
   return String(document.calonSantriId || document.userId || document.studentName || document.username || "unknown");
 }
@@ -184,6 +302,7 @@ export default function DocumentsPage({ notify }) {
   const [error, setError] = useState("");
   const [reviewing, setReviewing] = useState(false);
   const [promoting, setPromoting] = useState(false);
+  const [printingApplicant, setPrintingApplicant] = useState(false);
 
   const loadDocuments = async () => {
     setLoading(true);
@@ -300,6 +419,19 @@ export default function DocumentsPage({ notify }) {
     }
   };
 
+  const downloadCurrentApplicantPdf = async () => {
+    if (!currentGroup) return;
+    setPrintingApplicant(true);
+    try {
+      await printApplicantDocumentsPdf(currentGroup);
+      notify("PDF dokumen disiapkan", `Pilih Save as PDF untuk dokumen ${currentGroup.name}.`);
+    } catch (requestError) {
+      notify("PDF gagal dibuat", requestError.message || "Gagal menyiapkan PDF dokumen.");
+    } finally {
+      setPrintingApplicant(false);
+    }
+  };
+
   return (
     <section className="admin-page">
       <div className="admin-page-head">
@@ -368,7 +500,12 @@ export default function DocumentsPage({ notify }) {
             <>
               <div className="admin-panel__head">
                 <div><h2>{currentGroup?.name || "Detail Calon Santri"}</h2><p>Pilih dokumen di bawah, lalu verifikasi satu per satu.</p></div>
-                <OpenDocumentButton document={current}>Perbesar</OpenDocumentButton>
+                <div className="doc-detail-actions">
+                  <button className="admin-outline" type="button" disabled={printingApplicant} onClick={downloadCurrentApplicantPdf}>
+                    {printingApplicant ? "Menyiapkan..." : "Unduh PDF"}
+                  </button>
+                  <OpenDocumentButton document={current}>Perbesar</OpenDocumentButton>
+                </div>
               </div>
               <div className="doc-document-tabs">
                 {groupDocuments.map((document) => (
