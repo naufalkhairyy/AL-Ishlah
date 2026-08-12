@@ -302,6 +302,26 @@ function SealRing({ passed }) {
   );
 }
 
+function normalizeExamResult(response) {
+  const resultData = Array.isArray(response?.data)
+    ? response.data[0]
+    : response?.data?.data || response?.data;
+
+  if (!response?.status || !resultData) return null;
+
+  return {
+    ...resultData,
+    nama_santri: resultData.nama_santri || response.nama_santri || "-",
+    nilai_akhir: resultData.nilai ?? resultData.nilai_akhir ?? "-",
+    status_kelulusan: resultData.status_kelulusan || resultData.status || "-",
+    passing_grade: resultData.passing_grade ?? 75,
+    total_soal: resultData.total_soal ?? "-",
+    jumlah_benar: resultData.jumlah_benar ?? "-",
+    jumlah_salah: resultData.jumlah_salah ?? "-",
+    jumlah_kosong: resultData.jumlah_kosong ?? "-",
+  };
+}
+
 export default function StudentExamResult() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -325,36 +345,7 @@ export default function StudentExamResult() {
 
 
 
-      if(response?.status === true && response?.data){
-
-        setResult({
-
-          ...response.data,
-
-          // mapping data dari backend
-          nilai_akhir: response.data.nilai,
-
-          // backend mengirim:
-          // Lulus / Tidak Lulus
-          status_kelulusan: response.data.status,
-
-
-          // sementara jika belum dikirim backend
-          passing_grade: 75,
-
-          total_soal: "-",
-          jumlah_benar: "-",
-          jumlah_salah: "-",
-          jumlah_kosong: "-"
-
-        });
-
-
-      }else{
-
-        setResult(null);
-
-      }
+      setResult(normalizeExamResult(response));
 
 
 
