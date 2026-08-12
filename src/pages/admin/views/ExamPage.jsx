@@ -2,31 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getAdminExamData } from "../../../service/adminService";
 import {
   createExam,
-  createExamQuestion,
   deleteExamQuestion,
   generateExamSchedules,
   getAdminExamQuestions,
   importExamQuestions,
   updateExamSchedule,
-  updateExamQuestion,
 } from "../../../service/examService";
 
 const optionKeys = ["a", "b", "c", "d", "e"];
 const tableSizeOptions = [10, 15, 20, 30, 50];
-const emptyQuestionForm = {
-  soal_id: "",
-  nomor_soal: "",
-  judul_soal: "",
-  opsi_a: "",
-  opsi_b: "",
-  opsi_c: "",
-  opsi_d: "",
-  opsi_e: "",
-  jawaban_benar: "A",
-  bobot_nilai: "1",
-  durasi_pengerjaan: "",
-  file_soal: null,
-};
 const emptyExamForm = {
   nama_ujian: "",
   tanggal: "",
@@ -110,12 +94,10 @@ export default function ExamPage({ openModal, notify }) {
   const [examData, setExamData] = useState({ ujian: [], jadwal: [], jawaban: [], santri: [] });
   const [loading, setLoading] = useState(true);
   const [questionLoading, setQuestionLoading] = useState(false);
-  const [savingQuestion, setSavingQuestion] = useState(false);
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState("");
   const [selectedExamId, setSelectedExamId] = useState("");
   const [questions, setQuestions] = useState([]);
-  const [questionForm, setQuestionForm] = useState(emptyQuestionForm);
   const [examForm, setExamForm] = useState(emptyExamForm);
   const [scheduleForm, setScheduleForm] = useState(emptyScheduleForm);
   const [selectedScheduleSantriIds, setSelectedScheduleSantriIds] = useState([]);
@@ -127,8 +109,6 @@ export default function ExamPage({ openModal, notify }) {
   const [savingExam, setSavingExam] = useState(false);
   const [savingSchedule, setSavingSchedule] = useState(false);
   const importInputRef = useRef(null);
-  const fileInputRef = useRef(null);
-  const questionFormRef = useRef(null);
   const scheduleFormRef = useRef(null);
 
   useEffect(() => {
@@ -178,7 +158,6 @@ export default function ExamPage({ openModal, notify }) {
 
   useEffect(() => {
     loadQuestions(selectedExamId);
-    setQuestionForm(emptyQuestionForm);
     setImportResult(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedExamId]);
@@ -214,10 +193,6 @@ export default function ExamPage({ openModal, notify }) {
     return getStudentDisplayName(student, santriId);
   };
 
-  const setFormField = (field, value) => {
-    setQuestionForm((current) => ({ ...current, [field]: value }));
-  };
-
   const setExamFormField = (field, value) => {
     setExamForm((current) => ({ ...current, [field]: value }));
   };
@@ -238,11 +213,6 @@ export default function ExamPage({ openModal, notify }) {
       const allIds = schedulableSantri.map((student) => String(student.santri_id));
       return current.length === allIds.length ? [] : allIds;
     });
-  };
-
-  const resetForm = () => {
-    setQuestionForm(emptyQuestionForm);
-    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleExamSubmit = async (event) => {
@@ -333,54 +303,6 @@ export default function ExamPage({ openModal, notify }) {
     }
   };
 
-  const editQuestion = (question) => {
-    setQuestionForm({
-      ...emptyQuestionForm,
-      ...question,
-      soal_id: getQuestionId(question),
-      judul_soal: getQuestionTitle(question),
-      jawaban_benar: (question.jawaban_benar || "A").toUpperCase(),
-      bobot_nilai: question.bobot_nilai ?? "1",
-      durasi_pengerjaan: question.durasi_pengerjaan ?? "",
-      file_soal: null,
-    });
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    setTimeout(() => {
-      questionFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
-  };
-
-  const handleQuestionSubmit = async (event) => {
-    event.preventDefault();
-    if (!selectedExamId) {
-      notify("Pilih ujian", "Soal harus disimpan ke salah satu ujian.");
-      return;
-    }
-
-    setSavingQuestion(true);
-    try {
-      const payload = {
-        ...questionForm,
-        ujian_id: selectedExamId,
-        jawaban_benar: questionForm.jawaban_benar ? questionForm.jawaban_benar.toUpperCase() : "",
-      };
-
-      if (questionForm.soal_id) {
-        await updateExamQuestion(questionForm.soal_id, payload);
-        notify("Soal diperbarui", `Nomor ${payload.nomor_soal || "-"} berhasil disimpan.`);
-      } else {
-        await createExamQuestion(payload);
-        notify("Soal ditambahkan", `Nomor ${payload.nomor_soal || "-"} berhasil dibuat.`);
-      }
-      resetForm();
-      loadQuestions();
-    } catch (requestError) {
-      notify("Gagal menyimpan soal", requestError.message || "Periksa kembali data soal.");
-    } finally {
-      setSavingQuestion(false);
-    }
-  };
-
   const handleDeleteQuestion = async (question) => {
     const soalId = getQuestionId(question);
     if (!soalId) return;
@@ -391,7 +313,6 @@ export default function ExamPage({ openModal, notify }) {
       await deleteExamQuestion(soalId);
       notify("Soal dihapus", `Soal nomor ${question.nomor_soal || "-"} sudah dihapus.`);
       loadQuestions();
-      if (String(questionForm.soal_id) === String(soalId)) resetForm();
     } catch (requestError) {
       notify("Gagal menghapus soal", requestError.message || "Coba ulangi beberapa saat lagi.");
     }
@@ -499,65 +420,10 @@ export default function ExamPage({ openModal, notify }) {
             </form>
           </article>
 
-          <article className="admin-panel reveal-card" ref={questionFormRef}>
-            <div className="admin-panel__head">
-              <div>
-                <span className="question-step">2</span>
-                <h2>{questionForm.soal_id ? `Edit Soal Nomor ${questionForm.nomor_soal || "-"}` : "Tambah Soal"}</h2>
-                <p>{questionForm.soal_id ? "Anda sedang mengedit soal dari tabel." : "Isi form ini jika ingin menambah soal satu per satu."}</p>
-              </div>
-              {questionForm.soal_id && <button type="button" onClick={resetForm}>Batal Edit</button>}
-            </div>
-            <form className="question-form" onSubmit={handleQuestionSubmit}>
-              <label>
-                <span>Nomor Soal</span>
-                <input type="number" min="1" value={questionForm.nomor_soal} onChange={(event) => setFormField("nomor_soal", event.target.value)} required />
-              </label>
-              <label className="is-full">
-                <span>Pertanyaan / Judul Soal</span>
-                <textarea value={questionForm.judul_soal} onChange={(event) => setFormField("judul_soal", event.target.value)} required />
-              </label>
-              <label>
-                <span>Bobot Nilai</span>
-                <input type="number" min="0" step="0.01" value={questionForm.bobot_nilai} onChange={(event) => setFormField("bobot_nilai", event.target.value)} required />
-              </label>
-              <label>
-                <span>Durasi Pengerjaan</span>
-                <input type="number" min="0" value={questionForm.durasi_pengerjaan} onChange={(event) => setFormField("durasi_pengerjaan", event.target.value)} placeholder="Detik atau menit" />
-              </label>
-              <label>
-                <span>File Soal</span>
-                <input
-                  accept=".pdf,.doc,.docx,image/*"
-                  ref={fileInputRef}
-                  type="file"
-                  onChange={(event) => setFormField("file_soal", event.target.files?.[0] || null)}
-                />
-              </label>
-             
-              {optionKeys.map((key) => (
-                <label key={key}>
-                  <span>Opsi {key.toUpperCase()}</span>
-                  <input value={questionForm[`opsi_${key}`]} onChange={(event) => setFormField(`opsi_${key}`, event.target.value)} required />
-                </label>
-              ))}
-              <label>
-                <span>Jawaban Benar</span>
-                <select value={questionForm.jawaban_benar} onChange={(event) => setFormField("jawaban_benar", event.target.value)}>
-                  {optionKeys.map((key) => <option value={key.toUpperCase()} key={key}>{key.toUpperCase()}</option>)}
-                </select>
-              </label>
-              <div className="question-form__actions">
-                <button className="admin-primary" type="submit" disabled={savingQuestion || !selectedExamId}>{savingQuestion ? "Menyimpan..." : "Simpan Soal"}</button>
-                <button className="admin-outline" type="button" onClick={resetForm}>Reset</button>
-              </div>
-            </form>
-          </article>
-
           <article className="admin-panel reveal-card">
             <div className="admin-panel__head">
               <div>
-                <span className="question-step">3</span>
+                <span className="question-step">2</span>
                 <h2>Import Massal Soal</h2>
                 <p>Gunakan template jika ingin mengisi banyak soal sekaligus.</p>
               </div>
@@ -612,7 +478,7 @@ export default function ExamPage({ openModal, notify }) {
           <article className="admin-panel reveal-card">
             <div className="admin-panel__head">
               <div>
-                <span className="question-step">4</span>
+                <span className="question-step">3</span>
                 <h2>Daftar Soal</h2>
                 <p>Soal otomatis diurutkan berdasarkan nomor soal.</p>
               </div>
@@ -660,7 +526,6 @@ export default function ExamPage({ openModal, notify }) {
                       <td>{question.bobot_nilai ?? "-"}</td>
                       <td>
                         <div className="question-table-actions">
-                          <button type="button" onClick={() => editQuestion(question)}>Edit</button>
                           <button className="text-danger" type="button" onClick={() => handleDeleteQuestion(question)}>Hapus</button>
                         </div>
                       </td>
@@ -677,7 +542,7 @@ export default function ExamPage({ openModal, notify }) {
           <article className="admin-panel reveal-card" ref={scheduleFormRef}>
             <div className="admin-panel__head">
               <div>
-                <span className="question-step">5</span>
+                <span className="question-step">4</span>
                 <h2>{editingScheduleId ? "Edit Jadwal Ujian" : "Generate Jadwal Peserta"}</h2>
                 <p>{editingScheduleId ? "Ubah tanggal, waktu, ruang, atau keterangan jadwal yang sudah dibuat." : "Sistem akan membuat jadwal untuk santri eligible. Checklist peserta bersifat opsional."}</p>
               </div>
@@ -774,7 +639,7 @@ export default function ExamPage({ openModal, notify }) {
           <article className="admin-panel reveal-card">
             <div className="admin-panel__head">
               <div>
-                <span className="question-step">6</span>
+                <span className="question-step">5</span>
                 <h2>Daftar Jadwal Ujian</h2>
                 <p>Edit jadwal peserta atau salin link page khusus pelaksanaan ujian.</p>
               </div>

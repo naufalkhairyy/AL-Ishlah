@@ -378,7 +378,7 @@ export default function DocumentsPage({ notify }) {
         current.calonSantriId,
         current.backendField,
         nextStatus,
-        note || (status === "verified" ? "File jelas" : ""),
+        note,
       );
 
       await loadDocuments();
@@ -403,7 +403,7 @@ export default function DocumentsPage({ notify }) {
       await updateCalonSantriDocumentStatus(
         current.calonSantriId,
         "diterima",
-        note || "Dokumen lengkap, calon santri dipromote menjadi santri.",
+        note,
       );
 
       await loadDocuments();
@@ -464,7 +464,6 @@ export default function DocumentsPage({ notify }) {
               <span>{item}</span><b>{item === "Semua" ? documents.length : documents.filter((document) => document.documentTitle === item).length}</b>
             </button>
           ))}
-          <div className="doc-guide"><h3>Panduan Verifikasi</h3><p>Pastikan file jelas, nama dokumen sesuai, dan data dapat dibaca sebelum disetujui.</p></div>
         </aside>
         <article className="doc-queue reveal-card">
           <h3>Calon Santri</h3>

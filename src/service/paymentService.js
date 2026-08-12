@@ -86,14 +86,23 @@ function normalizeHttpsUrl(url) {
   return String(url).replace(/^http:\/\//i, "https://");
 }
 
-function getPaymentStudentName(payment, username, calonByUser = new Map()) {
+function getPaymentStudentName(payment, username, calonByUser = new Map(), calonById = new Map()) {
   const calon = calonByUser.get(String(payment.user_id || payment.userId || ""));
+  const calonByPaymentId = calonById.get(String(
+    payment.calon_santri_id ||
+    payment.id_calon_santri ||
+    payment.calonSantriId ||
+    payment.calon_santri?.calon_santri_id ||
+    payment.calonSantri?.calon_santri_id ||
+    "",
+  ));
   return payment.student_name ||
     payment.studentName ||
     payment.nama_lengkap ||
     payment.calon_santri?.nama_lengkap ||
     payment.calonSantri?.nama_lengkap ||
     calon?.nama_lengkap ||
+    calonByPaymentId?.nama_lengkap ||
     "Calon Santri";
 }
 
@@ -101,19 +110,22 @@ async function getPaymentCalonSantriMap() {
   try {
     const response = await apiRequest("/calon-santri", { authScope: "admin" });
     const rows = extractPaymentRows(response);
-    return new Map(rows.map((item) => [String(item.user_id || item.user?.user_id || ""), item]).filter(([key]) => key));
+    return {
+      byUser: new Map(rows.map((item) => [String(item.user_id || item.user?.user_id || ""), item]).filter(([key]) => key)),
+      byId: new Map(rows.map((item) => [String(item.calon_santri_id || item.id_calon_santri || item.id || ""), item]).filter(([key]) => key)),
+    };
   } catch {
-    return new Map();
+    return { byUser: new Map(), byId: new Map() };
   }
 }
 
-function normalizePayment(payment, calonByUser = new Map()) {
+function normalizePayment(payment, calonMaps = { byUser: new Map(), byId: new Map() }) {
   if (!payment) return null;
   if (payment.bukti_bayar_uploaded === false) return null;
 
   const user = getCurrentUser();
   const username = payment.username || user?.username || "Calon Santri";
-  const studentName = getPaymentStudentName(payment, username, calonByUser);
+  const studentName = getPaymentStudentName(payment, username, calonMaps.byUser, calonMaps.byId);
 
   const fileName =
     payment.bukti_bayar_nama_file ||
@@ -142,7 +154,8 @@ function normalizePayment(payment, calonByUser = new Map()) {
       payment.jenis_pembayaran ||
       payment.kategori ||
       payment.category ||
-      "Biaya Pendaftaran",
+      payment.jenisPembayaran ||
+      "Pembayaran Ujian",
 
     amount: Number(
       payment.jumlah_bayar ||

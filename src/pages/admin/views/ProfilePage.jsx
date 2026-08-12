@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import KpiCard from "../components/KpiCard";
-import QuickApplicantForm from "../components/QuickApplicantForm";
 import { getAdminApplicants, getApplicantDisplayName, getInitials } from "../../../service/adminService";
 import { mapProfileFromApi } from "../../../service/registrationService";
-import { downloadText } from "../utils/downloadText";
 
 const PAGE_SIZE = 15;
 const formDetailSections = [
@@ -332,11 +330,6 @@ export default function ProfilePage({ openModal, notify }) {
   const paginatedRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
   const verifiedCount = rows.filter((item) => item.status === "Verified").length;
   const pendingCount = rows.filter((item) => item.status === "Pending").length;
-  const csv = [
-    "nama,status,tanggal_daftar",
-    ...filtered.map((item) => `${item.name},${item.status},${item.date}`),
-  ].join("\n");
-
   const handleFilterChange = (event) => {
     setFilter(event.target.value);
     setPage(1);
@@ -359,10 +352,6 @@ export default function ProfilePage({ openModal, notify }) {
           <span className="admin-year">TA 2024/2025</span>
           <h1>Profil Calon Santri</h1>
           <p>{loading ? "Mengambil data calon santri..." : "Kelola akun dan data calon santri."}</p>
-        </div>
-        <div className="admin-head-actions">
-          <button className="admin-outline" type="button" onClick={() => downloadText("data-calon-santri.csv", csv)}>Ekspor Data</button>
-          <button className="admin-primary" type="button" onClick={() => openModal("Tambah Manual", "Tambahkan calon santri dari loket administrasi.", <QuickApplicantForm notify={notify} />)}>+ Tambah Manual</button>
         </div>
       </div>
 

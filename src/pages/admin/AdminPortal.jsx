@@ -6,7 +6,6 @@ import logo from "../../assets/logo.png";
 
 import AdminIcon from "./components/AdminIcon";
 import Modal from "./components/Modal";
-import NotificationCenter from "./components/NotificationCenter";
 import ToastStack from "./components/ToastStack";
 
 import { navItems } from "./data/adminData";
@@ -105,15 +104,6 @@ export default function AdminPortal() {
     });
   };
 
-  const openNotifications = () => {
-    openModal(
-      "Notifikasi Admin",
-      "Pembaruan penting untuk admin akan tampil di sini.",
-      <NotificationCenter notify={notify} />,
-      "Notifikasi"
-    );
-  };
-
   const setSection = (target) => {
     navigate(`/admin/${target}`);
   };
@@ -180,7 +170,7 @@ export default function AdminPortal() {
           </span>
 
           <span>
-            <strong>Al-Azhar Admin</strong>
+            <strong>Al Ishlah Admin</strong>
             <small>Portal Akademik</small>
           </span>
         </NavLink>
@@ -262,30 +252,6 @@ export default function AdminPortal() {
           </label>
 
           <div className="admin-topbar__actions">
-            <button
-              type="button"
-              aria-label="Notifikasi"
-              onClick={openNotifications}
-            >
-              <AdminIcon name="bell" />
-              <span />
-            </button>
-
-            <button
-              type="button"
-              aria-label="Pengaturan"
-              onClick={() =>
-                openModal(
-                  "Pengaturan Admin",
-                  "Preferensi notifikasi, periode akademik, role admin, dan akses staf.",
-                  null,
-                  "Pengaturan"
-                )
-              }
-            >
-              <AdminIcon name="gear" />
-            </button>
-
             <div className="admin-topbar__title">
               <strong>
                 Portal Administrasi Pesantren

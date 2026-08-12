@@ -2201,6 +2201,24 @@ td small,
   border-radius: 3px;
 }
 
+.admin-icon--result::before {
+  left: 3px;
+  right: 3px;
+  bottom: 3px;
+  height: 16px;
+  border-radius: 3px;
+}
+
+.admin-icon--result::after {
+  left: 8px;
+  top: 3px;
+  width: 8px;
+  height: 8px;
+  border-left: 0;
+  border-bottom: 0;
+  transform: rotate(45deg);
+}
+
 .admin-icon--shield::before {
   left: 4px;
   top: 2px;

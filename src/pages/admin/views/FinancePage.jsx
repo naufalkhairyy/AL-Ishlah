@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import DocumentMock from "../components/DocumentMock";
 import { downloadText } from "../utils/downloadText";
 import {
-  formatCurrency,
   getPayments,
   reviewPayment,
 } from "../../../service/paymentService";
@@ -14,6 +13,18 @@ const statusLabels = {
   approved: "Disetujui",
   rejected: "Ditolak",
 };
+
+function escapeCsvCell(value) {
+  const text = String(value ?? "");
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function formatCsvDate(value) {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleString("id-ID");
+}
 
 function PaymentProofPreview({ payment }) {
   const sourceUrl = getPreviewUrl(payment.fileDataUrl || payment.bukti_bayar || payment.bukti_pembayaran_url || "");
@@ -143,8 +154,6 @@ export default function FinancePage({ notify }) {
     () => payments.filter((payment) => payment.status === "rejected"),
     [payments],
   );
-  const approvedTotal = approvedPayments.reduce((total, payment) => total + Number(payment.amount || 0), 0);
-
   const handleReview = async (payment, status) => {
     try {
       const updated = await reviewPayment(payment.id, status, reviewNote);
@@ -161,15 +170,17 @@ export default function FinancePage({ notify }) {
   };
 
   const exportCsv = [
-    "id,nama_santri,nominal,status,tanggal_kirim,tanggal_review",
+    "\ufeffID Pembayaran,Nama Calon Santri,Jenis Pembayaran,Metode,Status,Tanggal Kirim,Tanggal Review,Catatan Admin",
     ...payments.map((payment) => [
       payment.id,
       payment.studentName || "Calon Santri",
-      payment.amount,
-      payment.status,
-      payment.submittedAt,
-      payment.reviewedAt || "",
-    ].join(",")),
+      payment.category || "Pembayaran Ujian",
+      payment.method,
+      statusLabels[payment.status] || payment.status,
+      formatCsvDate(payment.submittedAt),
+      formatCsvDate(payment.reviewedAt),
+      payment.reviewNote || "",
+    ].map(escapeCsvCell).join(",")),
   ].join("\n");
 
   return (
@@ -182,7 +193,6 @@ export default function FinancePage({ notify }) {
       </div>
 
       <div className="finance-stats">
-        <article className="finance-balance reveal-card"><p>Total Disetujui</p><strong>{formatCurrency(approvedTotal)}</strong><small>{approvedPayments.length} pembayaran valid</small><span>Transfer manual calon santri</span></article>
         <article className="finance-pending reveal-card"><p>Antrian Verifikasi</p><strong>{pendingPayments.length}</strong><span>Disetujui <b>{approvedPayments.length}</b></span><span>Ditolak <b>{rejectedPayments.length}</b></span></article>
         <article className="finance-report reveal-card"><DocumentMock compact /><h2>Laporan Pembayaran</h2><p>Export data pembayaran manual.</p><button className="admin-primary" type="button" onClick={() => downloadText("laporan-pembayaran.csv", exportCsv)}>Unduh CSV</button></article>
       </div>
@@ -199,7 +209,7 @@ export default function FinancePage({ notify }) {
                 <h3>{selectedPayment.studentName || selectedPayment.username}</h3>
                 <p>{selectedPayment.id}</p>
                 <dl>
-                  <div><dt>Nominal</dt><dd>{formatCurrency(selectedPayment.amount)}</dd></div>
+                  <div><dt>Jenis Pembayaran</dt><dd>{selectedPayment.category || "Pembayaran Ujian"}</dd></div>
                   <div><dt>Dikirim</dt><dd>{new Date(selectedPayment.submittedAt).toLocaleString("id-ID")}</dd></div>
                   <div><dt>Metode</dt><dd>{selectedPayment.method}</dd></div>
                 </dl>
@@ -219,13 +229,13 @@ export default function FinancePage({ notify }) {
           <div className="admin-table-card__head"><div><h2>Transaksi Pembayaran Manual</h2><p>Menampilkan bukti transfer yang diupload calon santri.</p></div><button type="button" onClick={() => { loadPayments(); notify("Data diperbarui", "Daftar pembayaran manual disegarkan."); }}>Refresh</button></div>
           {error && <div className="backend-inline-note">{error}</div>}
           <table>
-            <thead><tr><th>Santri</th><th>Bukti</th><th>Nominal</th><th>Update</th><th>Status</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>Santri</th><th>Bukti</th><th>Jenis Pembayaran</th><th>Update</th><th>Status</th><th>Aksi</th></tr></thead>
             <tbody>
               {payments.length ? payments.map((payment) => (
                 <tr key={payment.id}>
                   <td><span className="admin-avatar admin-avatar--small">{payment.initials}</span><div><strong>{payment.studentName || payment.username}</strong><small>ID: {payment.id}</small></div></td>
                   <td><span className={`admin-status admin-status--${payment.status === "approved" ? "verified" : "pending"}`}>{payment.category}</span><small>{payment.fileName}</small></td>
-                  <td><strong>{formatCurrency(payment.amount)}</strong><small>{payment.method}</small></td>
+                  <td><strong>{payment.category || "Pembayaran Ujian"}</strong><small>{payment.method}</small></td>
                   <td>{new Date(payment.updatedAt || payment.submittedAt).toLocaleString("id-ID")}</td>
                   <td><span className={`admin-status admin-status--${payment.status === "approved" ? "verified" : "pending"}`}>{statusLabels[payment.status]}</span></td>
                   <td><button type="button" onClick={() => { setSelectedPayment(payment); setReviewNote(payment.reviewNote || ""); }}>Review</button></td>
