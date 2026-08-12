@@ -16,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 
 class JawabanController extends Controller
 {
+    private const PASSING_GRADE = 75;
+
     public function index(Request $request)
     {
         $query = Jawaban::with(['soal', 'santri']);
@@ -44,14 +46,7 @@ class JawabanController extends Controller
             'waktu_submit' => 'nullable|date',
         ]);
 
-       $validated['santri_id'] = $this->resolveSantriId(
-    $request,
-    null
-);
-dd([
-    "user"=>$request->user()->user_id,
-    "santri_id"=>$validated['santri_id']
-]);
+        $validated['santri_id'] = $this->resolveSantriId($request, $validated['santri_id'] ?? null);
 
         $soal = Soal::find($validated['soal_id']);
         $nilai = $validated['nilai_jawaban'] ?? null;
@@ -77,7 +72,7 @@ dd([
             [
                 'jawaban_text' => $validated['jawaban_text'],
                 'nilai_jawaban' => $nilai,
-                'waktu_submit' => $validated['waktu_submit'],
+                'waktu_submit' => $validated['waktu_submit'] ?? now(),
                 'is_final' => false,
             ]
         );
@@ -176,43 +171,17 @@ dd([
         $saved = Jawaban::with(['soal', 'santri'])
             ->whereIn('jawaban_id', $saved->pluck('jawaban_id'))
             ->get();
-            $totalSoal = Soal::where('ujian_id', $validated['ujian_id'])->count();
-
-$jumlahBenar = $saved->filter(function ($item) {
-    return $item->nilai_jawaban !== null && $item->nilai_jawaban > 0;
-})->count();
-
-$jumlahSalah = $saved->filter(function ($item) {
-    return $item->nilai_jawaban !== null && $item->nilai_jawaban == 0;
-})->count();
-
-$jumlahKosong = $totalSoal - $saved->count();
-
-$totalBobot = Soal::where('ujian_id', $validated['ujian_id'])
-    ->sum('bobot_nilai');
-
-$nilaiAkhir = $totalBobot > 0
-    ? round(($saved->sum('nilai_jawaban') / $totalBobot) * 100, 2)
-    : 0;
-
-// Passing Grade
-$passingGrade = 75;
-
-$statusKelulusan = $nilaiAkhir >= $passingGrade
-    ? 'lulus'
-    : 'tidak_lulus';
+        $summary = $this->buildExamResultSummary($saved);
 
        return response()->json([
     'status' => true,
     'message' => 'Jawaban berhasil disimpan',
    'summary' => [
-    'total_soal' => $totalSoal,
-    'jumlah_benar' => $jumlahBenar,
-    'jumlah_salah' => $jumlahSalah,
-    'jumlah_kosong' => $jumlahKosong,
-    'nilai_akhir' => $nilaiAkhir,
-    'passing_grade' => $passingGrade,
-    'status_kelulusan' => $statusKelulusan,
+    ...$summary,
+    'nilai_akhir' => $summary['nilai'],
+    'status_kelulusan' => $summary['nilai'] >= self::PASSING_GRADE
+        ? 'lulus'
+        : 'tidak_lulus',
 ],
     'data' => $saved,
 ], 201);
@@ -315,6 +284,36 @@ $statusKelulusan = $nilaiAkhir >= $passingGrade
     {
         throw new HttpResponseException($this->alreadySubmittedResponse());
     }
+
+    private function buildExamResultSummary($items): array
+    {
+        $first = $items->first();
+        $ujianId = $first->soal->ujian_id ?? null;
+        $totalSoal = $ujianId ? Soal::where('ujian_id', $ujianId)->count() : 0;
+        $totalBobot = $ujianId ? Soal::where('ujian_id', $ujianId)->sum('bobot_nilai') : 0;
+        $totalNilai = $items->sum('nilai_jawaban');
+        $nilai = $totalBobot > 0 ? round(($totalNilai / $totalBobot) * 100, 2) : 0;
+
+        return [
+            'santri_id' => $first->santri_id,
+            'nama_santri' => $first->santri->nama_lengkap ?? '-',
+            'ujian_id' => $ujianId,
+            'nama_ujian' => $first->soal->ujian->nama_ujian ?? '-',
+            'total_soal' => $totalSoal,
+            'total_bobot' => $totalBobot,
+            'jumlah_terjawab' => $items->count(),
+            'jumlah_benar' => $items->filter(function ($item) {
+                return $item->nilai_jawaban !== null && $item->nilai_jawaban > 0;
+            })->count(),
+            'jumlah_salah' => $items->filter(function ($item) {
+                return $item->nilai_jawaban !== null && $item->nilai_jawaban == 0;
+            })->count(),
+            'jumlah_kosong' => max($totalSoal - $items->count(), 0),
+            'nilai' => $nilai,
+            'passing_grade' => self::PASSING_GRADE,
+            'status' => $nilai >= self::PASSING_GRADE ? 'Lulus' : 'Tidak Lulus',
+        ];
+    }
 public function hasil(Request $request)
 {
     $user = $request->user();
@@ -345,6 +344,7 @@ public function hasil(Request $request)
 
     // Ambil jawaban final milik santri tersebut
     $jawaban = Jawaban::with([
+            'santri',
             'soal.ujian'
         ])
         ->where('santri_id',$santri->santri_id)
@@ -372,49 +372,7 @@ public function hasil(Request $request)
             return $item->soal->ujian_id;
 
         })
-        ->map(function($items){
-
-
-            $totalBobot = $items->sum(function($item){
-
-                return $item->soal->bobot_nilai ?? 0;
-
-            });
-
-
-
-            $nilai = $totalBobot > 0
-
-                ? round(
-                    ($items->sum('nilai_jawaban') / $totalBobot) * 100,
-                    2
-                )
-
-                : 0;
-
-
-
-            return [
-
-                "nama_ujian" =>
-                    $items->first()
-                    ->soal
-                    ->ujian
-                    ->nama_ujian ?? "-",
-
-
-                "nilai"=>$nilai,
-
-
-                "status"=>
-                    $nilai >= 75
-                    ? "Lulus"
-                    : "Tidak Lulus"
-
-            ];
-
-
-        })
+        ->map(fn($items) => $this->buildExamResultSummary($items))
         ->values();
 
 
@@ -466,6 +424,7 @@ public function hasilSaya(Request $request)
 
 
     $jawaban = Jawaban::with([
+        'santri',
         'soal.ujian'
     ])
     ->where('santri_id',$santriId)
@@ -483,29 +442,18 @@ public function hasilSaya(Request $request)
     }
 
 
-    $totalBobot = $jawaban->sum(function($item){
-        return $item->soal->bobot_nilai ?? 0;
-    });
-
-
-    $nilai = $totalBobot > 0
-        ? round(
-            ($jawaban->sum('nilai_jawaban') / $totalBobot) * 100,
-            2
-        )
-        : 0;
+    $hasil = $jawaban
+        ->groupBy(function($item){
+            return $item->soal->ujian_id;
+        })
+        ->map(fn($items) => $this->buildExamResultSummary($items))
+        ->values();
 
 
     return response()->json([
         'status'=>true,
-        'data'=>[
-            'santri_id'=>$santriId,
-            'nama_santri'=>Santri::find($santriId)->nama_lengkap,
-            'nilai'=>$nilai,
-            'status'=>$nilai >= 75
-                ? 'Lulus'
-                : 'Tidak Lulus'
-        ]
+        'nama_santri'=>Santri::find($santriId)->nama_lengkap,
+        'data'=>$hasil
     ]);
 }
 public function hasilSemua()
@@ -527,36 +475,10 @@ public function hasilSemua()
 
 
     $hasil = $jawaban
-        ->groupBy('santri_id')
-        ->map(function($items){
-
-            $totalBobot = $items->sum(function($item){
-                return $item->soal->bobot_nilai ?? 0;
-            });
-
-
-            $nilai = $totalBobot > 0
-                ? round(
-                    ($items->sum('nilai_jawaban') / $totalBobot) * 100,
-                    2
-                )
-                : 0;
-
-
-            return [
-                'santri_id' => $items->first()->santri_id,
-
-                'nama_santri' => 
-                    $items->first()->santri->nama_lengkap ?? '-',
-
-                'nilai' => $nilai,
-
-                'status' => $nilai >= 75
-                    ? 'Lulus'
-                    : 'Tidak Lulus'
-            ];
-
+        ->groupBy(function($item){
+            return $item->santri_id . ':' . ($item->soal->ujian_id ?? '');
         })
+        ->map(fn($items) => $this->buildExamResultSummary($items))
         ->values();
 
 
