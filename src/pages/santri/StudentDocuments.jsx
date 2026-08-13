@@ -92,7 +92,7 @@ export default function StudentDocuments() {
       <article className="upload-panel">
         <div>
           <h2>Upload Dokumen Baru</h2>
-          <p>Pilih jenis dokumen, lalu upload file PDF, JPG, PNG, atau Word sesuai kebutuhan. Maksimal 5MB per file.</p>
+          <p>Pilih jenis dokumen, lalu upload file PDF, JPG, atau png sesuai kebutuhan. Maksimal 5MB per file.</p>
         </div>
         <div className="upload-panel__controls">
           <select value={selectedDoc} onChange={(event) => setSelectedDoc(event.target.value)}>
