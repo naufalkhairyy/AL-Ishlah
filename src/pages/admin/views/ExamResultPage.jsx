@@ -135,24 +135,32 @@ function buildResultPdfHtml(results) {
 </html>`;
 }
 
-export default function ExamResultPage() {
+export default function ExamResultPage({ notify }) {
   const [results, setResults] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
 
   const handleExportPdf = () => {
-    if (!results.length) return;
+    if (!results.length) {
+      const emptyMessage = "Belum ada data hasil ujian yang bisa diexport.";
+      setMessage(emptyMessage);
+      notify?.("Export PDF belum tersedia", emptyMessage, "error");
+      return;
+    }
 
     const printWindow = window.open("", "_blank");
 
     if (!printWindow) {
-      setMessage("Popup diblokir browser. Izinkan popup untuk export PDF.");
+      const blockedMessage = "Popup diblokir browser. Izinkan popup untuk export PDF.";
+      setMessage(blockedMessage);
+      notify?.("Export PDF gagal", blockedMessage, "error");
       return;
     }
 
     printWindow.document.open();
     printWindow.document.write(buildResultPdfHtml(results));
     printWindow.document.close();
+    notify?.("Export PDF disiapkan", "Pilih Simpan sebagai PDF pada dialog cetak browser.");
   };
 
   useEffect(() => {
@@ -213,9 +221,8 @@ export default function ExamResultPage() {
             className="admin-primary"
             type="button"
             onClick={handleExportPdf}
-            disabled={!results.length}
           >
-            Export PDF
+            Unduh PDF
           </button>
         </div>
       </div>
