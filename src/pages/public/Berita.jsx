@@ -74,7 +74,7 @@ export default function Berita() {
         <div className="section-header">
           <h2>Berita Baru</h2>
           <button onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}>
-            See all
+            Lihat Semua
           </button>
         </div>
 
@@ -85,7 +85,7 @@ export default function Berita() {
               <img src={article.image} alt={article.title} />
               <h4>{article.title}</h4>
               <p>{article.desc}</p>
-              <button>Read More</button>
+              <button>Baca Selengkapnya</button>
             </div>
           ))}
         </div>
@@ -101,7 +101,7 @@ export default function Berita() {
               dengan baik, sementara santri putra dibimbing menjaga kerapian baju muslim, peci,
               dan adab di lingkungan pesantren.
             </p>
-            <button onClick={() => openArticle("Pembinaan Santri dan Santriwati Berbasis Adab Islami")}>Read More</button>
+            <button onClick={() => openArticle("Pembinaan Santri dan Santriwati Berbasis Adab Islami")}>Baca Selengkapnya</button>
           </div>
         </div>
 
@@ -112,14 +112,14 @@ export default function Berita() {
               <img src={article.image} alt={article.title} />
               <h4>{article.title}</h4>
               <p>{article.desc}</p>
-              <button>Read More</button>
+              <button>Baca Selengkapnya</button>
             </div>
           ))}
         </div>
 
         {/* TAG */}
         <div className="tags">
-          <h3>Recent Post</h3>
+          <h3>Postingan Terbaru</h3>
           <div className="tag-list">
             {["Santriwati", "Santri putra", "Tahfidz", "Adab Islami"].map((tag) => (
               <button key={tag} onClick={() => openArticle(tag)}>{tag}</button>

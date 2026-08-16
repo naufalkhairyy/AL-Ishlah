@@ -91,7 +91,7 @@ export async function apiRequest(path, options = {}) {
     const validationMessage = data.errors
       ? Object.values(data.errors).flat().join("\n")
       : null;
-    const error = new Error(validationMessage || data.message || "Request gagal");
+    const error = new Error(validationMessage || data.message || "Permintaan gagal");
     error.status = response.status;
     error.data = data;
     throw error;

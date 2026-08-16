@@ -10,10 +10,7 @@ export const DOCUMENT_TYPES = [
   { key: "fotocopyAkte", backendField: "akta_kelahiran", title: "Fotocopy Akte Kelahiran", required: true, accept: ".pdf,.jpg,.jpeg,.png" },
   { key: "pasFoto", backendField: "pas_foto", title: "Pas Foto 3x4", required: true, accept: ".jpg,.jpeg,.png" },
   { key: "kartuKeluarga", backendField: "kartu_keluarga", title: "Kartu Keluarga", required: true, accept: ".pdf,.jpg,.jpeg,.png" },
-  { key: "ktp", backendField: "ktp", title: "KTP Calon Santri", required: true, accept: ".pdf,.jpg,.jpeg,.png" },
-  { key: "ijazahSkl", backendField: "ijazah_skl", title: "Ijazah / SKL", required: true, accept: ".pdf,.jpg,.jpeg,.png" },
-  { key: "suratPernyataanLulus", backendField: "surat_pernyataan_lulus", title: "Surat Pernyataan Lulus", required: true, accept: ".pdf,.jpg,.jpeg,.png" },
-  { key: "ktpOrangTua", backendField: "ktp_orang_tua", title: "KTP Orang Tua", required: true, accept: ".pdf,.jpg,.jpeg,.png" },
+  { key: "ktpOrangTua", backendField: "ktp_orang_tua", title: "KTP orang tua/ wali", required: true, accept: ".pdf,.jpg,.jpeg,.png" },
 ];
 
 const DOCUMENT_SCHEMA_VERSION = 2;
@@ -347,15 +344,15 @@ async function getCurrentCalonSantriForUpload() {
     return response.data;
   } catch (error) {
     if (error.status === 404) {
-      throw new Error("Data calon santri belum dibuat. Lengkapi dan simpan profil terlebih dahulu sebelum upload dokumen.");
+      throw new Error("Data calon santri belum dibuat. Lengkapi dan simpan profil terlebih dahulu sebelum mengunggah dokumen.");
     }
     throw error;
   }
 }
 
 export async function submitManualDocument(documentKey, file) {
-  if (!file) throw new Error("File dokumen wajib dipilih.");
-  if (file.size > 5120 * 1024) throw new Error("Ukuran file maksimal 5120 KB atau 5 MB.");
+  if (!file) throw new Error("Berkas dokumen wajib dipilih.");
+  if (file.size > 5120 * 1024) throw new Error("Ukuran berkas maksimal 5120 KB atau 5 MB.");
 
   const user = getCurrentUser();
   if (!user?.user_id) throw new Error("Sesi login tidak ditemukan. Silakan login ulang.");

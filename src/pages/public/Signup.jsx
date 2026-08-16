@@ -36,7 +36,7 @@ function Signup({ goLogin }) {
       showPopup("Akun berhasil dibuat", result.message || "Silakan lanjut melengkapi data calon santri.", "success");
       navigate("/santri/dashboard");
     } catch (error) {
-      showPopup("Signup gagal", error.message || "Akun gagal dibuat.", "error");
+      showPopup("Daftar gagal", error.message || "Akun gagal dibuat.", "error");
     } finally {
       setLoading(false);
     }
@@ -51,7 +51,7 @@ function Signup({ goLogin }) {
 
           <div className="grid">
             <div>
-              <label>Username :</label>
+              <label>Nama Pengguna :</label>
               <input
                 type="text"
                 placeholder="Masukkan username"
@@ -64,7 +64,7 @@ function Signup({ goLogin }) {
             </div>
 
             <div>
-              <label>Password :</label>
+              <label>Kata Sandi :</label>
               <input
                 type="password"
                 value={password}
@@ -72,7 +72,7 @@ function Signup({ goLogin }) {
               />
             </div>
             <div>
-              <label>Confirm Password :</label>
+              <label>Konfirmasi Kata Sandi :</label>
               <input
                 type="password"
                 value={confirmPassword}
@@ -82,11 +82,11 @@ function Signup({ goLogin }) {
           </div>
 
           <button className="btn-signup-main" onClick={handleSignup} disabled={loading}>
-            {loading ? "Loading..." : "Sign up"}
+            {loading ? "Memproses..." : "Daftar"}
           </button>
 
           <p className="back-login" onClick={goLogin || (() => navigate("/login"))}>
-            Kembali ke Login
+            Kembali ke Masuk
           </p>
         </div>
       </div>

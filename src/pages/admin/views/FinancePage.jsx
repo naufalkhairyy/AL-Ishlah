@@ -74,8 +74,8 @@ function PaymentProofPreview({ payment }) {
         {isPdf && !isImage && <iframe title={`Bukti transfer ${payment.id}`} src={previewSource} />}
         {!isImage && !isPdf && (
           <div className="payment-proof-viewer__fallback">
-            <strong>Preview file tidak tersedia</strong>
-            <span>Gunakan tombol Buka Tab Baru untuk memeriksa file ini.</span>
+            <strong>Pratinjau berkas tidak tersedia</strong>
+            <span>Gunakan tombol Buka Tab Baru untuk memeriksa berkas ini.</span>
           </div>
         )}
       </div>
@@ -165,7 +165,7 @@ export default function FinancePage({ notify }) {
         `${payment.studentName || payment.username} ditandai ${statusLabels[status]}.`,
       );
     } catch (reviewError) {
-      notify("Gagal update status", reviewError.message || "Status pembayaran gagal diperbarui.");
+      notify("Gagal memperbarui status", reviewError.message || "Status pembayaran gagal diperbarui.");
     }
   };
 
@@ -194,12 +194,12 @@ export default function FinancePage({ notify }) {
 
       <div className="finance-stats">
         <article className="finance-pending reveal-card"><p>Antrian Verifikasi</p><strong>{pendingPayments.length}</strong><span>Disetujui <b>{approvedPayments.length}</b></span><span>Ditolak <b>{rejectedPayments.length}</b></span></article>
-        <article className="finance-report reveal-card"><DocumentMock compact /><h2>Laporan Pembayaran</h2><p>Export data pembayaran manual.</p><button className="admin-primary" type="button" onClick={() => downloadText("laporan-pembayaran.csv", exportCsv)}>Unduh CSV</button></article>
+        <article className="finance-report reveal-card"><DocumentMock compact /><h2>Laporan Pembayaran</h2><p>Ekspor data pembayaran manual.</p><button className="admin-primary" type="button" onClick={() => downloadText("laporan-pembayaran.csv", exportCsv)}>Unduh CSV</button></article>
       </div>
 
       <div className="finance-layout">
         <aside className="admin-panel finance-form reveal-card">
-          <h2>Review Bukti Transfer</h2>
+          <h2>Tinjau Bukti Transfer</h2>
           {selectedPayment ? (
             <>
               <div className="payment-review-summary">
@@ -226,7 +226,7 @@ export default function FinancePage({ notify }) {
           )}
         </aside>
         <article className="admin-table-card finance-table reveal-card">
-          <div className="admin-table-card__head"><div><h2>Transaksi Pembayaran Manual</h2><p>Menampilkan bukti transfer yang diupload calon santri.</p></div><button type="button" onClick={() => { loadPayments(); notify("Data diperbarui", "Daftar pembayaran manual disegarkan."); }}>Refresh</button></div>
+          <div className="admin-table-card__head"><div><h2>Transaksi Pembayaran Manual</h2><p>Menampilkan bukti transfer yang diunggah calon santri.</p></div><button type="button" onClick={() => { loadPayments(); notify("Data diperbarui", "Daftar pembayaran manual disegarkan."); }}>Segarkan</button></div>
           {error && <div className="backend-inline-note">{error}</div>}
           <table>
             <thead><tr><th>Santri</th><th>Bukti</th><th>Jenis Pembayaran</th><th>Update</th><th>Status</th><th>Aksi</th></tr></thead>
@@ -238,10 +238,10 @@ export default function FinancePage({ notify }) {
                   <td><strong>{payment.category || "Pembayaran Ujian"}</strong><small>{payment.method}</small></td>
                   <td>{new Date(payment.updatedAt || payment.submittedAt).toLocaleString("id-ID")}</td>
                   <td><span className={`admin-status admin-status--${payment.status === "approved" ? "verified" : "pending"}`}>{statusLabels[payment.status]}</span></td>
-                  <td><button type="button" onClick={() => { setSelectedPayment(payment); setReviewNote(payment.reviewNote || ""); }}>Review</button></td>
+                  <td><button type="button" onClick={() => { setSelectedPayment(payment); setReviewNote(payment.reviewNote || ""); }}>Tinjau</button></td>
                 </tr>
               )) : (
-                <tr><td colSpan="6">Belum ada bukti pembayaran yang diupload calon santri.</td></tr>
+                <tr><td colSpan="6">Belum ada bukti pembayaran yang diunggah calon santri.</td></tr>
               )}
             </tbody>
           </table>

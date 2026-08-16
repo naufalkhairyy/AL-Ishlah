@@ -48,7 +48,7 @@ export default function StudentDocuments() {
       await loadDocuments();
       alert(`${file.name} berhasil dikirim. Menunggu verifikasi admin.`);
     } catch (error) {
-      alert(error.message || "Gagal upload dokumen.");
+      alert(error.message || "Gagal mengunggah dokumen.");
     } finally {
       setUploadingKey("");
     }
@@ -57,7 +57,7 @@ export default function StudentDocuments() {
   const triggerUpload = (key) => {
     const currentFile = getDocumentByKey(uploadedDocs, key) || documents[key];
     if (currentFile?.status === "verified") {
-      alert("Dokumen ini sudah diverifikasi admin dan tidak bisa diupload ulang.");
+      alert("Dokumen ini sudah diverifikasi admin dan tidak bisa diunggah ulang.");
       return;
     }
     inputRefs.current[key]?.click();
@@ -79,19 +79,19 @@ export default function StudentDocuments() {
       return;
     }
 
-    alert("Preview file belum tersedia. Silakan refresh halaman setelah upload selesai.");
+      alert("Pratinjau berkas belum tersedia. Silakan segarkan halaman setelah unggahan selesai.");
   };
 
   return (
     <section className="student-page">
       <div className="student-page-title">
-        <h1>Documents</h1>
+        <h1>Dokumen</h1>
         <p>Unggah berkas persyaratan pendaftaran. File tersimpan untuk diverifikasi admin.</p>
       </div>
 
       <article className="upload-panel">
         <div>
-          <h2>Upload Dokumen Baru</h2>
+          <h2>Unggah Dokumen Baru</h2>
           <p>Pilih jenis dokumen, lalu upload file PDF, JPG, atau png sesuai kebutuhan. Maksimal 5MB per file.</p>
         </div>
         <div className="upload-panel__controls">
@@ -129,7 +129,7 @@ export default function StudentDocuments() {
                 disabled={isVerified}
                 onChange={(event) => handleUpload(doc.key, event.target.files?.[0])}
               />
-              <div className="document-card__icon">FILE</div>
+              <div className="document-card__icon">BERKAS</div>
               <div>
                 <h3>{doc.title}</h3>
                 <p>{doc.required ? "Wajib" : "Opsional"}</p>
@@ -137,10 +137,10 @@ export default function StudentDocuments() {
                 {file?.reviewNote && <small>Catatan admin: {file.reviewNote}</small>}
               </div>
               <span className={`doc-status is-${state}`}>
-                {file ? DOCUMENT_STATUS_LABELS[file.status] || "Terupload" : "Belum Diunggah"}
+                {file ? DOCUMENT_STATUS_LABELS[file.status] || "Terunggah" : "Belum Diunggah"}
               </span>
               <button type="button" onClick={() => openDocument(file, doc.key)}>
-                {file ? "Lihat File" : "Upload"}
+                {file ? "Lihat Berkas" : "Unggah"}
               </button>
             </article>
           );

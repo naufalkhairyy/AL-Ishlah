@@ -7,8 +7,8 @@ const exams = [
   {
     date: "15",
     title: "Ujian Tes Potensi Akademik (TPA)",
-    time: "Pukul 08:00 - 10:00 WIB via Portal Digital",
-    tags: "Matematika, IPA, IPS | Online Monitoring",
+    time: "Pukul 08:00 - 10:00 WIB melalui Portal Digital",
+    tags: "Matematika, IPA, IPS | Pemantauan Daring",
   },
   {
     date: "16",
@@ -55,7 +55,7 @@ export default function StudentDashboard() {
     ? "Menunggu verifikasi admin"
     : paymentProof?.status === "rejected"
     ? "Pembayaran ditolak admin"
-    : "Upload bukti transfer";
+    : "Unggah bukti transfer";
 
   const paymentState = progress.documentsComplete
     ? progress.paymentComplete
@@ -77,7 +77,7 @@ export default function StudentDashboard() {
       to: "/santri/profil",
     },
     {
-      title: "Upload Dokumen",
+      title: "Unggah Dokumen",
       meta: documentMeta,
       state: progress.profileComplete
         ? progress.documentsComplete
@@ -98,12 +98,6 @@ export default function StudentDashboard() {
       state: progress.examAvailable ? "active" : "locked",
       to: "/santri/ujian",
     },
-    {
-      title: "Pengumuman",
-      meta: progress.examFinished ? "Lihat hasil ujian" : "Menunggu ujian selesai",
-      state: progress.examFinished ? "active" : "locked",
-      to: "/santri/hasil-ujian",
-    },
   ];
 
   const nextStep = flow.find((item) => item.state === "active") || flow[0];
@@ -116,13 +110,13 @@ export default function StudentDashboard() {
     : progress.documentsComplete
     ? paymentMeta
     : progress.profileComplete
-    ? "Upload Dokumen"
+    ? "Unggah Dokumen"
     : "Lengkapi Data Diri";
 
   return (
     <section className="student-page">
       <div className="student-hero">
-        <p>Dashboard Santri</p>
+        <p>Dasbor Santri</p>
         <h1>Ahlan wa Sahlan, {name}!</h1>
         <span>
           Selamat datang di portal pendaftaran Pesantren Al Ishhlah Al Islamy.
@@ -148,7 +142,7 @@ export default function StudentDashboard() {
       <article className="student-card dashboard-payment-upload">
         <div>
           <span className="student-badge student-badge--pink">Pembayaran</span>
-          <h2>Upload Bukti Bayar Calon Santri</h2>
+          <h2>Unggah Bukti Bayar Calon Santri</h2>
           <p>Kirim bukti transfer agar admin bisa melihat dan memverifikasi pembayaran.</p>
         </div>
         <button
@@ -156,7 +150,7 @@ export default function StudentDashboard() {
           className="student-primary-action"
           onClick={() => navigate("/santri/pembayaran")}
         >
-          Upload Bukti Bayar
+          Unggah Bukti Bayar
         </button>
       </article>
 
@@ -164,7 +158,7 @@ export default function StudentDashboard() {
         <div className="student-card__heading">
           <h2>Alur Pendaftaran</h2>
           <span className={`student-badge${syncing ? " student-badge--syncing" : ""}`}>
-            {syncing ? "Sinkronisasi..." : `${flow.filter((item) => item.state === "done").length}/4 selesai`}
+            {syncing ? "Sinkronisasi..." : `${flow.filter((item) => item.state === "done").length}/${flow.length} selesai`}
           </span>
         </div>
         <div className="flow-list">
@@ -213,9 +207,9 @@ export default function StudentDashboard() {
 
         <aside className="question-panel">
           <h2>Punya Pertanyaan?</h2>
-          <p>Hubungi admin jika ada kendala saat mengisi profil, upload dokumen, atau pembayaran.</p>
+          <p>Hubungi admin jika ada kendala saat mengisi profil, mengunggah dokumen, atau pembayaran.</p>
           <button type="button" onClick={() => window.open("https://wa.me/6281234567890", "_blank")}>
-            Live Chat
+            Chat Langsung
           </button>
           <button type="button" onClick={() => (window.location.href = "mailto:admin@alishhlah.sch.id")}>
             Email Admin
@@ -231,13 +225,13 @@ export default function StudentDashboard() {
         </Link>
         <Link to="/santri/dokumen" className="quick-action">
           <span>02</span>
-          <strong>Upload Berkas</strong>
-          <small>Akta, KK, Pas Foto, Ijazah</small>
+          <strong>Unggah Berkas</strong>
+          <small>Rapor, Akta, KK, Pas Foto</small>
         </Link>
         <Link to="/santri/pembayaran" className="quick-action">
           <span>03</span>
           <strong>Bayar Sekarang</strong>
-          <small>Upload bukti pembayaran</small>
+          <small>Unggah bukti pembayaran</small>
         </Link>
       </div>
     </section>

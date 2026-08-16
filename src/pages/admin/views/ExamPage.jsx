@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getAdminExamData } from "../../../service/adminService";
 import {
   createExam,
@@ -106,6 +106,8 @@ export default function ExamPage({ openModal, notify }) {
   const [selectedImportFile, setSelectedImportFile] = useState(null);
   const [questionLimit, setQuestionLimit] = useState(10);
   const [scheduleLimit, setScheduleLimit] = useState(10);
+  const [scheduleStudentSearch, setScheduleStudentSearch] = useState("");
+  const [scheduleSearch, setScheduleSearch] = useState("");
   const [savingExam, setSavingExam] = useState(false);
   const [savingSchedule, setSavingSchedule] = useState(false);
   const importInputRef = useRef(null);
@@ -171,7 +173,6 @@ export default function ExamPage({ openModal, notify }) {
   const importErrors = normalizeImportErrors(importResult);
   const multipleChoiceCount = questions.length;
   const visibleQuestions = questions.slice(0, questionLimit);
-  const visibleSchedules = sortedSchedules.slice(0, scheduleLimit);
   const scheduledSantriIds = useMemo(() => {
     const scheduleExamId = scheduleForm.ujian_id || selectedExamId;
     return new Set(examData.jadwal
@@ -183,15 +184,49 @@ export default function ExamPage({ openModal, notify }) {
     () => examData.santri.filter((student) => student.santri_id && !scheduledSantriIds.has(String(student.santri_id))),
     [examData.santri, scheduledSantriIds],
   );
+  const filteredSchedulableSantri = useMemo(() => {
+    const keyword = scheduleStudentSearch.trim().toLowerCase();
+    if (!keyword) return schedulableSantri;
+    return schedulableSantri.filter((student) => {
+      const santriId = String(student.santri_id || "");
+      const name = getStudentDisplayName(student, santriId).toLowerCase();
+      return name.includes(keyword) || santriId.includes(keyword);
+    });
+  }, [scheduleStudentSearch, schedulableSantri]);
   const getSantriNameById = (santriId) => {
     const student = examData.santri.find((item) => String(item.santri_id) === String(santriId));
     return getStudentDisplayName(student, santriId);
   };
-  const getScheduleStudentName = (schedule) => {
+  const getScheduleStudentName = useCallback((schedule) => {
     const santriId = getScheduleStudentId(schedule);
     const student = schedule.santri || examData.santri.find((item) => String(item.santri_id) === String(santriId));
     return getStudentDisplayName(student, santriId);
-  };
+  }, [examData.santri]);
+  const filteredSchedules = useMemo(() => {
+    const keyword = scheduleSearch.trim().toLowerCase();
+    if (!keyword) return sortedSchedules;
+
+    return sortedSchedules.filter((schedule) => {
+      const santriId = String(getScheduleStudentId(schedule) || "");
+      const examId = String(getScheduleExamId(schedule) || "");
+      const values = [
+        getScheduleStudentName(schedule),
+        santriId,
+        schedule.ujian?.nama_ujian,
+        examId,
+        schedule.ujian?.status,
+        schedule.tanggal,
+        formatScheduleDate(schedule.tanggal),
+        schedule.waktu_mulai,
+        schedule.waktu_selesai,
+        schedule.ruang_ujian,
+        schedule.keterangan,
+      ];
+
+      return values.some((value) => String(value || "").toLowerCase().includes(keyword));
+    });
+  }, [getScheduleStudentName, scheduleSearch, sortedSchedules]);
+  const visibleSchedules = filteredSchedules.slice(0, scheduleLimit);
 
   const setExamFormField = (field, value) => {
     setExamForm((current) => ({ ...current, [field]: value }));
@@ -210,8 +245,11 @@ export default function ExamPage({ openModal, notify }) {
 
   const toggleAllScheduleSantri = () => {
     setSelectedScheduleSantriIds((current) => {
-      const allIds = schedulableSantri.map((student) => String(student.santri_id));
-      return current.length === allIds.length ? [] : allIds;
+      const visibleIds = filteredSchedulableSantri.map((student) => String(student.santri_id));
+      const allVisibleSelected = visibleIds.length && visibleIds.every((id) => current.includes(id));
+      return allVisibleSelected
+        ? current.filter((id) => !visibleIds.includes(id))
+        : [...new Set([...current, ...visibleIds])];
     });
   };
 
@@ -256,7 +294,8 @@ export default function ExamPage({ openModal, notify }) {
       await refreshExamData(payload.ujian_id);
       setScheduleForm(emptyScheduleForm);
       setSelectedScheduleSantriIds([]);
-      notify("Generate jadwal selesai", `${result.created ?? 0} dibuat, ${result.skipped ?? 0} dilewati.`);
+      setScheduleStudentSearch("");
+      notify("Pembuatan jadwal selesai", `${result.created ?? 0} dibuat, ${result.skipped ?? 0} dilewati.`);
     } catch (requestError) {
       notify("Gagal membuat jadwal", requestError.message || "Periksa kembali data jadwal ujian.");
     } finally {
@@ -290,16 +329,16 @@ export default function ExamPage({ openModal, notify }) {
   const copyExamPageLink = async (schedule) => {
     const examId = getScheduleExamId(schedule);
     if (!examId) {
-      notify("Link belum tersedia", "Jadwal ini belum memiliki ujian_id.");
+      notify("Tautan belum tersedia", "Jadwal ini belum memiliki ujian_id.");
       return;
     }
 
     const url = `${window.location.origin}/santri/ujian/${examId}`;
     try {
       await navigator.clipboard.writeText(url);
-      notify("Link page ujian disalin", url);
+      notify("Tautan halaman ujian disalin", url);
     } catch {
-      openModal("Page Pelaksanaan Ujian", url);
+      openModal("Halaman Pelaksanaan Ujian", url);
     }
   };
 
@@ -325,11 +364,11 @@ export default function ExamPage({ openModal, notify }) {
     try {
       const result = await importExamQuestions(selectedExamId, file);
       setImportResult(result);
-      notify("Import selesai", `${result.total_imported ?? result.imported ?? result.total ?? 0} soal berhasil diproses.`);
+      notify("Impor selesai", `${result.total_imported ?? result.imported ?? result.total ?? 0} soal berhasil diproses.`);
       loadQuestions();
     } catch (requestError) {
       setImportResult(requestError.data || { message: requestError.message });
-      notify("Import gagal", requestError.message || "File tidak sesuai format.");
+      notify("Impor gagal", requestError.message || "Berkas tidak sesuai format.");
     } finally {
       setImporting(false);
       if (importInputRef.current) importInputRef.current.value = "";
@@ -352,7 +391,7 @@ export default function ExamPage({ openModal, notify }) {
           <p>Alur admin: buat atau pilih ujian, susun soal, cek daftar soal, jadwalkan peserta, lalu pantau jawaban.</p>
         </div>
         <button className="admin-primary admin-primary--large" type="button" onClick={() => loadQuestions()}>
-          Refresh Data Soal
+          Segarkan Data Soal
         </button>
       </div>
 
@@ -409,7 +448,7 @@ export default function ExamPage({ openModal, notify }) {
                 <span>Status</span>
                 <select value={examForm.status} onChange={(event) => setExamFormField("status", event.target.value)}>
                   <option value="aktif">Aktif</option>
-                  <option value="draft">Draft</option>
+                  <option value="draft">Draf</option>
                   <option value="nonaktif">Nonaktif</option>
                 </select>
               </label>
@@ -424,24 +463,24 @@ export default function ExamPage({ openModal, notify }) {
             <div className="admin-panel__head">
               <div>
                 <span className="question-step">2</span>
-                <h2>Import Massal Soal</h2>
-                <p>Gunakan template jika ingin mengisi banyak soal sekaligus.</p>
+                <h2>Impor Massal Soal</h2>
+                <p>Gunakan contoh format jika ingin mengisi banyak soal sekaligus.</p>
               </div>
             </div>
             <div className="question-import-box">
               <div>
-                <strong>1. Download contoh format</strong>
-                <p>Pakai file ini sebagai acuan kolom import.</p>
+                <strong>1. Unduh contoh format</strong>
+                <p>Pakai berkas ini sebagai acuan kolom impor.</p>
                 <div className="question-import-buttons">
-                  {/* <button className="admin-outline" type="button" onClick={() => downloadTemplate("/contoh_import_soal.csv")}>CSV Import</button> */}
+                  {/* <button className="admin-outline" type="button" onClick={() => downloadTemplate("/contoh_import_soal.csv")}>CSV Impor</button> */}
                   <button className="admin-outline" type="button" onClick={() => downloadTemplate("/contoh_import_soal_excel.csv")}>CSV Rapi Excel</button>
                 </div>
               </div>
               <div>
-                <strong>2. Pilih file CSV/XLSX</strong>
-                <p>{selectedImportFile ? selectedImportFile.name : "Belum ada file dipilih."}</p>
+                <strong>2. Pilih berkas CSV/XLSX</strong>
+                <p>{selectedImportFile ? selectedImportFile.name : "Belum ada berkas dipilih."}</p>
                 <button className="admin-outline" type="button" onClick={() => importInputRef.current?.click()} disabled={importing || !selectedExamId}>
-                  Pilih File
+                  Pilih Berkas
                 </button>
                 <input
                   accept=".csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
@@ -452,20 +491,20 @@ export default function ExamPage({ openModal, notify }) {
                 />
               </div>
               <div>
-                <strong>3. Jalankan import</strong>
-                <p>Pastikan ujian sudah dipilih sebelum import.</p>
+                <strong>3. Jalankan impor</strong>
+                <p>Pastikan ujian sudah dipilih sebelum impor.</p>
                 <button className="admin-primary" type="button" disabled={importing || !selectedImportFile || !selectedExamId} onClick={() => handleImport(selectedImportFile)}>
-                  {importing ? "Mengimport..." : "Import Soal"}
+                  {importing ? "Mengimpor..." : "Impor Soal"}
                 </button>
               </div>
             </div>
             {importResult && (
               <div className="import-result">
-                <strong>{importResult.message || "Hasil import"}</strong>
+                <strong>{importResult.message || "Hasil impor"}</strong>
                 <span>Total berhasil: {importResult.total_imported ?? importResult.imported ?? importResult.total ?? 0}</span>
                 {importErrors.length > 0 && (
                   <div>
-                    <b>Error validasi</b>
+                    <b>Kesalahan validasi</b>
                     {importErrors.map((item, index) => (
                       <p key={`${item.row || index}`}>Baris {item.row || item.line || index + 1}: {(item.messages || item.errors || [item.message || String(item)]).join(", ")}</p>
                     ))}
@@ -512,7 +551,7 @@ export default function ExamPage({ openModal, notify }) {
                       <td><strong>{question.nomor_soal || "-"}</strong></td>
                       <td>
                         <strong>{getQuestionTitle(question)}</strong>
-                        {question.file_soal && <small>File: {question.file_soal}</small>}
+                        {question.file_soal && <small>Berkas: {question.file_soal}</small>}
                       </td>
                       <td><span className="admin-pill">PG</span></td>
                       <td>
@@ -532,7 +571,7 @@ export default function ExamPage({ openModal, notify }) {
                     </tr>
                   ))}
                   {!questionLoading && !questions.length && (
-                    <tr><td colSpan="7">{selectedExamId ? "Belum ada soal untuk ujian ini. Tambahkan manual atau import file." : "Pilih ujian terlebih dahulu."}</td></tr>
+                    <tr><td colSpan="7">{selectedExamId ? "Belum ada soal untuk ujian ini. Tambahkan manual atau impor berkas." : "Pilih ujian terlebih dahulu."}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -543,8 +582,8 @@ export default function ExamPage({ openModal, notify }) {
             <div className="admin-panel__head">
               <div>
                 <span className="question-step">4</span>
-                <h2>{editingScheduleId ? "Edit Jadwal Ujian" : "Generate Jadwal Peserta"}</h2>
-                <p>{editingScheduleId ? "Ubah tanggal, waktu, ruang, atau keterangan jadwal yang sudah dibuat." : "Sistem akan membuat jadwal untuk santri eligible. Checklist peserta bersifat opsional."}</p>
+                <h2>{editingScheduleId ? "Edit Jadwal Ujian" : "Buat Jadwal Peserta"}</h2>
+                <p>{editingScheduleId ? "Ubah tanggal, waktu, ruang, atau keterangan jadwal yang sudah dibuat." : "Sistem akan membuat jadwal untuk santri yang memenuhi syarat. Centang peserta bersifat opsional."}</p>
               </div>
             </div>
             <form className="question-form" onSubmit={handleScheduleSubmit}>
@@ -595,14 +634,23 @@ export default function ExamPage({ openModal, notify }) {
                 <div className="schedule-student-picker__head">
                   <div>
                     <strong>Peserta Ujian</strong>
-                    <small>{selectedScheduleSantriIds.length ? `${selectedScheduleSantriIds.length} santri dipilih khusus` : "Kosongkan untuk generate semua santri eligible"}</small>
+                    <small>{selectedScheduleSantriIds.length ? `${selectedScheduleSantriIds.length} santri dipilih khusus` : "Kosongkan untuk membuat jadwal semua santri yang memenuhi syarat"}</small>
                   </div>
                   <button className="admin-outline" type="button" onClick={toggleAllScheduleSantri} disabled={!schedulableSantri.length}>
-                    {selectedScheduleSantriIds.length === schedulableSantri.length && schedulableSantri.length ? "Kosongkan" : "Pilih Semua"}
+                    {filteredSchedulableSantri.length && filteredSchedulableSantri.every((student) => selectedScheduleSantriIds.includes(String(student.santri_id))) ? "Kosongkan Tampilan" : "Pilih Semua Tampilan"}
                   </button>
                 </div>
+                <label className="schedule-student-search">
+                  <span>Cari Peserta</span>
+                  <input
+                    type="search"
+                    value={scheduleStudentSearch}
+                    onChange={(event) => setScheduleStudentSearch(event.target.value)}
+                    placeholder="Cari nama atau ID santri..."
+                  />
+                </label>
                 <div className="schedule-student-list">
-                  {schedulableSantri.map((student) => {
+                  {filteredSchedulableSantri.map((student) => {
                     const santriId = String(student.santri_id);
                     return (
                       <label className="schedule-student-item" key={santriId}>
@@ -618,14 +666,14 @@ export default function ExamPage({ openModal, notify }) {
                       </label>
                     );
                   })}
-                  {!schedulableSantri.length && (
-                    <div className="schedule-student-empty">Tidak ada santri belum terjadwal dari daftar tampilan. Sistem tetap akan memvalidasi peserta eligible saat generate.</div>
+                  {!filteredSchedulableSantri.length && (
+                    <div className="schedule-student-empty">{schedulableSantri.length ? "Tidak ada peserta yang cocok dengan pencarian." : "Tidak ada santri belum terjadwal dari daftar tampilan. Sistem tetap akan memvalidasi peserta yang memenuhi syarat saat jadwal dibuat."}</div>
                   )}
                 </div>
               </div>}
               <div className="question-form__actions">
                 <button className="admin-primary" type="submit" disabled={savingSchedule || !(scheduleForm.ujian_id || selectedExamId)}>
-                  {savingSchedule ? "Menyimpan..." : editingScheduleId ? "Simpan Perubahan" : "Generate Jadwal"}
+                  {savingSchedule ? "Menyimpan..." : editingScheduleId ? "Simpan Perubahan" : "Buat Jadwal"}
                 </button>
                 <button className="admin-outline" type="button" onClick={() => {
                   setScheduleForm(emptyScheduleForm);
@@ -641,16 +689,25 @@ export default function ExamPage({ openModal, notify }) {
               <div>
                 <span className="question-step">5</span>
                 <h2>Daftar Jadwal Ujian</h2>
-                <p>Edit jadwal peserta atau salin link page khusus pelaksanaan ujian.</p>
+                <p>Edit jadwal peserta atau salin tautan halaman khusus pelaksanaan ujian.</p>
               </div>
               <div className="exam-table-toolbar">
+                <label>
+                  <span>Cari Peserta</span>
+                  <input
+                    type="search"
+                    value={scheduleSearch}
+                    onChange={(event) => setScheduleSearch(event.target.value)}
+                    placeholder="Nama, ID, ujian, ruang..."
+                  />
+                </label>
                 <label>
                   <span>Tampil</span>
                   <select value={scheduleLimit} onChange={(event) => setScheduleLimit(Number(event.target.value))}>
                     {tableSizeOptions.map((size) => <option value={size} key={size}>{size}</option>)}
                   </select>
                 </label>
-                <span className="admin-pill admin-pill--gray">{sortedSchedules.length} jadwal</span>
+                <span className="admin-pill admin-pill--gray">{filteredSchedules.length} jadwal</span>
               </div>
             </div>
             <div className="question-table-wrap question-table-wrap--scroll">
@@ -670,7 +727,7 @@ export default function ExamPage({ openModal, notify }) {
                     <tr key={getScheduleId(schedule) || `${getScheduleExamId(schedule)}-${getScheduleStudentId(schedule)}`}>
                       <td>
                         <strong>{schedule.ujian?.nama_ujian || `Ujian #${getScheduleExamId(schedule) || "-"}`}</strong>
-                        <small>{schedule.ujian?.status || "status tidak dikirim"}</small>
+                        <small>{schedule.ujian?.status || "status belum tersedia"}</small>
                       </td>
                       <td>
                         <strong>{getScheduleStudentName(schedule)}</strong>
@@ -682,13 +739,13 @@ export default function ExamPage({ openModal, notify }) {
                       <td>
                         <div className="question-table-actions">
                           <button type="button" onClick={() => editSchedule(schedule)}>Edit</button>
-                          <button type="button" onClick={() => copyExamPageLink(schedule)}>Link Page</button>
+                          <button type="button" onClick={() => copyExamPageLink(schedule)}>Tautan Halaman</button>
                         </div>
                       </td>
                     </tr>
                   ))}
-                  {!sortedSchedules.length && (
-                    <tr><td colSpan="6">Belum ada jadwal ujian. Gunakan form generate jadwal di atas.</td></tr>
+                  {!filteredSchedules.length && (
+                    <tr><td colSpan="6">{sortedSchedules.length ? "Tidak ada jadwal yang cocok dengan pencarian." : "Belum ada jadwal ujian. Gunakan form buat jadwal di atas."}</td></tr>
                   )}
                 </tbody>
               </table>

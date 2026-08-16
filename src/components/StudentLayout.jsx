@@ -5,7 +5,7 @@ import { logoutUser } from "../service/authservice";
 import "../styles/student-dashboard.css";
 
 const navItems = [
-  { to: "/santri/dashboard", label: "Dashboard", icon: "grid" },
+  { to: "/santri/dashboard", label: "Dasbor", icon: "grid" },
   { to: "/santri/profil", label: "Profil", icon: "user" },
   { to: "/santri/ujian", label: "Ujian", icon: "exam" },
   { to: "/santri/dokumen", label: "Dokumen", icon: "folder" },
@@ -50,7 +50,7 @@ function StudentLayoutContent() {
 
     if (value.includes("dokumen") || value.includes("upload")) {
       navigate("/santri/dokumen");
-    } else if (value.includes("bayar") || value.includes("payment")) {
+    } else if (value.includes("bayar") || value.includes("pembayaran")) {
       navigate("/santri/pembayaran");
     } else if (value.includes("ujian")) {
       navigate("/santri/ujian");
@@ -107,7 +107,7 @@ function StudentLayoutContent() {
             onClick={handleLogout}
           >
             <StudentIcon name="logout" />
-            <span>Logout</span>
+            <span>Keluar</span>
           </NavLink>
         </div>
       </aside>

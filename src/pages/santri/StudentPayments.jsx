@@ -105,8 +105,8 @@ export default function StudentPayments() {
   return (
     <section className="student-page">
       <div className="student-page-title">
-        <h1>Payments</h1>
-        <p>Upload bukti transfer dan lihat statusnya.</p>
+        <h1>Pembayaran</h1>
+        <p>Unggah bukti transfer dan lihat statusnya.</p>
       </div>
 
       <div className="payment-summary">
@@ -124,9 +124,9 @@ export default function StudentPayments() {
 
       <article className="student-card payment-upload-card">
         <div>
-          <span className="student-badge student-badge--pink">Upload ke Admin</span>
-          <h2>Upload Bukti Pembayaran</h2>
-          <p>Upload bukti transfer.</p>
+          <span className="student-badge student-badge--pink">Unggah ke Admin</span>
+          <h2>Unggah Bukti Pembayaran</h2>
+          <p>Unggah bukti transfer.</p>
         </div>
         <input
           accept=".pdf,.jpg,.jpeg,.png"
@@ -137,7 +137,7 @@ export default function StudentPayments() {
         />
         <div className="payment-upload-card__actions">
           <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-          {displayedPayment ? "Ganti File" : "Pilih File"}
+          {displayedPayment ? "Ganti Berkas" : "Pilih Berkas"}
           </button>
           <button type="button" className="student-primary-action" onClick={() => handleProof(selectedProof)} disabled={!selectedProof || uploading}>
             {uploading ? "Kirim..." : "Kirim"}
@@ -155,7 +155,7 @@ export default function StudentPayments() {
         </div>
         <div className="payment-actions">
           <button type="button" onClick={copyRekening}>Salin</button>
-          <button type="button" className="is-outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>Upload</button>
+          <button type="button" className="is-outline" onClick={() => fileInputRef.current?.click()} disabled={uploading}>Unggah</button>
         </div>
       </article>
 
@@ -163,11 +163,11 @@ export default function StudentPayments() {
         <h2>Status</h2>
         <div>
           <span>{loadingStatus ? "Sinkron..." : displayedPayment ? statusLabels[displayedPayment.status] : "Belum ada bukti."}</span>
-          <small>{loadingStatus ? "Memuat data terbaru." : displayedPayment ? `${displayedPayment.fileName || displayedPayment.name} - ${new Date(displayedPayment.submittedAt || displayedPayment.uploadedAt).toLocaleString("id-ID")}` : "Upload bukti transfer."}</small>
+          <small>{loadingStatus ? "Memuat data terbaru." : displayedPayment ? `${displayedPayment.fileName || displayedPayment.name} - ${new Date(displayedPayment.submittedAt || displayedPayment.uploadedAt).toLocaleString("id-ID")}` : "Unggah bukti transfer."}</small>
           {displayedPayment?.reviewNote && <small>Catatan admin: {displayedPayment.reviewNote}</small>}
           {displayedPayment?.fileDataUrl && (
             <button type="button" onClick={() => openUploadedFile(displayedPayment.fileDataUrl, displayedPayment.fileName || displayedPayment.name, displayedPayment.fileType || displayedPayment.type)}>
-              Lihat File
+              Lihat Berkas
             </button>
           )}
         </div>

@@ -278,7 +278,7 @@ function OpenDocumentButton({ document, children = "Perbesar" }) {
       if (!previewUrl) throw new Error("Preview file belum tersedia.");
       await openUploadedFile(document.fileDataUrl || previewUrl, document.fileName, document.fileType, "admin");
     } catch (error) {
-      alert(error.message || "Gagal membuka preview dokumen.");
+      alert(error.message || "Gagal membuka pratinjau dokumen.");
     } finally {
       setOpening(false);
     }
@@ -424,7 +424,7 @@ export default function DocumentsPage({ notify }) {
     setPrintingApplicant(true);
     try {
       await printApplicantDocumentsPdf(currentGroup);
-      notify("PDF dokumen disiapkan", `Pilih Save as PDF untuk dokumen ${currentGroup.name}.`);
+      notify("PDF dokumen disiapkan", `Pilih Simpan sebagai PDF untuk dokumen ${currentGroup.name}.`);
     } catch (requestError) {
       notify("PDF gagal dibuat", requestError.message || "Gagal menyiapkan PDF dokumen.");
     } finally {

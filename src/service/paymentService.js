@@ -339,7 +339,7 @@ export function fileToDataUrl(file) {
 
 export async function submitManualPayment(file) {
   if (!file) throw new Error("File bukti pembayaran wajib dipilih.");
-  if (file.size > 5120 * 1024) throw new Error("Ukuran file maksimal 5120 KB atau 5 MB.");
+  if (file.size > 5120 * 1024) throw new Error("Ukuran berkas maksimal 5120 KB atau 5 MB.");
   const lowerName = file.name.toLowerCase();
   const isAllowedFile = (
     file.type === "application/pdf" ||
@@ -355,7 +355,7 @@ export async function submitManualPayment(file) {
     await apiRequest("/calon-santri", { authScope: "student" });
   } catch (error) {
     if (error.status === 404) {
-      throw new Error("Data calon santri belum dibuat. Lengkapi dan simpan profil terlebih dahulu sebelum upload bukti pembayaran.");
+      throw new Error("Data calon santri belum dibuat. Lengkapi dan simpan profil terlebih dahulu sebelum mengunggah bukti pembayaran.");
     }
     throw error;
   }
@@ -375,7 +375,7 @@ export async function submitManualPayment(file) {
   } catch (error) {
     throw new Error(
       error.message ||
-      "Upload bukti bayar gagal. Pastikan server aktif, data sudah siap, dan coba upload ulang.",
+      "Unggah bukti bayar gagal. Pastikan server aktif, data sudah siap, dan coba unggah ulang.",
     );
   }
 }

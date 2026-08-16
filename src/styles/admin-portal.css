@@ -1591,6 +1591,7 @@ td small,
   font-weight: 800;
 }
 
+.exam-table-toolbar input,
 .exam-table-toolbar select {
   min-height: 34px;
   border: 1px solid #bacbb6;
@@ -1599,6 +1600,11 @@ td small,
   color: #1b261a;
   padding: 0 10px;
   font-weight: 800;
+}
+
+.exam-table-toolbar input {
+  width: min(260px, 100%);
+  font-weight: 700;
 }
 
 .question-form {
@@ -1639,6 +1645,25 @@ td small,
 .schedule-student-picker__head strong,
 .schedule-student-picker__head small {
   display: block;
+}
+
+.schedule-student-search {
+  display: grid;
+  gap: 7px;
+  color: #52604e;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.schedule-student-search input {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #bacbb6;
+  border-radius: 8px;
+  background: #fff;
+  color: #1b261a;
+  padding: 0 12px;
+  font-weight: 700;
 }
 
 .schedule-student-list {

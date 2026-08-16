@@ -3,7 +3,7 @@ import "../styles/navbar.css";
 import logo from "../assets/logo.png";
 
 const links = [
-  { to: "/", label: "Home" },
+  { to: "/", label: "Beranda" },
   { to: "/pendaftaran", label: "Formulir" },
   { to: "/berita", label: "Berita & Artikel" },
   { to: "/jadwal-biaya", label: "Jadwal & Biaya" },
@@ -35,7 +35,7 @@ export default function Navbar() {
         </nav>
 
         <NavLink to="/login" className="site-nav__login">
-          Login
+          Masuk
         </NavLink>
       </div>
     </header>

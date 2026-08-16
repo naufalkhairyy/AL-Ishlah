@@ -19,6 +19,44 @@ import FinancePage from "./views/FinancePage";
 import ProfilePage from "./views/ProfilePage";
 import ExamResultPage from "./views/ExamResultPage";
 
+const notificationTranslations = [
+  [/request gagal/gi, "Permintaan gagal"],
+  [/import/gi, "impor"],
+  [/export/gi, "ekspor"],
+  [/upload/gi, "unggah"],
+  [/download/gi, "unduh"],
+  [/update/gi, "pembaruan"],
+  [/success/gi, "berhasil"],
+  [/successful/gi, "berhasil"],
+  [/failed/gi, "gagal"],
+  [/error/gi, "kesalahan"],
+  [/invalid/gi, "tidak valid"],
+  [/required/gi, "wajib diisi"],
+  [/unauthorized/gi, "tidak memiliki akses"],
+  [/forbidden/gi, "akses ditolak"],
+  [/not found/gi, "tidak ditemukan"],
+  [/server error/gi, "kesalahan server"],
+  [/validation/gi, "validasi"],
+  [/created/gi, "dibuat"],
+  [/updated/gi, "diperbarui"],
+  [/deleted/gi, "dihapus"],
+  [/saved/gi, "disimpan"],
+  [/selected/gi, "dipilih"],
+  [/skipped/gi, "dilewati"],
+  [/page/gi, "halaman"],
+  [/link/gi, "tautan"],
+  [/file/gi, "berkas"],
+  [/data/gi, "data"],
+];
+
+function localizeNotificationText(value) {
+  if (!value) return "";
+  return notificationTranslations.reduce(
+    (text, [pattern, replacement]) => text.replace(pattern, replacement),
+    String(value),
+  );
+}
+
 export default function AdminPortal() {
   const navigate = useNavigate();
   const { section = "dashboard" } = useParams();
@@ -64,7 +102,7 @@ export default function AdminPortal() {
             type="button"
             onClick={() => navigate("/admin/login")}
           >
-            Login Admin
+            Masuk Admin
           </button>
         </section>
       </div>
@@ -80,7 +118,12 @@ export default function AdminPortal() {
 
     setToasts((items) => [
       ...items,
-      { id, title, message, type },
+      {
+        id,
+        title: localizeNotificationText(title),
+        message: localizeNotificationText(message),
+        type,
+      },
     ]);
 
     window.setTimeout(() => {
@@ -225,7 +268,7 @@ export default function AdminPortal() {
           type="button"
           onClick={handleLogout}
         >
-          Logout Admin
+          Keluar Admin
         </button>
       </aside>
 
@@ -272,7 +315,7 @@ export default function AdminPortal() {
         type="button"
         onClick={() =>
           notify(
-            "Helpdesk aktif",
+            "Layanan bantuan aktif",
             "Pesan bantuan siap diterima admin."
           )
         }

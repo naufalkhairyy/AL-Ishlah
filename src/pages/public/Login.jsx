@@ -25,7 +25,7 @@ function Login({ goSignup, goHome, adminOnly = false }) {
     try {
       const result = await loginUser(username.trim(), password, adminOnly ? "admin" : "");
       const user = result.data?.user;
-      showPopup("Login berhasil", result.message || "Anda berhasil masuk.", "success");
+      showPopup("Masuk berhasil", result.message || "Anda berhasil masuk.", "success");
 
       if (adminOnly || user?.role === "admin") {
         navigate("/admin/dashboard");
@@ -35,7 +35,7 @@ function Login({ goSignup, goHome, adminOnly = false }) {
         navigate("/santri/dashboard");
       }
     } catch (error) {
-      showPopup("Login gagal", error.message || "Periksa username dan password Anda.", "error");
+      showPopup("Masuk gagal", error.message || "Periksa username dan password Anda.", "error");
     } finally {
       setLoading(false);
     }
@@ -49,31 +49,31 @@ function Login({ goSignup, goHome, adminOnly = false }) {
         <form className="login-box" onSubmit={handleLogin}>
           <img src={logo} className="login-logo" alt="Logo Al Ishlah Al Islamy" />
 
-          <h2>{adminOnly ? "Login Admin" : "Login into your account"}</h2>
+          <h2>{adminOnly ? "Masuk Admin" : "Masuk ke Akun Anda"}</h2>
 
           <div className="form-group">
-            <label>Username :</label>
+            <label>Nama Pengguna :</label>
             <input
               type="text"
-              placeholder="Enter your username"
+              placeholder="Masukkan nama pengguna"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
             />
           </div>
 
           <div className="form-group">
-            <label>Password</label>
+            <label>Kata Sandi</label>
             <input
               type="password"
-              placeholder="Enter your password"
+              placeholder="Masukkan kata sandi"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
           </div>
 
           <div className="forgot">
-            <button type="button" onClick={() => showPopup("Reset password", "Silakan hubungi admin pesantren untuk reset password.", "info")}>
-              Forgot password?
+            <button type="button" onClick={() => showPopup("Reset kata sandi", "Silakan hubungi admin pesantren untuk reset kata sandi.", "info")}>
+              Lupa kata sandi?
             </button>
           </div>
 
@@ -82,14 +82,14 @@ function Login({ goSignup, goHome, adminOnly = false }) {
             disabled={loading}
             type="submit"
           >
-            {loading ? "Loading..." : "Login now"}
+            {loading ? "Memproses..." : "Masuk Sekarang"}
           </button>
 
-          {!adminOnly && <div className="divider">OR</div>}
+          {!adminOnly && <div className="divider">ATAU</div>}
 
           {!adminOnly && (
             <button className="btn-signup" type="button" onClick={goSignup || (() => navigate("/signup"))}>
-              Signup now
+              Daftar Sekarang
             </button>
           )}
         </form>
