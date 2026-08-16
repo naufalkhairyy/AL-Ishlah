@@ -10,7 +10,7 @@ export const DOCUMENT_TYPES = [
   { key: "fotocopyAkte", backendField: "akta_kelahiran", title: "Fotocopy Akte Kelahiran", required: true, accept: ".pdf,.jpg,.jpeg,.png" },
   { key: "pasFoto", backendField: "pas_foto", title: "Pas Foto 3x4", required: true, accept: ".jpg,.jpeg,.png" },
   { key: "kartuKeluarga", backendField: "kartu_keluarga", title: "Kartu Keluarga", required: true, accept: ".pdf,.jpg,.jpeg,.png" },
-  { key: "ktpOrangTua", backendField: "ktp_orang_tua", title: "KTP orang tua/ wali", required: true, accept: ".pdf,.jpg,.jpeg,.png" },
+  { key: "ktpOrangTua", backendField: "ktp_orang_tua", title: "KTP Orang tua/ Wali", required: true, accept: ".pdf,.jpg,.jpeg,.png" },
 ];
 
 const DOCUMENT_SCHEMA_VERSION = 2;
