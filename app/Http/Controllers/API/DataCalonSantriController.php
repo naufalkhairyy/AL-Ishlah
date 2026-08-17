@@ -558,7 +558,7 @@ class DataCalonSantriController extends Controller
     private function linkApprovedPaymentsToSantri(int $userId, Santri $santri): void
     {
         Pembayaran::where('user_id', $userId)
-            ->where('status', 'approved')
+            ->whereIn('status', ['approved', 'diterima'])
             ->where(function ($query) use ($santri) {
                 $query->whereNull('santri_id')
                     ->orWhere('santri_id', '!=', $santri->santri_id);

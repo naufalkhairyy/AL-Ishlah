@@ -7,6 +7,7 @@ use App\Models\Pembayaran;
 use Illuminate\Http\Request;
 use App\Models\DataCalonSantri;
 use App\Models\Santri;
+use Illuminate\Support\Facades\DB;
 
 class PembayaranController extends Controller
 {
@@ -138,9 +139,9 @@ class PembayaranController extends Controller
     }
 
     $validated = $request->validate([
-        'status' => 'nullable|in:pending,approved,rejected,diterima,ditolak',
-        'status_pembayaran' => 'nullable|in:pending,approved,rejected,diterima,ditolak',
-        'status_verifikasi' => 'nullable|in:pending,approved,rejected,diterima,ditolak',
+        'status' => 'nullable|in:pending,approved,rejected,verified,terverifikasi,lunas,success,paid,valid,failed,invalid,batal,diterima,ditolak',
+        'status_pembayaran' => 'nullable|in:pending,approved,rejected,verified,terverifikasi,lunas,success,paid,valid,failed,invalid,batal,diterima,ditolak',
+        'status_verifikasi' => 'nullable|in:pending,approved,rejected,verified,terverifikasi,lunas,success,paid,valid,failed,invalid,batal,diterima,ditolak',
         'catatan' => 'nullable|string',
         'catatan_review' => 'nullable|string',
     ]);
@@ -162,9 +163,10 @@ class PembayaranController extends Controller
     }
 
     $status = $this->normalizeStatus($statusInput);
+    $storedStatus = $this->statusForDatabase($status);
 
     $pembayaran->update([
-        'status' => $status,
+        'status' => $storedStatus,
         'catatan' => $validated['catatan_review'] ?? $validated['catatan'] ?? null,
     ]);
 
@@ -269,10 +271,49 @@ class PembayaranController extends Controller
     private function normalizeStatus(string $status): string
     {
         return match ($status) {
-            'diterima' => 'approved',
-            'ditolak' => 'rejected',
+            'verified', 'terverifikasi', 'lunas', 'success', 'paid', 'valid', 'diterima' => 'approved',
+            'failed', 'invalid', 'batal', 'ditolak' => 'rejected',
             default => $status,
         };
+    }
+
+    private function statusForDatabase(string $status): string
+    {
+        if ($this->paymentStatusColumnAccepts($status)) {
+            return $status;
+        }
+
+        return match ($status) {
+            'approved' => 'diterima',
+            'rejected' => 'ditolak',
+            default => $status,
+        };
+    }
+
+    private function paymentStatusColumnAccepts(string $status): bool
+    {
+        try {
+            if (DB::connection()->getDriverName() !== 'mysql') {
+                return true;
+            }
+
+            $columns = DB::select("SHOW COLUMNS FROM pembayaran WHERE Field = 'status'");
+            $type = $columns[0]->Type ?? '';
+
+            if (!preg_match("/^enum\\((.*)\\)$/", $type, $matches)) {
+                return true;
+            }
+
+            preg_match_all("/'((?:[^'\\\\]|\\\\.)*)'/", $matches[1], $enumMatches);
+            $values = array_map(
+                fn ($value) => stripcslashes($value),
+                $enumMatches[1] ?? []
+            );
+
+            return $values === [] || in_array($status, $values, true);
+        } catch (\Throwable) {
+            return true;
+        }
     }
 
     private function normalizeBuktiBayar(Request $request): array
