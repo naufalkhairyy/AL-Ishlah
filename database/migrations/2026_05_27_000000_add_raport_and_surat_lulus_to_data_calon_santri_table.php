@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::table('data_calon_santri', function (Blueprint $table) {
             $table->string('raport_semester_4', 255)->nullable()->after('nisn');
-            $table->string('surat_pernyataan_lulus', 255)->nullable()->after('ijazah_skl');
         });
     }
 
@@ -19,7 +18,6 @@ return new class extends Migration
         Schema::table('data_calon_santri', function (Blueprint $table) {
             $table->dropColumn([
                 'raport_semester_4',
-                'surat_pernyataan_lulus',
             ]);
         });
     }

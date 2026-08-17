@@ -10,6 +10,14 @@ use App\Models\Santri;
 
 class PembayaranController extends Controller
 {
+    private const REQUIRED_DOKUMEN_FIELDS = [
+        'raport_semester_4' => 'raport_semester_4',
+        'akta_kelahiran' => 'akta_kelahiran',
+        'pas_foto' => 'pas_foto',
+        'kartu_keluarga' => 'kartu_keluarga',
+        'ktp_orang_tua' => 'ktp_ayah',
+    ];
+
     public function index()
     {
         $pembayaran = Pembayaran::with(['user', 'santri'])
@@ -291,7 +299,7 @@ class PembayaranController extends Controller
             ];
         }
 
-        $dokumenStatus = $this->normalizeDokumenStatus($calon->status_dokumen);
+        $dokumenStatus = $this->resolveAcceptedDokumenStatus($calon);
 
         if ($dokumenStatus !== 'diterima') {
             return [
@@ -300,7 +308,12 @@ class PembayaranController extends Controller
                 'user_id' => $pembayaran->user_id,
                 'calon_santri_id' => $calon->calon_santri_id,
                 'status_dokumen' => $calon->status_dokumen,
+                'resolved_status_dokumen' => $dokumenStatus,
             ];
+        }
+
+        if ($calon->status_dokumen !== 'diterima') {
+            $calon->update(['status_dokumen' => 'diterima']);
         }
 
         $santri = Santri::updateOrCreate(
@@ -328,6 +341,37 @@ class PembayaranController extends Controller
             'calon_santri_id' => $calon->calon_santri_id,
             'santri_id' => $santri->santri_id,
         ];
+    }
+
+    private function resolveAcceptedDokumenStatus(DataCalonSantri $calon): string
+    {
+        $globalStatus = $this->normalizeDokumenStatus($calon->status_dokumen);
+
+        if ($globalStatus === 'diterima') {
+            return 'diterima';
+        }
+
+        $dokumenStatus = is_array($calon->dokumen_status) ? $calon->dokumen_status : [];
+
+        foreach (self::REQUIRED_DOKUMEN_FIELDS as $publicField => $storageField) {
+            if (!$this->isDokumenUploaded($calon, $publicField, $storageField)
+                || ($dokumenStatus[$publicField] ?? 'pending') !== 'diterima') {
+                return $globalStatus;
+            }
+        }
+
+        return 'diterima';
+    }
+
+    private function isDokumenUploaded(DataCalonSantri $calon, string $publicField, string $storageField): bool
+    {
+        $attributes = $calon->getAttributes();
+
+        if (array_key_exists("{$publicField}_uploaded", $attributes)) {
+            return (bool) $attributes["{$publicField}_uploaded"];
+        }
+
+        return $calon->{$storageField} !== null && $calon->{$storageField} !== '';
     }
 
     private function normalizeDokumenStatus(?string $status): string

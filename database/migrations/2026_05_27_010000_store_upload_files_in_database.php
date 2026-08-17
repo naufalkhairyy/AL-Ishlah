@@ -12,11 +12,7 @@ return new class extends Migration
         'akta_kelahiran',
         'pas_foto',
         'kartu_keluarga',
-        'ktp',
-        'ijazah_skl',
-        'surat_pernyataan_lulus',
         'ktp_ayah',
-        'ktp_ibu',
     ];
 
     public function up(): void

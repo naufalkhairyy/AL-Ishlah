@@ -16,9 +16,6 @@ class DataCalonSantriController extends Controller
         'akta_kelahiran' => 'akta_kelahiran',
         'pas_foto' => 'pas_foto',
         'kartu_keluarga' => 'kartu_keluarga',
-        'ktp' => 'ktp',
-        'ijazah_skl' => 'ijazah_skl',
-        'surat_pernyataan_lulus' => 'surat_pernyataan_lulus',
         'ktp_orang_tua' => 'ktp_ayah',
     ];
 
@@ -32,6 +29,27 @@ class DataCalonSantriController extends Controller
 
     private const DOKUMEN_ALIASES = [
         'ktp_ayah' => 'ktp_orang_tua',
+    ];
+
+    private const RESPONSE_FIELDS = [
+        'calon_santri_id',
+        'user_id',
+        'nama_lengkap',
+        'nama_panggilan',
+        'tempat_lahir',
+        'tanggal_lahir',
+        'jenis_kelamin',
+        'golongan_darah',
+        'jumlah_saudara',
+        'anak_ke',
+        'alamat',
+        'nisn',
+        'status_dokumen',
+        'catatan_dokumen',
+        'dokumen_status',
+        'dokumen_catatan',
+        'created_at',
+        'updated_at',
     ];
 
     // Simpan data calon santri
@@ -52,9 +70,6 @@ class DataCalonSantriController extends Controller
             'akta_kelahiran' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'pas_foto'       => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
             'kartu_keluarga' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'ktp'            => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'ijazah_skl'     => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'surat_pernyataan_lulus' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'ktp_orang_tua'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
@@ -85,9 +100,6 @@ class DataCalonSantriController extends Controller
             'akta_kelahiran' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'pas_foto'       => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
             'kartu_keluarga' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'ktp'            => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'ijazah_skl'     => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'surat_pernyataan_lulus' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'ktp_orang_tua'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
@@ -354,9 +366,20 @@ class DataCalonSantriController extends Controller
         return false;
     }
 
+    private function hasRequiredDokumenFile(Request $request): bool
+    {
+        foreach (self::REQUIRED_DOKUMEN_FIELDS as $field) {
+            if ($request->hasFile($field)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function pendingDokumenStatus(Request $request): array
     {
-        if (!$this->hasDokumenFile($request)) {
+        if (!$this->hasRequiredDokumenFile($request)) {
             return [];
         }
 
@@ -368,7 +391,12 @@ class DataCalonSantriController extends Controller
 
     private function withDokumenUrl(DataCalonSantri $calon): array
     {
-        $data = $calon->toArray();
+        $data = [];
+
+        foreach (self::RESPONSE_FIELDS as $field) {
+            $data[$field] = $calon->{$field};
+        }
+
         $data['santri_id'] = Santri::where('user_id', $calon->user_id)->value('santri_id');
         $data['dokumen_url'] = [];
         $data['dokumen_uploaded'] = [];
@@ -392,12 +420,6 @@ class DataCalonSantriController extends Controller
                 );
             }
         }
-
-        unset(
-            $data['ktp_ibu_nama_file'],
-            $data['ktp_ibu_mime_type'],
-            $data['ktp_ibu_size']
-        );
 
         return $data;
     }
