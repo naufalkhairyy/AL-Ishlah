@@ -151,30 +151,7 @@ class PembayaranController extends Controller
         ]);
 
         if ($status === 'approved') {
-            $calon = DataCalonSantri::where('user_id', $pembayaran->user_id)->first();
-
-            if ($calon && $calon->status_dokumen === 'diterima') {
-                $santri = Santri::where('user_id', $calon->user_id)->first();
-
-                if (!$santri) {
-                    $santri = Santri::create([
-                        'user_id' => $calon->user_id,
-                        'nama_lengkap' => $calon->nama_lengkap,
-                        'tempat_lahir' => $calon->tempat_lahir,
-                        'tanggal_lahir' => $calon->tanggal_lahir,
-                        'jenis_kelamin' => $calon->jenis_kelamin,
-                        'alamat' => $calon->alamat,
-                        'no_hp' => '-',
-                        'kelas' => 'Calon Santri',
-                    ]);
-                }
-
-                if ($pembayaran->santri_id === null) {
-                    $pembayaran->update([
-                        'santri_id' => $santri->santri_id,
-                    ]);
-                }
-            }
+            $this->promoteApprovedPaymentToSantri($pembayaran->fresh());
         }
 
         return $this->paymentResponse(
@@ -275,6 +252,45 @@ class PembayaranController extends Controller
             'diterima' => 'approved',
             'ditolak' => 'rejected',
             default => $status,
+        };
+    }
+
+    private function promoteApprovedPaymentToSantri(Pembayaran $pembayaran): ?Santri
+    {
+        $calon = DataCalonSantri::where('user_id', $pembayaran->user_id)->first();
+
+        if (!$calon || $this->normalizeDokumenStatus($calon->status_dokumen) !== 'diterima') {
+            return null;
+        }
+
+        $santri = Santri::updateOrCreate(
+            ['user_id' => $calon->user_id],
+            [
+                'nama_lengkap' => $calon->nama_lengkap,
+                'tempat_lahir' => $calon->tempat_lahir,
+                'tanggal_lahir' => $calon->tanggal_lahir,
+                'jenis_kelamin' => $calon->jenis_kelamin,
+                'alamat' => $calon->alamat,
+                'no_hp' => '-',
+                'kelas' => 'Calon Santri',
+            ]
+        );
+
+        if ($pembayaran->santri_id !== $santri->santri_id) {
+            $pembayaran->update([
+                'santri_id' => $santri->santri_id,
+            ]);
+        }
+
+        return $santri;
+    }
+
+    private function normalizeDokumenStatus(?string $status): string
+    {
+        return match (strtolower((string) $status)) {
+            'approved' => 'diterima',
+            'rejected' => 'ditolak',
+            default => strtolower((string) $status),
         };
     }
 
