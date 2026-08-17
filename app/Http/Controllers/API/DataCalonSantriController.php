@@ -22,6 +22,14 @@ class DataCalonSantriController extends Controller
         'ktp_orang_tua' => 'ktp_ayah',
     ];
 
+    private const REQUIRED_DOKUMEN_FIELDS = [
+        'raport_semester_4',
+        'akta_kelahiran',
+        'pas_foto',
+        'kartu_keluarga',
+        'ktp_orang_tua',
+    ];
+
     private const DOKUMEN_ALIASES = [
         'ktp_ayah' => 'ktp_orang_tua',
     ];
@@ -515,14 +523,22 @@ class DataCalonSantriController extends Controller
 
     private function resolveGlobalDokumenStatus(DataCalonSantri $calon, array $dokumenStatus): string
     {
-        foreach (self::DOKUMEN_FIELDS as $publicField => $storageField) {
+        foreach (self::REQUIRED_DOKUMEN_FIELDS as $publicField) {
+            $storageField = self::DOKUMEN_FIELDS[$publicField];
+
             if (!$this->isDokumenUploaded($calon, $publicField, $storageField)
                 || ($dokumenStatus[$publicField] ?? 'pending') === 'pending') {
                 return 'pending';
             }
         }
 
-        return in_array('ditolak', $dokumenStatus, true) ? 'ditolak' : 'diterima';
+        foreach (self::REQUIRED_DOKUMEN_FIELDS as $publicField) {
+            if (($dokumenStatus[$publicField] ?? 'pending') === 'ditolak') {
+                return 'ditolak';
+            }
+        }
+
+        return 'diterima';
     }
 
     private function resolveGlobalDokumenCatatan(array $dokumenCatatan): ?string
