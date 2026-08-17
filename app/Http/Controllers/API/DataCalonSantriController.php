@@ -118,6 +118,10 @@ class DataCalonSantriController extends Controller
     // Ambil data calon santri milik user yang login
     public function show(Request $request)
     {
+        if ($request->user()->role === 'admin') {
+            return $this->dokumenList();
+        }
+
         $calon = DataCalonSantri::where('user_id', $request->user()->user_id)->first();
 
         if (!$calon) {

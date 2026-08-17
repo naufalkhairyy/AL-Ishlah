@@ -253,7 +253,7 @@ class JadwalUjianController extends Controller
             return 'Dokumen belum lengkap atau belum diterima.';
         }
 
-        $pembayaranApproved = Pembayaran::where('status', 'approved')
+        $pembayaranApproved = Pembayaran::whereIn('status', ['approved', 'diterima'])
             ->where(function ($query) use ($santri) {
                 $query->where('santri_id', $santri->santri_id)
                     ->orWhere('user_id', $santri->user_id);
