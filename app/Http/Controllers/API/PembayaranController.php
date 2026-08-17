@@ -138,25 +138,47 @@ class PembayaranController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => 'required|in:pending,approved,rejected,diterima,ditolak',
+            'status' => 'nullable|in:pending,approved,rejected,diterima,ditolak',
+            'status_pembayaran' => 'nullable|in:pending,approved,rejected,diterima,ditolak',
+            'status_verifikasi' => 'nullable|in:pending,approved,rejected,diterima,ditolak',
             'catatan' => 'nullable|string',
             'catatan_review' => 'nullable|string',
         ]);
 
-        $status = $this->normalizeStatus($validated['status']);
+        $statusInput = $validated['status']
+            ?? $validated['status_pembayaran']
+            ?? $validated['status_verifikasi']
+            ?? null;
+
+        if ($statusInput === null) {
+            return response()->json([
+                'success' => false,
+                'status' => null,
+                'message' => 'Status pembayaran wajib diisi',
+                'errors' => [
+                    'status' => ['Status pembayaran wajib diisi'],
+                ],
+            ], 422);
+        }
+
+        $status = $this->normalizeStatus($statusInput);
 
         $pembayaran->update([
             'status' => $status,
             'catatan' => $validated['catatan_review'] ?? $validated['catatan'] ?? null,
         ]);
 
+        $promotion = null;
+
         if ($status === 'approved') {
-            $this->promoteApprovedPaymentToSantri($pembayaran->fresh());
+            $promotion = $this->promoteApprovedPaymentToSantri($pembayaran->fresh());
         }
 
         return $this->paymentResponse(
             $pembayaran->fresh(),
-            'Status pembayaran berhasil diperbarui'
+            'Status pembayaran berhasil diperbarui',
+            200,
+            ['promotion' => $promotion]
         );
     }
 
@@ -223,14 +245,14 @@ class PembayaranController extends Controller
         return $data;
     }
 
-    private function paymentResponse(Pembayaran $pembayaran, ?string $message = null, int $statusCode = 200)
+    private function paymentResponse(Pembayaran $pembayaran, ?string $message = null, int $statusCode = 200, array $extra = [])
     {
         $data = $this->withBuktiBayarUrl($pembayaran);
-        $response = [
+        $response = array_merge([
             'success' => true,
             'status' => $data['status'],
             'data' => $data,
-        ];
+        ], $extra);
 
         if ($message !== null) {
             $response['message'] = $message;
@@ -255,12 +277,28 @@ class PembayaranController extends Controller
         };
     }
 
-    private function promoteApprovedPaymentToSantri(Pembayaran $pembayaran): ?Santri
+    private function promoteApprovedPaymentToSantri(Pembayaran $pembayaran): array
     {
         $calon = DataCalonSantri::where('user_id', $pembayaran->user_id)->first();
 
-        if (!$calon || $this->normalizeDokumenStatus($calon->status_dokumen) !== 'diterima') {
-            return null;
+        if (!$calon) {
+            return [
+                'status' => 'skipped',
+                'reason' => 'calon_santri_not_found',
+                'user_id' => $pembayaran->user_id,
+            ];
+        }
+
+        $dokumenStatus = $this->normalizeDokumenStatus($calon->status_dokumen);
+
+        if ($dokumenStatus !== 'diterima') {
+            return [
+                'status' => 'skipped',
+                'reason' => 'dokumen_not_accepted',
+                'user_id' => $pembayaran->user_id,
+                'calon_santri_id' => $calon->calon_santri_id,
+                'status_dokumen' => $calon->status_dokumen,
+            ];
         }
 
         $santri = Santri::updateOrCreate(
@@ -282,7 +320,12 @@ class PembayaranController extends Controller
             ]);
         }
 
-        return $santri;
+        return [
+            'status' => 'promoted',
+            'user_id' => $pembayaran->user_id,
+            'calon_santri_id' => $calon->calon_santri_id,
+            'santri_id' => $santri->santri_id,
+        ];
     }
 
     private function normalizeDokumenStatus(?string $status): string
