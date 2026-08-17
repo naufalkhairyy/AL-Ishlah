@@ -137,10 +137,12 @@ class PembayaranController extends Controller
             ], 404);
         }
 
+        $statusRule = 'nullable|in:pending,approved,rejected,verified,terverifikasi,lunas,success,paid,valid,failed,invalid,batal,diterima,ditolak';
+
         $validated = $request->validate([
-            'status' => 'nullable|in:pending,approved,rejected,diterima,ditolak',
-            'status_pembayaran' => 'nullable|in:pending,approved,rejected,diterima,ditolak',
-            'status_verifikasi' => 'nullable|in:pending,approved,rejected,diterima,ditolak',
+            'status' => $statusRule,
+            'status_pembayaran' => $statusRule,
+            'status_verifikasi' => $statusRule,
             'catatan' => 'nullable|string',
             'catatan_review' => 'nullable|string',
         ]);
@@ -271,8 +273,8 @@ class PembayaranController extends Controller
     private function normalizeStatus(string $status): string
     {
         return match ($status) {
-            'diterima' => 'approved',
-            'ditolak' => 'rejected',
+            'verified', 'terverifikasi', 'lunas', 'success', 'paid', 'valid', 'diterima' => 'approved',
+            'failed', 'invalid', 'batal', 'ditolak' => 'rejected',
             default => $status,
         };
     }
