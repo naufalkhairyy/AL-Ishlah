@@ -168,36 +168,8 @@ class PembayaranController extends Controller
         'catatan' => $validated['catatan_review'] ?? $validated['catatan'] ?? null,
     ]);
 
-    // Jika pembayaran disetujui
     if ($status === 'approved') {
-
-        $calon = DataCalonSantri::where('user_id', $pembayaran->user_id)->first();
-
-        if ($calon && $calon->status_dokumen === 'diterima') {
-
-            $santri = Santri::where('user_id', $calon->user_id)->first();
-
-            if (!$santri) {
-$santri = Santri::create([
-    'user_id'        => $calon->user_id,
-    'nama_lengkap'   => $calon->nama_lengkap,
-    'tempat_lahir'   => $calon->tempat_lahir,
-    'tanggal_lahir'  => $calon->tanggal_lahir,
-    'jenis_kelamin'  => $calon->jenis_kelamin,
-    'alamat'         => $calon->alamat,
-    'no_hp'          => '-',
-    'kelas'          => 'Calon Santri',
-]);
-            }
-
-            // Hubungkan pembayaran dengan santri
-            if ($pembayaran->santri_id === null) {
-
-                $pembayaran->update([
-                    'santri_id' => $santri->santri_id,
-                ]);
-            }
-        }
+        $this->linkPaymentToAcceptedSantri($pembayaran);
     }
 
     return $this->paymentResponse(
@@ -339,5 +311,39 @@ $santri = Santri::create([
         }
 
         return $buktiBayar;
+    }
+
+    private function linkPaymentToAcceptedSantri(Pembayaran $pembayaran): ?Santri
+    {
+        $calon = DataCalonSantri::where('user_id', $pembayaran->user_id)
+            ->where('status_dokumen', 'diterima')
+            ->first();
+
+        if (!$calon) {
+            return null;
+        }
+
+        $santri = Santri::where('user_id', $pembayaran->user_id)->first();
+
+        if (!$santri) {
+            $santri = Santri::create([
+                'user_id' => $calon->user_id,
+                'nama_lengkap' => $calon->nama_lengkap,
+                'tempat_lahir' => $calon->tempat_lahir,
+                'tanggal_lahir' => $calon->tanggal_lahir,
+                'jenis_kelamin' => $calon->jenis_kelamin,
+                'alamat' => $calon->alamat,
+                'no_hp' => '-',
+                'kelas' => 'Calon Santri',
+            ]);
+        }
+
+        if ($santri && $pembayaran->santri_id !== $santri->santri_id) {
+            $pembayaran->update([
+                'santri_id' => $santri->santri_id,
+            ]);
+        }
+
+        return $santri;
     }
 }

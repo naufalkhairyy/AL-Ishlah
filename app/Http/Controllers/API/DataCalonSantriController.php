@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\DataCalonSantri;
+use App\Models\Pembayaran;
 use App\Models\Santri;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -153,6 +154,7 @@ class DataCalonSantriController extends Controller
 
         if ($validated['status_dokumen'] === 'diterima') {
             $santri = $this->promoteCalonToSantri($calon->fresh());
+            $this->linkApprovedPaymentsToSantri($calon->user_id, $santri);
         }
 
         return response()->json([
@@ -213,13 +215,20 @@ class DataCalonSantriController extends Controller
             'catatan_dokumen' => $this->resolveGlobalDokumenCatatan($dokumenCatatan),
         ]);
 
-        $santriIds = Santri::where('user_id', $calon->user_id)
+        $freshCalon = $calon->fresh();
+
+        if ($freshCalon->status_dokumen === 'diterima') {
+            $santri = $this->promoteCalonToSantri($freshCalon);
+            $this->linkApprovedPaymentsToSantri($freshCalon->user_id, $santri);
+        }
+
+        $santriIds = Santri::where('user_id', $freshCalon->user_id)
             ->pluck('santri_id', 'user_id');
 
         return response()->json([
             'status' => true,
             'message' => 'Status dokumen berhasil diperbarui',
-            'data' => $this->withDokumenListData($calon->fresh(), $santriIds),
+            'data' => $this->withDokumenListData($freshCalon, $santriIds),
         ]);
     }
 
@@ -274,6 +283,7 @@ class DataCalonSantriController extends Controller
             $validated['no_hp'] ?? '-',
             $validated['kelas'] ?? 'Calon Santri'
         );
+        $this->linkApprovedPaymentsToSantri($calon->user_id, $santri);
 
         return response()->json([
             'status' => true,
@@ -543,6 +553,19 @@ class DataCalonSantriController extends Controller
                 'kelas' => $kelas,
             ]
         );
+    }
+
+    private function linkApprovedPaymentsToSantri(int $userId, Santri $santri): void
+    {
+        Pembayaran::where('user_id', $userId)
+            ->where('status', 'approved')
+            ->where(function ($query) use ($santri) {
+                $query->whereNull('santri_id')
+                    ->orWhere('santri_id', '!=', $santri->santri_id);
+            })
+            ->update([
+                'santri_id' => $santri->santri_id,
+            ]);
     }
 
     private function downloadDokumenFromRecord(?DataCalonSantri $calon, string $field)
