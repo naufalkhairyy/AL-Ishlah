@@ -120,6 +120,11 @@ class PembayaranController extends Controller
         return $this->review($request, $id);
     }
 
+    public function update(Request $request, int $id)
+    {
+        return $this->review($request, $id);
+    }
+
     public function review(Request $request, int $id)
 {
     $pembayaran = Pembayaran::find($id);
@@ -133,12 +138,30 @@ class PembayaranController extends Controller
     }
 
     $validated = $request->validate([
-        'status' => 'required|in:pending,approved,rejected,diterima,ditolak',
+        'status' => 'nullable|in:pending,approved,rejected,diterima,ditolak',
+        'status_pembayaran' => 'nullable|in:pending,approved,rejected,diterima,ditolak',
+        'status_verifikasi' => 'nullable|in:pending,approved,rejected,diterima,ditolak',
         'catatan' => 'nullable|string',
         'catatan_review' => 'nullable|string',
     ]);
 
-    $status = $this->normalizeStatus($validated['status']);
+    $statusInput = $validated['status']
+        ?? $validated['status_pembayaran']
+        ?? $validated['status_verifikasi']
+        ?? null;
+
+    if ($statusInput === null) {
+        return response()->json([
+            'success' => false,
+            'status' => null,
+            'message' => 'Status pembayaran wajib diisi',
+            'errors' => [
+                'status' => ['Status pembayaran wajib diisi'],
+            ],
+        ], 422);
+    }
+
+    $status = $this->normalizeStatus($statusInput);
 
     $pembayaran->update([
         'status' => $status,
@@ -237,6 +260,8 @@ $santri = Santri::create([
     {
         $data = $pembayaran->toArray();
         $data['status'] = $this->normalizeStatus($pembayaran->status);
+        $data['status_pembayaran'] = $data['status'];
+        $data['status_verifikasi'] = $data['status'];
         $data['catatan_review'] = $pembayaran->catatan;
         $data['bukti_bayar_uploaded'] = $pembayaran->bukti_bayar !== null;
         $data['bukti_bayar_url'] = $pembayaran->bukti_bayar !== null

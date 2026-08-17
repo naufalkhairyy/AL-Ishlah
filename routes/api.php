@@ -82,6 +82,9 @@ Route::post('/calon-santri',
 Route::get('/calon-santri',
 [DataCalonSantriController::class,'show']);
 
+Route::middleware('role:admin')->get('/calon-santri/dokumen-list',
+[DataCalonSantriController::class,'dokumenList']);
+
 
 Route::post('/calon-santri/dokumen',
 [DataCalonSantriController::class,'uploadDokumen']);
@@ -399,7 +402,7 @@ Route::get('/pembayaran',
 
 
 Route::match(
-['put','patch'],
+['put','post','patch'],
 '/pembayaran/{id}/review',
 [PembayaranController::class,'review']
 );
@@ -410,6 +413,9 @@ Route::match(
 '/pembayaran/{id}/status',
 [PembayaranController::class,'updateStatus']
 );
+
+Route::put('/pembayaran/{id}',
+[PembayaranController::class,'update']);
 
 
 Route::delete('/pembayaran/{id}',

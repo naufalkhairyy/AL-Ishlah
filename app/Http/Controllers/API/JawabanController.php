@@ -468,9 +468,10 @@ public function hasilSemua()
 
     if ($jawaban->isEmpty()) {
         return response()->json([
-            'status' => false,
-            'message' => 'Belum ada hasil ujian'
-        ], 404);
+            'status' => true,
+            'message' => 'Belum ada hasil ujian',
+            'data' => [],
+        ]);
     }
 
 
