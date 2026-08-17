@@ -232,17 +232,53 @@ class PembayaranController extends Controller
 
     private function withBuktiBayarUrl(Pembayaran $pembayaran): array
     {
+        $pembayaran->loadMissing(['user', 'santri']);
+
         $data = $pembayaran->toArray();
         $data['status'] = $this->normalizeStatus($pembayaran->status);
         $data['status_pembayaran'] = $data['status'];
         $data['status_verifikasi'] = $data['status'];
         $data['catatan_review'] = $pembayaran->catatan;
+        $data['reviewNote'] = $pembayaran->catatan;
         $data['bukti_bayar_uploaded'] = $pembayaran->bukti_bayar !== null;
         $data['bukti_bayar_url'] = $pembayaran->bukti_bayar !== null
             ? url("/api/pembayaran/{$pembayaran->pembayaran_id}/bukti-bayar")
             : null;
+        $data['bukti_pembayaran_url'] = $data['bukti_bayar_url'];
+        $data['bukti_pembayaran_nama'] = $pembayaran->bukti_bayar_nama_file;
+        $data['bukti_pembayaran_mime'] = $pembayaran->bukti_bayar_mime_type;
+        $data['bukti_pembayaran_size'] = $pembayaran->bukti_bayar_size;
+
+        $studentName = $this->paymentStudentName($pembayaran);
+        $reviewedAt = $data['status'] === 'pending' ? null : optional($pembayaran->updated_at)->toISOString();
+
+        $data['id'] = $pembayaran->pembayaran_id;
+        $data['username'] = $pembayaran->user?->username;
+        $data['student_name'] = $studentName;
+        $data['studentName'] = $studentName;
+        $data['category'] = $pembayaran->jenis_pembayaran ?: 'Pembayaran Ujian';
+        $data['method'] = $pembayaran->metode_pembayaran ?: 'Transfer Bank Manual';
+        $data['fileName'] = $pembayaran->bukti_bayar_nama_file ?: 'Bukti pembayaran';
+        $data['fileType'] = $pembayaran->bukti_bayar_mime_type ?: 'File bukti transfer';
+        $data['fileSize'] = $pembayaran->bukti_bayar_size;
+        $data['submittedAt'] = optional($pembayaran->created_at)->toISOString();
+        $data['updatedAt'] = optional($pembayaran->updated_at)->toISOString();
+        $data['reviewed_at'] = $reviewedAt;
+        $data['reviewedAt'] = $reviewedAt;
 
         return $data;
+    }
+
+    private function paymentStudentName(Pembayaran $pembayaran): string
+    {
+        if ($pembayaran->santri?->nama_lengkap) {
+            return $pembayaran->santri->nama_lengkap;
+        }
+
+        $calonName = DataCalonSantri::where('user_id', $pembayaran->user_id)
+            ->value('nama_lengkap');
+
+        return $calonName ?: ($pembayaran->user?->username ?: 'Calon Santri');
     }
 
     private function paymentResponse(Pembayaran $pembayaran, ?string $message = null, int $statusCode = 200)
